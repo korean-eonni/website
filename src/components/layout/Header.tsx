@@ -36,8 +36,8 @@ export default function Header() {
           {/* Icons */}
           <div className="flex items-center gap-10 ml-auto">
             {[
-              { src: '/icons/Search.png', alt: 'Пошук' },
-              { src: '/icons/Account.png', alt: 'Акаунт' },
+              { src: '/icons/search.png', alt: 'Пошук' },
+              { src: '/icons/account.png', alt: 'Акаунт' },
               { src: '/icons/Cart 1.png', alt: 'Кошик' },
             ].map((icon) => (
               <button
