@@ -11,7 +11,7 @@ import ReviewsSection from '@/components/sections/ReviewsSection'
 import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
-import { getDb } from '@/lib/db'
+import { listProducts } from '@/lib/productStore'
 
 type ProductCard = {
   id: string
@@ -24,8 +24,7 @@ type ProductCard = {
   slug: string
 }
 
-export default function Home() {
-  const db = getDb()
+export default async function Home() {
   const mapRow = (row: {
     id: string
     name: string
@@ -46,17 +45,7 @@ export default function Home() {
     slug: row.id,
   })
 
-  const newRows = db
-    .prepare(
-      `
-      SELECT id, name, sale_price, original_price, discount_amount, image_path, image_url, is_new
-      FROM products
-      WHERE is_active = 1 AND is_new = 1
-      ORDER BY created_at DESC
-      LIMIT 6
-    `
-    )
-    .all() as Array<{
+  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 6) as Array<{
     id: string
     name: string
     sale_price: number | null
@@ -66,17 +55,7 @@ export default function Home() {
     image_url: string | null
     is_new: number
   }>
-  const exclusiveRows = db
-    .prepare(
-      `
-      SELECT id, name, sale_price, original_price, discount_amount, image_path, image_url, is_new
-      FROM products
-      WHERE is_active = 1 AND is_exclusive = 1
-      ORDER BY created_at DESC
-      LIMIT 6
-    `
-    )
-    .all() as Array<{
+  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 6) as Array<{
     id: string
     name: string
     sale_price: number | null

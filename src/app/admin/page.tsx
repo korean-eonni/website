@@ -1,11 +1,9 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { randomUUID } from 'crypto'
-import { imageSize } from 'image-size'
-import fs from 'fs'
-import path from 'path'
-import { getDb } from '@/lib/db'
 import { ADMIN_COOKIE, isAuthed } from '@/lib/adminAuth'
+import { createProduct, deleteProduct, listProducts } from '@/lib/productStore'
+import { storeImage } from '@/lib/uploads'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 
@@ -85,98 +83,20 @@ async function addProductAction(formData: FormData) {
   }
 
   const imageFile = formData.get('image') as File | null
+  if (!imageFile || imageFile.size === 0) {
+    redirect('/admin')
+  }
   if (imageFile && imageFile.size > 0) {
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(imageFile.type)) {
-      redirect('/admin')
-    }
-    if (imageFile.size > 2 * 1024 * 1024) {
-      redirect('/admin')
-    }
-    let dimensions: { width?: number; height?: number }
     try {
-      const buffer = Buffer.from(await imageFile.arrayBuffer())
-      dimensions = imageSize(buffer)
-      if (!dimensions.width || !dimensions.height) {
-        redirect('/admin')
-      }
-      const ratio = dimensions.width / dimensions.height
-      if (dimensions.width < 393 || dimensions.height < 400 || ratio < 0.95 || ratio > 1.05) {
-        redirect('/admin')
-      }
-      const ext = imageFile.type === 'image/png'
-        ? 'png'
-        : imageFile.type === 'image/webp'
-          ? 'webp'
-          : 'jpg'
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
-      }
-      const fileName = `${product.id}.${ext}`
-      const filePath = path.join(uploadsDir, fileName)
-      fs.writeFileSync(filePath, buffer)
-      product.image_path = `/uploads/${fileName}`
+      const stored = await storeImage(imageFile, product.id)
+      product.image_path = stored.image_path
+      product.image_url = stored.image_url
     } catch {
       redirect('/admin')
     }
   }
 
-  const db = getDb()
-  db.prepare(
-    `
-    INSERT INTO products (
-      id,
-      name,
-      image_url,
-      image_path,
-      short_description,
-      long_description,
-      supplier,
-      cost_price,
-      sale_price,
-      original_price,
-      discount_amount,
-      stock_quantity,
-      category,
-      subcategory,
-      weight_grams,
-      tags,
-      sku,
-      barcode,
-      brand,
-      is_active,
-      is_new,
-      is_exclusive,
-      created_at,
-      updated_at
-    ) VALUES (
-      @id,
-      @name,
-      @image_url,
-      @image_path,
-      @short_description,
-      @long_description,
-      @supplier,
-      @cost_price,
-      @sale_price,
-      @original_price,
-      @discount_amount,
-      @stock_quantity,
-      @category,
-      @subcategory,
-      @weight_grams,
-      @tags,
-      @sku,
-      @barcode,
-      @brand,
-      @is_active,
-      @is_new,
-      @is_exclusive,
-      @created_at,
-      @updated_at
-    )
-  `
-  ).run(product)
+  await createProduct(product)
 
   redirect('/admin')
 }
@@ -188,21 +108,11 @@ async function deleteProductAction(formData: FormData) {
   }
   const id = String(formData.get('id') || '')
   if (!id) redirect('/admin')
-  const db = getDb()
-  const existing = db.prepare('SELECT image_path FROM products WHERE id = ?').get(id) as {
-    image_path?: string | null
-  }
-  db.prepare('DELETE FROM products WHERE id = ?').run(id)
-  if (existing?.image_path?.startsWith('/uploads/')) {
-    const filePath = path.join(process.cwd(), 'public', existing.image_path)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
-  }
+  await deleteProduct(id)
   redirect('/admin')
 }
 
-export default function AdminPage() {
+export default async function AdminPage() {
   if (!isAuthed()) {
     return (
       <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center px-6">
@@ -234,16 +144,7 @@ export default function AdminPage() {
     )
   }
 
-  const db = getDb()
-  const products = db
-    .prepare(
-      `
-      SELECT id, name, category, sale_price, stock_quantity, is_active, is_new, is_exclusive, created_at
-      FROM products
-      ORDER BY created_at DESC
-    `
-    )
-    .all() as ProductRow[]
+  const products = (await listProducts()) as ProductRow[]
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">

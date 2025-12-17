@@ -2,7 +2,7 @@ import Header from '@/components/layout/Header'
 import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
-import { getDb } from '@/lib/db'
+import { listProducts } from '@/lib/productStore'
 
 type ProductCard = {
   id: string
@@ -14,27 +14,17 @@ type ProductCard = {
   isNew: boolean
 }
 
-export default function CatalogPage() {
-  const db = getDb()
-  const rows = db
-    .prepare(
-      `
-      SELECT id, name, sale_price, original_price, discount_amount, image_path, image_url, is_new
-      FROM products
-      WHERE is_active = 1
-      ORDER BY created_at DESC
-    `
-    )
-    .all() as Array<{
-      id: string
-      name: string
-      sale_price: number | null
-      original_price: number | null
-      discount_amount: number | null
-      image_path: string | null
-      image_url: string | null
-      is_new: number
-    }>
+export default async function CatalogPage() {
+  const rows = (await listProducts('is_active = 1')) as Array<{
+    id: string
+    name: string
+    sale_price: number | null
+    original_price: number | null
+    discount_amount: number | null
+    image_path: string | null
+    image_url: string | null
+    is_new: number
+  }>
 
   const products: ProductCard[] = rows.map((row) => ({
       id: row.id,

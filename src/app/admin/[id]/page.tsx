@@ -1,36 +1,12 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { imageSize } from 'image-size'
-import fs from 'fs'
-import path from 'path'
-import { getDb } from '@/lib/db'
+import { getProduct, updateProduct, ProductRecord } from '@/lib/productStore'
 import { ADMIN_COOKIE, isAuthed } from '@/lib/adminAuth'
+import { storeImage } from '@/lib/uploads'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 
-type ProductRow = {
-  id: string
-  name: string
-  image_path: string | null
-  short_description: string | null
-  long_description: string | null
-  supplier: string | null
-  cost_price: number | null
-  sale_price: number | null
-  original_price: number | null
-  discount_amount: number | null
-  stock_quantity: number | null
-  category: string | null
-  subcategory: string | null
-  weight_grams: number | null
-  tags: string | null
-  sku: string | null
-  barcode: string | null
-  brand: string | null
-  is_active: number
-  is_new: number
-  is_exclusive: number
-}
+type ProductRow = ProductRecord
 
 async function loginAction(formData: FormData) {
   'use server'
@@ -60,7 +36,9 @@ async function updateProductAction(formData: FormData) {
     return Number.isFinite(num) ? num : null
   }
 
-  const updates = {
+  const existing = await getProduct(id)
+
+  const updates: ProductRecord = {
     id,
     name: String(formData.get('name') || '').trim(),
     short_description: String(formData.get('short_description') || '').trim() || null,
@@ -82,89 +60,30 @@ async function updateProductAction(formData: FormData) {
     is_new: formData.get('is_new') ? 1 : 0,
     is_exclusive: formData.get('is_exclusive') ? 1 : 0,
     image_path: null as string | null,
+    image_url: existing?.image_url ?? null,
+    created_at: existing?.created_at ?? new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
 
-  const db = getDb()
-  const existing = db.prepare('SELECT image_path FROM products WHERE id = ?').get(id) as {
-    image_path?: string | null
-  }
-
   const imageFile = formData.get('image') as File | null
+  let includeImage = false
   if (imageFile && imageFile.size > 0) {
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(imageFile.type)) {
-      redirect(`/admin/${id}`)
-    }
-    if (imageFile.size > 2 * 1024 * 1024) {
-      redirect(`/admin/${id}`)
-    }
     try {
-      const buffer = Buffer.from(await imageFile.arrayBuffer())
-      const dimensions = imageSize(buffer)
-      if (!dimensions.width || !dimensions.height) {
-        redirect(`/admin/${id}`)
-      }
-      const ratio = dimensions.width / dimensions.height
-      if (dimensions.width < 393 || dimensions.height < 400 || ratio < 0.95 || ratio > 1.05) {
-        redirect(`/admin/${id}`)
-      }
-      const ext = imageFile.type === 'image/png'
-        ? 'png'
-        : imageFile.type === 'image/webp'
-          ? 'webp'
-          : 'jpg'
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
-      }
-      const fileName = `${id}.${ext}`
-      const filePath = path.join(uploadsDir, fileName)
-      fs.writeFileSync(filePath, buffer)
-      updates.image_path = `/uploads/${fileName}`
-      if (existing?.image_path?.startsWith('/uploads/') && existing.image_path !== updates.image_path) {
-        const oldPath = path.join(process.cwd(), 'public', existing.image_path)
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath)
-        }
-      }
+      const stored = await storeImage(imageFile, id, existing?.image_url, existing?.image_path)
+      updates.image_path = stored.image_path
+      updates.image_url = stored.image_url
+      includeImage = true
     } catch {
       redirect(`/admin/${id}`)
     }
   }
 
-  db.prepare(
-    `
-    UPDATE products
-    SET
-      name = @name,
-      short_description = @short_description,
-      long_description = @long_description,
-      supplier = @supplier,
-      cost_price = @cost_price,
-      sale_price = @sale_price,
-      original_price = @original_price,
-      discount_amount = @discount_amount,
-      stock_quantity = @stock_quantity,
-      category = @category,
-      subcategory = @subcategory,
-      weight_grams = @weight_grams,
-      tags = @tags,
-      sku = @sku,
-      barcode = @barcode,
-      brand = @brand,
-      is_active = @is_active,
-      is_new = @is_new,
-      is_exclusive = @is_exclusive,
-      updated_at = @updated_at
-      ${updates.image_path ? ', image_path = @image_path' : ''}
-    WHERE id = @id
-  `
-  ).run(updates)
+  await updateProduct(updates, includeImage)
 
   redirect('/admin')
 }
 
-export default function AdminEditPage({ params }: { params: { id: string } }) {
+export default async function AdminEditPage({ params }: { params: { id: string } }) {
   if (!isAuthed()) {
     return (
       <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center px-6">
@@ -196,8 +115,7 @@ export default function AdminEditPage({ params }: { params: { id: string } }) {
     )
   }
 
-  const db = getDb()
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(params.id) as ProductRow
+  const product = (await getProduct(params.id)) as ProductRow
   if (!product) {
     redirect('/admin')
   }
