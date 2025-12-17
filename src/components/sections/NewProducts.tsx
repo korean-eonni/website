@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
-interface Product {
+export interface Product {
   id: string
   name: string
   price: number
@@ -14,39 +14,44 @@ interface Product {
   slug: string
 }
 
-export default function NewProducts() {
+type NewProductsProps = {
+  products?: Product[]
+}
+
+const fallbackProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad',
+    price: 800,
+    discount: 300,
+    image: '/products/product-1.png',
+    isNew: true,
+    slug: 'dear-doer-pdrn-serum-pad',
+  },
+  {
+    id: '2',
+    name: 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad',
+    price: 800,
+    discount: 300,
+    image: '/products/product-2.png',
+    isNew: true,
+    slug: 'dear-doer-pdrn-pad-2',
+  },
+  {
+    id: '3',
+    name: 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad',
+    price: 800,
+    discount: 300,
+    image: '/products/product-3.png',
+    isNew: true,
+    slug: 'dear-doer-pdrn-pad-3',
+  },
+]
+
+export default function NewProducts({ products }: NewProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [itemsPerView, setItemsPerView] = useState(3)
-
-  const products: Product[] = [
-    {
-      id: '1',
-      name: 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad',
-      price: 800,
-      discount: 300,
-      image: '/products/product-1.png',
-      isNew: true,
-      slug: 'dear-doer-pdrn-serum-pad',
-    },
-    {
-      id: '2',
-      name: 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad',
-      price: 800,
-      discount: 300,
-      image: '/products/product-2.png',
-      isNew: true,
-      slug: 'dear-doer-pdrn-pad-2',
-    },
-    {
-      id: '3',
-      name: 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad',
-      price: 800,
-      discount: 300,
-      image: '/products/product-3.png',
-      isNew: true,
-      slug: 'dear-doer-pdrn-pad-3',
-    },
-  ]
+  const displayProducts = products && products.length > 0 ? products : fallbackProducts
 
   useEffect(() => {
     const handleResize = () => {
@@ -65,7 +70,7 @@ export default function NewProducts() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const maxIndex = Math.max(0, products.length - itemsPerView)
+  const maxIndex = Math.max(0, displayProducts.length - itemsPerView)
 
   useEffect(() => {
     if (currentIndex > maxIndex) {
@@ -85,7 +90,7 @@ export default function NewProducts() {
     console.log('Add to cart:', productId)
   }
 
-  const visibleProducts = products.slice(currentIndex, currentIndex + itemsPerView)
+  const visibleProducts = displayProducts.slice(currentIndex, currentIndex + itemsPerView)
 
   return (
     <section className="bg-white py-16 sm:py-20">
@@ -200,7 +205,7 @@ export default function NewProducts() {
           </div>
 
           {/* Navigation Buttons */}
-          {products.length > 1 && (
+          {displayProducts.length > 1 && (
             <>
               <button
                 onClick={handlePrev}

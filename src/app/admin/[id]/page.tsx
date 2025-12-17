@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { randomUUID } from 'crypto'
 import { imageSize } from 'image-size'
 import fs from 'fs'
 import path from 'path'
@@ -12,13 +11,25 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 type ProductRow = {
   id: string
   name: string
-  category: string | null
+  image_path: string | null
+  short_description: string | null
+  long_description: string | null
+  supplier: string | null
+  cost_price: number | null
   sale_price: number | null
+  original_price: number | null
+  discount_amount: number | null
   stock_quantity: number | null
+  category: string | null
+  subcategory: string | null
+  weight_grams: number | null
+  tags: string | null
+  sku: string | null
+  barcode: string | null
+  brand: string | null
   is_active: number
   is_new: number
   is_exclusive: number
-  created_at: string
 }
 
 async function loginAction(formData: FormData) {
@@ -34,30 +45,24 @@ async function loginAction(formData: FormData) {
   redirect('/admin')
 }
 
-async function logoutAction() {
-  'use server'
-  cookies().delete(ADMIN_COOKIE)
-  redirect('/admin')
-}
-
-async function addProductAction(formData: FormData) {
+async function updateProductAction(formData: FormData) {
   'use server'
   if (!isAuthed()) {
     redirect('/admin')
   }
 
-  const now = new Date().toISOString()
+  const id = String(formData.get('id') || '')
+  if (!id) redirect('/admin')
+
   const toNumber = (value: FormDataEntryValue | null) => {
     if (!value) return null
     const num = Number(value)
     return Number.isFinite(num) ? num : null
   }
 
-  const product = {
-    id: randomUUID(),
+  const updates = {
+    id,
     name: String(formData.get('name') || '').trim(),
-    image_url: null as string | null,
-    image_path: null as string | null,
     short_description: String(formData.get('short_description') || '').trim() || null,
     long_description: String(formData.get('long_description') || '').trim() || null,
     supplier: String(formData.get('supplier') || '').trim() || null,
@@ -76,32 +81,32 @@ async function addProductAction(formData: FormData) {
     is_active: formData.get('is_active') ? 1 : 0,
     is_new: formData.get('is_new') ? 1 : 0,
     is_exclusive: formData.get('is_exclusive') ? 1 : 0,
-    created_at: now,
-    updated_at: now,
+    image_path: null as string | null,
+    updated_at: new Date().toISOString(),
   }
 
-  if (!product.name) {
-    redirect('/admin')
+  const db = getDb()
+  const existing = db.prepare('SELECT image_path FROM products WHERE id = ?').get(id) as {
+    image_path?: string | null
   }
 
   const imageFile = formData.get('image') as File | null
   if (imageFile && imageFile.size > 0) {
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(imageFile.type)) {
-      redirect('/admin')
+      redirect(`/admin/${id}`)
     }
     if (imageFile.size > 2 * 1024 * 1024) {
-      redirect('/admin')
+      redirect(`/admin/${id}`)
     }
-    let dimensions: { width?: number; height?: number }
     try {
       const buffer = Buffer.from(await imageFile.arrayBuffer())
-      dimensions = imageSize(buffer)
+      const dimensions = imageSize(buffer)
       if (!dimensions.width || !dimensions.height) {
-        redirect('/admin')
+        redirect(`/admin/${id}`)
       }
       const ratio = dimensions.width / dimensions.height
       if (dimensions.width < 393 || dimensions.height < 400 || ratio < 0.95 || ratio > 1.05) {
-        redirect('/admin')
+        redirect(`/admin/${id}`)
       }
       const ext = imageFile.type === 'image/png'
         ? 'png'
@@ -112,97 +117,54 @@ async function addProductAction(formData: FormData) {
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true })
       }
-      const fileName = `${product.id}.${ext}`
+      const fileName = `${id}.${ext}`
       const filePath = path.join(uploadsDir, fileName)
       fs.writeFileSync(filePath, buffer)
-      product.image_path = `/uploads/${fileName}`
+      updates.image_path = `/uploads/${fileName}`
+      if (existing?.image_path?.startsWith('/uploads/') && existing.image_path !== updates.image_path) {
+        const oldPath = path.join(process.cwd(), 'public', existing.image_path)
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath)
+        }
+      }
     } catch {
-      redirect('/admin')
+      redirect(`/admin/${id}`)
     }
   }
 
-  const db = getDb()
   db.prepare(
     `
-    INSERT INTO products (
-      id,
-      name,
-      image_url,
-      image_path,
-      short_description,
-      long_description,
-      supplier,
-      cost_price,
-      sale_price,
-      original_price,
-      discount_amount,
-      stock_quantity,
-      category,
-      subcategory,
-      weight_grams,
-      tags,
-      sku,
-      barcode,
-      brand,
-      is_active,
-      is_new,
-      is_exclusive,
-      created_at,
-      updated_at
-    ) VALUES (
-      @id,
-      @name,
-      @image_url,
-      @image_path,
-      @short_description,
-      @long_description,
-      @supplier,
-      @cost_price,
-      @sale_price,
-      @original_price,
-      @discount_amount,
-      @stock_quantity,
-      @category,
-      @subcategory,
-      @weight_grams,
-      @tags,
-      @sku,
-      @barcode,
-      @brand,
-      @is_active,
-      @is_new,
-      @is_exclusive,
-      @created_at,
-      @updated_at
-    )
+    UPDATE products
+    SET
+      name = @name,
+      short_description = @short_description,
+      long_description = @long_description,
+      supplier = @supplier,
+      cost_price = @cost_price,
+      sale_price = @sale_price,
+      original_price = @original_price,
+      discount_amount = @discount_amount,
+      stock_quantity = @stock_quantity,
+      category = @category,
+      subcategory = @subcategory,
+      weight_grams = @weight_grams,
+      tags = @tags,
+      sku = @sku,
+      barcode = @barcode,
+      brand = @brand,
+      is_active = @is_active,
+      is_new = @is_new,
+      is_exclusive = @is_exclusive,
+      updated_at = @updated_at
+      ${updates.image_path ? ', image_path = @image_path' : ''}
+    WHERE id = @id
   `
-  ).run(product)
+  ).run(updates)
 
   redirect('/admin')
 }
 
-async function deleteProductAction(formData: FormData) {
-  'use server'
-  if (!isAuthed()) {
-    redirect('/admin')
-  }
-  const id = String(formData.get('id') || '')
-  if (!id) redirect('/admin')
-  const db = getDb()
-  const existing = db.prepare('SELECT image_path FROM products WHERE id = ?').get(id) as {
-    image_path?: string | null
-  }
-  db.prepare('DELETE FROM products WHERE id = ?').run(id)
-  if (existing?.image_path?.startsWith('/uploads/')) {
-    const filePath = path.join(process.cwd(), 'public', existing.image_path)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
-  }
-  redirect('/admin')
-}
-
-export default function AdminPage() {
+export default function AdminEditPage({ params }: { params: { id: string } }) {
   if (!isAuthed()) {
     return (
       <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center px-6">
@@ -235,47 +197,34 @@ export default function AdminPage() {
   }
 
   const db = getDb()
-  const products = db
-    .prepare(
-      `
-      SELECT id, name, category, sale_price, stock_quantity, is_active, is_new, is_exclusive, created_at
-      FROM products
-      ORDER BY created_at DESC
-    `
-    )
-    .all() as ProductRow[]
+  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(params.id) as ProductRow
+  if (!product) {
+    redirect('/admin')
+  }
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
-      <div className="max-w-[1200px] mx-auto">
+      <div className="max-w-[900px] mx-auto">
         <div className="flex items-center justify-between mb-10">
-          <h1 className="text-4xl font-bebas uppercase text-black">
-            Admin панель
-          </h1>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="h-10 px-6 rounded-lg bg-black text-white uppercase text-[14px]"
-            >
-              Вийти
-            </button>
-          </form>
+          <h1 className="text-4xl font-bebas uppercase text-black">Редагувати товар</h1>
+          <a href="/admin" className="text-black underline">
+            Назад
+          </a>
         </div>
 
-        <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8 mb-10">
-          <h2 className="text-2xl font-bebas uppercase text-black mb-6">
-            Додати товар
-          </h2>
+        <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8">
           <form
-            action={addProductAction}
+            action={updateProductAction}
             className="grid gap-4 md:grid-cols-2"
             encType="multipart/form-data"
           >
+            <input type="hidden" name="id" value={product.id} />
             <div className="md:col-span-2">
               <label className="block text-sm mb-2">Назва *</label>
               <input
                 name="name"
                 required
+                defaultValue={product.name}
                 maxLength={120}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -286,14 +235,19 @@ export default function AdminPage() {
                 name="image"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                required
                 className="w-full"
               />
+              {product.image_path && (
+                <p className="text-xs text-gray-600 mt-2">
+                  Поточне: {product.image_path}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm mb-2">Постачальник</label>
               <input
                 name="supplier"
+                defaultValue={product.supplier || ''}
                 maxLength={80}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -302,6 +256,7 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">Категорія</label>
               <input
                 name="category"
+                defaultValue={product.category || ''}
                 maxLength={80}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -310,6 +265,7 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">Субкатегорія</label>
               <input
                 name="subcategory"
+                defaultValue={product.subcategory || ''}
                 maxLength={80}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -318,6 +274,7 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">Бренд</label>
               <input
                 name="brand"
+                defaultValue={product.brand || ''}
                 maxLength={80}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -326,6 +283,7 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">SKU</label>
               <input
                 name="sku"
+                defaultValue={product.sku || ''}
                 maxLength={40}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -334,38 +292,75 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">Штрихкод</label>
               <input
                 name="barcode"
+                defaultValue={product.barcode || ''}
                 maxLength={40}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
             </div>
             <div>
               <label className="block text-sm mb-2">Собівартість (₴)</label>
-              <input name="cost_price" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input
+                name="cost_price"
+                type="number"
+                step="0.01"
+                defaultValue={product.cost_price ?? ''}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
             </div>
             <div>
               <label className="block text-sm mb-2">Ціна продажу (₴)</label>
-              <input name="sale_price" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input
+                name="sale_price"
+                type="number"
+                step="0.01"
+                defaultValue={product.sale_price ?? ''}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
             </div>
             <div>
               <label className="block text-sm mb-2">Стара ціна (₴)</label>
-              <input name="original_price" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input
+                name="original_price"
+                type="number"
+                step="0.01"
+                defaultValue={product.original_price ?? ''}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
             </div>
             <div>
               <label className="block text-sm mb-2">Знижка (₴)</label>
-              <input name="discount_amount" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input
+                name="discount_amount"
+                type="number"
+                step="0.01"
+                defaultValue={product.discount_amount ?? ''}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
             </div>
             <div>
               <label className="block text-sm mb-2">Кількість на складі</label>
-              <input name="stock_quantity" type="number" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input
+                name="stock_quantity"
+                type="number"
+                defaultValue={product.stock_quantity ?? ''}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
             </div>
             <div>
               <label className="block text-sm mb-2">Вага (г)</label>
-              <input name="weight_grams" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input
+                name="weight_grams"
+                type="number"
+                step="0.01"
+                defaultValue={product.weight_grams ?? ''}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
             </div>
             <div>
               <label className="block text-sm mb-2">Теги (через кому)</label>
               <input
                 name="tags"
+                defaultValue={product.tags || ''}
                 maxLength={200}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -374,6 +369,7 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">Короткий опис</label>
               <textarea
                 name="short_description"
+                defaultValue={product.short_description || ''}
                 maxLength={160}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
@@ -382,23 +378,24 @@ export default function AdminPage() {
               <label className="block text-sm mb-2">Довгий опис</label>
               <textarea
                 name="long_description"
+                defaultValue={product.long_description || ''}
                 maxLength={2000}
                 className="w-full min-h-[120px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div className="flex items-center gap-2">
-              <input id="is_active" name="is_active" type="checkbox" defaultChecked />
+              <input id="is_active" name="is_active" type="checkbox" defaultChecked={!!product.is_active} />
               <label htmlFor="is_active" className="text-sm">
                 Активний товар
               </label>
             </div>
             <div className="flex items-center gap-4 md:col-span-2">
               <label className="flex items-center gap-2 text-sm">
-                <input name="is_new" type="checkbox" />
+                <input name="is_new" type="checkbox" defaultChecked={!!product.is_new} />
                 Позначити як новинку
               </label>
               <label className="flex items-center gap-2 text-sm">
-                <input name="is_exclusive" type="checkbox" />
+                <input name="is_exclusive" type="checkbox" defaultChecked={!!product.is_exclusive} />
                 Позначити як ексклюзив
               </label>
             </div>
@@ -407,65 +404,10 @@ export default function AdminPage() {
                 type="submit"
                 className="mt-4 h-12 px-8 rounded-lg bg-black text-white uppercase text-[14px]"
               >
-                Додати товар
+                Зберегти
               </button>
             </div>
           </form>
-        </section>
-
-        <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8">
-          <h2 className="text-2xl font-bebas uppercase text-black mb-6">
-            Товари ({products.length})
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="text-black">
-                  <th className="py-2 pr-4">Назва</th>
-                  <th className="py-2 pr-4">Категорія</th>
-                  <th className="py-2 pr-4">Ціна</th>
-                  <th className="py-2 pr-4">Склад</th>
-                  <th className="py-2 pr-4">Активний</th>
-                  <th className="py-2 pr-4">Новинки</th>
-                  <th className="py-2 pr-4">Ексклюзив</th>
-                  <th className="py-2 pr-4">Дії</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr key={product.id} className="border-t border-[#EFEFEF]">
-                    <td className="py-3 pr-4">{product.name}</td>
-                    <td className="py-3 pr-4">{product.category || '—'}</td>
-                    <td className="py-3 pr-4">
-                      {product.sale_price !== null ? `₴${product.sale_price}` : '—'}
-                    </td>
-                    <td className="py-3 pr-4">
-                      {product.stock_quantity !== null ? product.stock_quantity : '—'}
-                    </td>
-                    <td className="py-3 pr-4">{product.is_active ? 'Так' : 'Ні'}</td>
-                    <td className="py-3 pr-4">{product.is_new ? 'Так' : 'Ні'}</td>
-                    <td className="py-3 pr-4">{product.is_exclusive ? 'Так' : 'Ні'}</td>
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-3">
-                        <a
-                          href={`/admin/${product.id}`}
-                          className="text-black underline"
-                        >
-                          Редагувати
-                        </a>
-                        <form action={deleteProductAction}>
-                          <input type="hidden" name="id" value={product.id} />
-                          <button type="submit" className="text-red-600">
-                            Видалити
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
       </div>
     </main>
