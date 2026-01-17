@@ -70,39 +70,76 @@ async function ensurePostgresSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_exclusive INTEGER NOT NULL DEFAULT 0;`
 }
 
-async function seedPostgresDefaults() {
-  const count = await sql`SELECT COUNT(*)::int as count FROM products`
-  if (count.rows[0]?.count > 0) return
+// No seed data - all products come from Google Sheets
+
+/**
+ * Replace ALL products in the database with the provided list.
+ * This deletes all existing products and inserts the new ones.
+ * Used for full sync from Google Sheets.
+ */
+export async function replaceAllProducts(products: ProductRecord[]) {
   const now = new Date().toISOString()
-  await sql`
+
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    
+    // Delete all existing products
+    await sql`DELETE FROM products`
+    console.log('Deleted all existing products')
+    
+    // Insert all new products
+    for (const p of products) {
+      await sql`
+        INSERT INTO products (
+          id, name, image_url, image_path, short_description, long_description,
+          supplier, cost_price, sale_price, original_price, discount_amount,
+          stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
+          brand, is_active, is_new, is_exclusive, created_at, updated_at
+        ) VALUES (
+          ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
+          ${p.short_description}, ${p.long_description}, ${p.supplier},
+          ${p.cost_price}, ${p.sale_price}, ${p.original_price}, ${p.discount_amount},
+          ${p.stock_quantity}, ${p.category}, ${p.subcategory}, ${p.weight_grams},
+          ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand}, ${p.is_active},
+          ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
+        )
+      `
+    }
+    console.log(`Inserted ${products.length} products`)
+    return
+  }
+
+  // Local SQLite fallback
+  const db = getDb()
+  db.prepare('DELETE FROM products').run()
+  
+  const stmt = db.prepare(`
     INSERT INTO products (
-      id,
-      name,
-      image_path,
-      short_description,
-      sale_price,
-      discount_amount,
-      stock_quantity,
-      category,
-      tags,
-      sku,
-      brand,
-      is_active,
-      is_new,
-      is_exclusive,
-      created_at,
-      updated_at
-    ) VALUES
-      ('seed-1', 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad', '/products/product-1.png', 'Серум-педи з PDRN для оновлення шкіри.', 800, 300, 10, 'Новинки', 'new,exclusive', 'PDRN-70-1', 'Dear Doer', 1, 1, 1, ${now}, ${now}),
-      ('seed-2', 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad', '/products/product-2.png', 'Серум-педи з PDRN для ретинолового догляду.', 800, 300, 10, 'Новинки', 'new,exclusive', 'PDRN-70-2', 'Dear Doer', 1, 1, 1, ${now}, ${now}),
-      ('seed-3', 'Dear Doer Серум-педи з PDRN, 70 шт. – Dear Doer Break PDRN Retinol Serum Pad', '/products/product-3.png', 'Серум-педи з PDRN для сяйва.', 800, 300, 10, 'Новинки', 'new,exclusive', 'PDRN-70-3', 'Dear Doer', 1, 1, 1, ${now}, ${now});
-  `
+      id, name, image_url, image_path, short_description, long_description,
+      supplier, cost_price, sale_price, original_price, discount_amount,
+      stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
+      brand, is_active, is_new, is_exclusive, created_at, updated_at
+    ) VALUES (
+      @id, @name, @image_url, @image_path, @short_description, @long_description,
+      @supplier, @cost_price, @sale_price, @original_price, @discount_amount,
+      @stock_quantity, @category, @subcategory, @weight_grams, @tags, @sku, @barcode,
+      @brand, @is_active, @is_new, @is_exclusive, @created_at, @updated_at
+    )
+  `)
+
+  for (const product of products) {
+    stmt.run({
+      ...product,
+      id: product.id || randomUUID(),
+      created_at: product.created_at || now,
+      updated_at: now,
+    })
+  }
 }
 
 export async function listProducts(where?: string) {
   if (usePostgres) {
     await ensurePostgresSchema()
-    await seedPostgresDefaults()
     const query = `
       SELECT * FROM products
       ${where ? `WHERE ${where}` : ''}

@@ -1,7 +1,7 @@
 import { google } from 'googleapis'
 import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
-import { upsertProducts } from '@/lib/productStore'
+import { replaceAllProducts } from '@/lib/productStore'
 
 // Sheet "Загальний" - columns A through AD (30 columns for Фото 1-10)
 const SHEET_RANGE = 'Загальний!A1:AD'
@@ -470,10 +470,11 @@ export async function syncSheetToDatabase() {
     }
   }
 
-  // Upsert all products to database
+  // Replace ALL products in database with sheet data
+  // This ensures the database is always in sync with the Google Sheet
   if (products.length > 0) {
-    await upsertProducts(products)
-    console.log(`Upserted ${products.length} products to database`)
+    await replaceAllProducts(products)
+    console.log(`Replaced all products with ${products.length} from sheet`)
   }
 
   const duration = Date.now() - startTime
