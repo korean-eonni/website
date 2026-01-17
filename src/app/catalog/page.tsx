@@ -4,6 +4,8 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import { listProducts } from '@/lib/productStore'
 
+export const dynamic = 'force-dynamic'
+
 type ProductCard = {
   id: string
   name: string
@@ -43,7 +45,7 @@ export default async function CatalogPage() {
       <section className="py-16 sm:py-20">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="flex items-end justify-between gap-6 mb-12">
-            <h1 className="font-bebas uppercase text-black text-[64px] sm:text-[72px] lg:text-[80px] leading-[80px]">
+            <h1 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
               Каталог
             </h1>
             <span className="text-[16px] text-[#666666]">
@@ -79,7 +81,7 @@ export default async function CatalogPage() {
                   )}
 
                   {product.discount && (
-                    <div className="absolute top-3 left-3 h-[22px] px-2 rounded-[6px] bg-white text-black text-[14px] font-medium tracking-[0.02em] flex items-center shadow-sm">
+                    <div className="absolute top-3 left-3 h-[30px] px-3 rounded-[8px] bg-[#BCC2F4] text-black text-[16px] font-semibold tracking-[0.02em] flex items-center shadow-[0_6px_16px_rgba(188,194,244,0.45)]">
                       Знижка ₴{product.discount}
                     </div>
                   )}

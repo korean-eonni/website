@@ -4,6 +4,14 @@ import '@/styles/globals.css'
 export const metadata: Metadata = {
   title: 'Eonni - Корейська косметика',
   description: 'Оригінальна корейська косметика з любов\'ю до філософії K-beauty',
+  icons: {
+    icon: '/logo.svg',
+  },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({

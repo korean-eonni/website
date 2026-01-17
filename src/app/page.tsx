@@ -13,6 +13,8 @@ import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { listProducts } from '@/lib/productStore'
 
+export const dynamic = 'force-dynamic'
+
 type ProductCard = {
   id: string
   name: string

@@ -45,7 +45,7 @@ export default function ReviewsSection() {
     <section className="bg-white py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-end justify-between gap-6 mb-12">
-          <h2 className="font-bebas uppercase text-black text-[64px] sm:text-[72px] lg:text-[80px] leading-[80px]">
+          <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
             Відгуки
           </h2>
         </div>
@@ -88,18 +88,18 @@ export default function ReviewsSection() {
                 </div>
               </div>
 
-              <p className="mt-6 font-gilroy text-[18px] leading-[24px] font-normal tracking-[0.01em] text-black">
+              <p className="mt-6 font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-normal tracking-[0.01em] text-black">
                 {review.text}
               </p>
 
-              <p className="mt-6 font-gilroy text-[18px] leading-[24px] font-semibold text-black">
+              <p className="mt-6 font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-semibold text-black">
                 Читати більше
               </p>
 
               {index === 2 && (
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-[50px] h-[50px] flex items-center justify-center bg-white rounded-[12px] shadow-[0_10px_25px_rgba(0,0,0,0.12)] hover:opacity-80 transition-opacity"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 hidden h-[50px] w-[50px] items-center justify-center rounded-[12px] bg-white shadow-[0_10px_25px_rgba(0,0,0,0.12)] transition-opacity hover:opacity-80 lg:flex"
                   aria-label="Наступний відгук"
                 >
                   <Image src="/arrow-next.png" alt="Наступний відгук" width={20} height={20} />

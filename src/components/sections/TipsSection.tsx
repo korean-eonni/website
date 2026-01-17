@@ -6,22 +6,13 @@ export default function TipsSection() {
   return (
     <section className="bg-white py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
-        <div className="flex items-start justify-between gap-6 mb-10">
-          <h2 className="font-bebas uppercase text-black text-[64px] sm:text-[72px] lg:text-[80px] leading-[80px]">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between mb-10">
+          <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
             Поради від твоєї EONNI
           </h2>
           <button
             type="button"
-            className="inline-flex items-center justify-center bg-black text-white uppercase transition-opacity duration-300 hover:opacity-80"
-            style={{
-              width: '200px',
-              height: '50px',
-              borderRadius: '10px',
-              fontFamily: 'Gilroy, sans-serif',
-              fontSize: '18px',
-              fontWeight: 600,
-              lineHeight: '18px',
-            }}
+            className="inline-flex h-[50px] w-[200px] items-center justify-center rounded-[10px] bg-black text-white uppercase font-gilroy text-[18px] font-semibold leading-[18px] transition-opacity duration-300 hover:opacity-80"
           >
             Усі поради
           </button>
@@ -29,64 +20,33 @@ export default function TipsSection() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-[30px]">
           <div
-            className="relative w-full lg:w-[605px] h-[600px] rounded-[30px] overflow-hidden bg-cover bg-center"
+            className="relative w-full lg:w-[605px] min-h-[520px] sm:min-h-[560px] lg:h-[600px] rounded-[30px] overflow-hidden bg-cover bg-center"
             style={{ backgroundImage: "url('/tips-gradient.png')" }}
           >
             <div className="h-full flex flex-col justify-center px-8 sm:px-10">
-              <h3
-                className="uppercase text-black font-bebas"
-                style={{
-                  fontSize: '40px',
-                  lineHeight: '45px',
-                  fontWeight: 400,
-                }}
-              >
+              <h3 className="uppercase text-black font-bebas text-[28px] leading-[32px] sm:text-[34px] sm:leading-[40px] lg:text-[40px] lg:leading-[45px] font-normal">
                 Що таке бальзам-гоммаж і чому він підкорює ринок K-beauty
               </h3>
-              <p
-                className="mt-6 text-black"
-                style={{
-                  fontFamily: 'Gilroy, sans-serif',
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  fontWeight: 400,
-                }}
-              >
+              <p className="mt-6 text-black font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-normal">
                 Кожна ефективна доглядова рутина починається з правильного
                 очищення. Але корейська бʼюті-філософія давно довела, що
                 очищення може бути не просто необхідним етапом, а справжнім
                 ритуалом турботи, який відновлює шкіру, насичує її поживними
                 компонентами та готує до подальшого догляду.
               </p>
-              <p
-                className="mt-4 text-black"
-                style={{
-                  fontFamily: 'Gilroy, sans-serif',
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  fontWeight: 400,
-                }}
-              >
+              <p className="mt-4 text-black font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-normal">
                 Кожна ефективна доглядова рутина починається з правильного
                 очищення. Але корейська бʼюті-філософія давно довела, що
                 очищення може бути не просто необхідним етапом, а справжнім
                 ритуалом турботи.
               </p>
-              <span
-                className="mt-6 text-black"
-                style={{
-                  fontFamily: 'Gilroy, sans-serif',
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  fontWeight: 600,
-                }}
-              >
+              <span className="mt-6 text-black font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-semibold">
                 Читати далі
               </span>
             </div>
           </div>
 
-          <div className="relative w-full lg:w-[605px] h-[600px] rounded-[30px] overflow-hidden">
+          <div className="relative w-full lg:w-[605px] h-[420px] sm:h-[520px] lg:h-[600px] rounded-[30px] overflow-hidden">
             <div className="absolute left-0 top-0 w-full h-full lg:-top-[149px] lg:h-[749px]">
               <Image
                 src="/tips-photo.png"

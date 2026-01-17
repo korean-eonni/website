@@ -32,7 +32,7 @@ export default function DeliverySection() {
     <section className="bg-white py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-end justify-between gap-6 mb-12">
-          <h2 className="font-bebas uppercase text-black text-[64px] sm:text-[72px] lg:text-[80px] leading-[80px]">
+          <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
             Зручна доставка і оплата
           </h2>
         </div>
@@ -52,16 +52,7 @@ export default function DeliverySection() {
                   height={item.iconHeight}
                 />
               </div>
-              <p
-                className="mt-6 text-black"
-                style={{
-                  fontFamily: 'Gilroy, sans-serif',
-                  fontSize: '21px',
-                  lineHeight: '27px',
-                  fontWeight: 400,
-                  letterSpacing: '0.01em',
-                }}
-              >
+              <p className="mt-6 text-black font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] lg:text-[21px] lg:leading-[27px] font-normal tracking-[0.01em]">
                 {item.text}
               </p>
             </div>

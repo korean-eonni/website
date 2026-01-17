@@ -4,6 +4,10 @@ import { randomUUID } from 'crypto'
 import { ADMIN_COOKIE, isAuthed } from '@/lib/adminAuth'
 import { createProduct, deleteProduct, listProducts } from '@/lib/productStore'
 import { storeImage } from '@/lib/uploads'
+import ConfirmableForm from '@/components/admin/ConfirmableForm'
+import { brands } from '@/data/brands'
+import { syncSheetToDatabase } from '@/lib/sheetSync'
+import AdminFlash from '@/components/admin/AdminFlash'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 
@@ -112,7 +116,26 @@ async function deleteProductAction(formData: FormData) {
   redirect('/admin')
 }
 
-export default async function AdminPage() {
+async function syncSheetAction() {
+  'use server'
+  if (!isAuthed()) {
+    redirect('/admin')
+  }
+  try {
+    const result = await syncSheetToDatabase()
+    redirect(`/admin?sync=ok&imported=${result?.imported ?? 0}`)
+  } catch (e) {
+    console.error('Sheet sync failed', e)
+    const message = e instanceof Error ? e.message : 'sync_failed'
+    redirect(`/admin?sync=error&reason=${encodeURIComponent(message)}`)
+  }
+}
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams?: { sync?: string; imported?: string; error?: string; reason?: string }
+}) {
   if (!isAuthed()) {
     return (
       <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center px-6">
@@ -148,27 +171,45 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
+      <AdminFlash
+        status={searchParams?.sync === 'ok' ? 'ok' : searchParams?.sync === 'error' ? 'error' : undefined}
+        imported={searchParams?.imported}
+        reason={searchParams?.reason}
+      />
       <div className="max-w-[1200px] mx-auto">
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-bebas uppercase text-black">
             Admin панель
           </h1>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="h-10 px-6 rounded-lg bg-black text-white uppercase text-[14px]"
-            >
-              Вийти
-            </button>
-          </form>
+          <div className="flex items-center gap-3">
+            <form action={syncSheetAction}>
+              <button
+                type="submit"
+                className="h-10 px-4 rounded-lg border border-black text-black uppercase text-[14px] hover:bg-black hover:text-white transition-colors"
+              >
+                Імпорт із Google Sheet
+              </button>
+            </form>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="h-10 px-6 rounded-lg bg-black text-white uppercase text-[14px]"
+              >
+                Вийти
+              </button>
+            </form>
+          </div>
         </div>
 
         <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8 mb-10">
           <h2 className="text-2xl font-bebas uppercase text-black mb-6">
             Додати товар
           </h2>
-          <form
+          <ConfirmableForm
             action={addProductAction}
+            title="Додати товар?"
+            description="Перевірте дані, перед тим як додати новий товар до каталогу."
+            confirmLabel="Додати"
             className="grid gap-4 md:grid-cols-2"
             encType="multipart/form-data"
           >
@@ -217,11 +258,18 @@ export default async function AdminPage() {
             </div>
             <div>
               <label className="block text-sm mb-2">Бренд</label>
-              <input
+              <select
                 name="brand"
-                maxLength={80}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
-              />
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3 bg-white"
+                defaultValue=""
+              >
+                <option value="">Оберіть бренд</option>
+                {brands.map((brand) => (
+                  <option key={brand.slug} value={brand.name}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm mb-2">SKU</label>
@@ -311,7 +359,7 @@ export default async function AdminPage() {
                 Додати товар
               </button>
             </div>
-          </form>
+          </ConfirmableForm>
         </section>
 
         <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8">
@@ -354,12 +402,17 @@ export default async function AdminPage() {
                         >
                           Редагувати
                         </a>
-                        <form action={deleteProductAction}>
-                          <input type="hidden" name="id" value={product.id} />
-                          <button type="submit" className="text-red-600">
-                            Видалити
-                          </button>
-                        </form>
+                      <ConfirmableForm
+                        action={deleteProductAction}
+                        title="Видалити товар?"
+                        description="Цю дію не можна скасувати."
+                        confirmLabel="Видалити"
+                      >
+                        <input type="hidden" name="id" value={product.id} />
+                        <button type="submit" className="text-red-600">
+                          Видалити
+                        </button>
+                      </ConfirmableForm>
                       </div>
                     </td>
                   </tr>

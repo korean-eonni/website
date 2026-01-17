@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { getProduct, updateProduct, ProductRecord } from '@/lib/productStore'
 import { ADMIN_COOKIE, isAuthed } from '@/lib/adminAuth'
 import { storeImage } from '@/lib/uploads'
+import { brands } from '@/data/brands'
+import ConfirmableForm from '@/components/admin/ConfirmableForm'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 
@@ -131,8 +133,11 @@ export default async function AdminEditPage({ params }: { params: { id: string }
         </div>
 
         <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8">
-          <form
+          <ConfirmableForm
             action={updateProductAction}
+            title="Зберегти зміни?"
+            description="Після збереження дані одразу оновляться в каталозі."
+            confirmLabel="Зберегти"
             className="grid gap-4 md:grid-cols-2"
             encType="multipart/form-data"
           >
@@ -190,12 +195,18 @@ export default async function AdminEditPage({ params }: { params: { id: string }
             </div>
             <div>
               <label className="block text-sm mb-2">Бренд</label>
-              <input
+              <select
                 name="brand"
                 defaultValue={product.brand || ''}
-                maxLength={80}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
-              />
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3 bg-white"
+              >
+                <option value="">Оберіть бренд</option>
+                {brands.map((brand) => (
+                  <option key={brand.slug} value={brand.name}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm mb-2">SKU</label>
@@ -325,7 +336,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
                 Зберегти
               </button>
             </div>
-          </form>
+          </ConfirmableForm>
         </section>
       </div>
     </main>

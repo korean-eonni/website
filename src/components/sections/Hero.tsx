@@ -30,7 +30,7 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   return (
-    <section className="relative h-[calc(100vh-108px)] min-h-[600px] bg-[#F5F5F5] overflow-hidden">
+    <section className="relative min-h-[520px] sm:min-h-[600px] lg:h-[calc(100vh-108px)] bg-[#F5F5F5] overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -54,11 +54,11 @@ export default function Hero() {
           {/* Content */}
           <div className="relative h-full max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 flex items-center">
             <div className="max-w-[767px] text-white drop-shadow-md">
-              <h1 className="text-[72px] sm:text-[96px] lg:text-[120px] leading-[120px] font-bebas uppercase tracking-[0]">
+              <h1 className="text-[48px] leading-[52px] sm:text-[72px] sm:leading-[80px] lg:text-[120px] lg:leading-[120px] font-bebas uppercase tracking-[0]">
                 {slide.title}
               </h1>
 
-              <p className="mt-6 text-[21px] leading-[27px] max-w-[500px]" style={{ fontFamily: 'Gilroy, sans-serif' }}>
+              <p className="mt-6 max-w-[500px] text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] lg:text-[21px] lg:leading-[27px] font-gilroy">
                 {slide.subtitle}
               </p>
 

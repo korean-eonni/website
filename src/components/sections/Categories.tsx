@@ -83,7 +83,7 @@ export default function Categories() {
     <section className="bg-white py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-end justify-between gap-6 mb-12">
-          <h2 className="font-bebas text-[64px] sm:text-[72px] lg:text-[80px] leading-[80px] uppercase text-black">
+          <h2 className="font-bebas text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px] uppercase text-black">
             Категорії
           </h2>
         </div>

@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres'
 import { del } from '@vercel/blob'
 import { getDb } from '@/lib/db'
+import { randomUUID } from 'crypto'
 
 export type ProductRecord = {
   id: string
@@ -64,6 +65,7 @@ async function ensurePostgresSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_path TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS original_price DOUBLE PRECISION;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_amount DOUBLE PRECISION;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS brand TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_new INTEGER NOT NULL DEFAULT 0;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_exclusive INTEGER NOT NULL DEFAULT 0;`
 }
@@ -119,6 +121,108 @@ export async function listProducts(where?: string) {
   `
   )
   return stmt.all() as ProductRecord[]
+}
+
+export async function upsertProducts(products: ProductRecord[]) {
+  const now = new Date().toISOString()
+
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    const values = products.map((p) => ({
+      ...p,
+      created_at: p.created_at || now,
+      updated_at: now,
+    }))
+
+    for (const p of values) {
+      await sql`
+        INSERT INTO products (
+          id, name, image_url, image_path, short_description, long_description,
+          supplier, cost_price, sale_price, original_price, discount_amount,
+          stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
+          brand, is_active, is_new, is_exclusive, created_at, updated_at
+        ) VALUES (
+          ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
+          ${p.short_description}, ${p.long_description}, ${p.supplier},
+          ${p.cost_price}, ${p.sale_price}, ${p.original_price}, ${p.discount_amount},
+          ${p.stock_quantity}, ${p.category}, ${p.subcategory}, ${p.weight_grams},
+          ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand}, ${p.is_active},
+          ${p.is_new}, ${p.is_exclusive}, ${p.created_at}, ${p.updated_at}
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          image_url = EXCLUDED.image_url,
+          image_path = EXCLUDED.image_path,
+          short_description = EXCLUDED.short_description,
+          long_description = EXCLUDED.long_description,
+          supplier = EXCLUDED.supplier,
+          cost_price = EXCLUDED.cost_price,
+          sale_price = EXCLUDED.sale_price,
+          original_price = EXCLUDED.original_price,
+          discount_amount = EXCLUDED.discount_amount,
+          stock_quantity = EXCLUDED.stock_quantity,
+          category = EXCLUDED.category,
+          subcategory = EXCLUDED.subcategory,
+          weight_grams = EXCLUDED.weight_grams,
+          tags = EXCLUDED.tags,
+          sku = EXCLUDED.sku,
+          barcode = EXCLUDED.barcode,
+          brand = EXCLUDED.brand,
+          is_active = EXCLUDED.is_active,
+          is_new = EXCLUDED.is_new,
+          is_exclusive = EXCLUDED.is_exclusive,
+          updated_at = EXCLUDED.updated_at
+      `
+    }
+    return
+  }
+
+  // Local SQLite fallback
+  const db = getDb()
+  const stmt = db.prepare(`
+    INSERT INTO products (
+      id, name, image_url, image_path, short_description, long_description,
+      supplier, cost_price, sale_price, original_price, discount_amount,
+      stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
+      brand, is_active, is_new, is_exclusive, created_at, updated_at
+    ) VALUES (
+      @id, @name, @image_url, @image_path, @short_description, @long_description,
+      @supplier, @cost_price, @sale_price, @original_price, @discount_amount,
+      @stock_quantity, @category, @subcategory, @weight_grams, @tags, @sku, @barcode,
+      @brand, @is_active, @is_new, @is_exclusive, @created_at, @updated_at
+    ) ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      image_url = excluded.image_url,
+      image_path = excluded.image_path,
+      short_description = excluded.short_description,
+      long_description = excluded.long_description,
+      supplier = excluded.supplier,
+      cost_price = excluded.cost_price,
+      sale_price = excluded.sale_price,
+      original_price = excluded.original_price,
+      discount_amount = excluded.discount_amount,
+      stock_quantity = excluded.stock_quantity,
+      category = excluded.category,
+      subcategory = excluded.subcategory,
+      weight_grams = excluded.weight_grams,
+      tags = excluded.tags,
+      sku = excluded.sku,
+      barcode = excluded.barcode,
+      brand = excluded.brand,
+      is_active = excluded.is_active,
+      is_new = excluded.is_new,
+      is_exclusive = excluded.is_exclusive,
+      updated_at = excluded.updated_at
+  `)
+
+  for (const product of products) {
+    stmt.run({
+      ...product,
+      id: product.id || randomUUID(),
+      created_at: product.created_at || now,
+      updated_at: now,
+    })
+  }
 }
 
 export async function getProduct(id: string) {

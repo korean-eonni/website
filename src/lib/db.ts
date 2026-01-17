@@ -124,6 +124,7 @@ function initialize(database: Database.Database) {
   addColumn('image_path', 'TEXT')
   addColumn('original_price', 'REAL')
   addColumn('discount_amount', 'REAL')
+  addColumn('brand', 'TEXT')
   addColumn('is_new', 'INTEGER NOT NULL DEFAULT 0')
   addColumn('is_exclusive', 'INTEGER NOT NULL DEFAULT 0')
 }
