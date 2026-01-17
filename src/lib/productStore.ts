@@ -79,34 +79,45 @@ async function ensurePostgresSchema() {
  */
 export async function replaceAllProducts(products: ProductRecord[]) {
   const now = new Date().toISOString()
+  console.log(`[replaceAllProducts] Starting with ${products.length} products`)
 
   if (usePostgres) {
     await ensurePostgresSchema()
     
     // Delete all existing products
-    await sql`DELETE FROM products`
-    console.log('Deleted all existing products')
+    const deleteResult = await sql`DELETE FROM products`
+    console.log(`[replaceAllProducts] Deleted existing products`)
     
-    // Insert all new products
+    // Insert all new products with error handling
+    let inserted = 0
+    let errors = 0
+    
     for (const p of products) {
-      await sql`
-        INSERT INTO products (
-          id, name, image_url, image_path, short_description, long_description,
-          supplier, cost_price, sale_price, original_price, discount_amount,
-          stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
-          brand, is_active, is_new, is_exclusive, created_at, updated_at
-        ) VALUES (
-          ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
-          ${p.short_description}, ${p.long_description}, ${p.supplier},
-          ${p.cost_price}, ${p.sale_price}, ${p.original_price}, ${p.discount_amount},
-          ${p.stock_quantity}, ${p.category}, ${p.subcategory}, ${p.weight_grams},
-          ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand}, ${p.is_active},
-          ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
-        )
-      `
+      try {
+        await sql`
+          INSERT INTO products (
+            id, name, image_url, image_path, short_description, long_description,
+            supplier, cost_price, sale_price, original_price, discount_amount,
+            stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
+            brand, is_active, is_new, is_exclusive, created_at, updated_at
+          ) VALUES (
+            ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
+            ${p.short_description}, ${p.long_description}, ${p.supplier},
+            ${p.cost_price}, ${p.sale_price}, ${p.original_price}, ${p.discount_amount},
+            ${p.stock_quantity}, ${p.category}, ${p.subcategory}, ${p.weight_grams},
+            ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand}, ${p.is_active},
+            ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
+          )
+        `
+        inserted++
+      } catch (err: any) {
+        errors++
+        console.error(`[replaceAllProducts] Error inserting "${p.name}" (${p.id}): ${err.message}`)
+      }
     }
-    console.log(`Inserted ${products.length} products`)
-    return
+    
+    console.log(`[replaceAllProducts] Completed: ${inserted} inserted, ${errors} errors`)
+    return { inserted, errors }
   }
 
   // Local SQLite fallback
