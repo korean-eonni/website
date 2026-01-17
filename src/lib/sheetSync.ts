@@ -3,8 +3,8 @@ import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 import { replaceAllProducts } from '@/lib/productStore'
 
-// Sheet "Загальний" - columns A through AE (31 columns for Фото 1-12)
-const SHEET_RANGE = 'Загальний!A1:AE'
+// Sheet "Загальний" - columns A through AK (37 columns including new fields)
+const SHEET_RANGE = 'Загальний!A1:AK'
 
 // Column indices based on actual Google Sheet structure (0-indexed)
 // A=0: Назва, B=1: Постачальник, C=2: Категорія, D=3: Субкатегорія, E=4: Бренд
@@ -15,6 +15,10 @@ const SHEET_RANGE = 'Загальний!A1:AE'
 // T=19: Фото 1, U=20: Фото 2, V=21: Фото 3, W=22: Фото 4, X=23: Фото 5
 // Y=24: Фото 6, Z=25: Фото 7, AA=26: Фото 8, AB=27: Фото 9, AC=28: Фото 10
 // AD=29: Фото 11, AE=30: Фото 12
+// NEW COLUMNS:
+// AF=31: Об'єм/Варіанти (e.g., "20 мл,40 мл,80 мл")
+// AG=32: Рейтинг (e.g., 4.5)
+// AH=33: Кількість відгуків (e.g., 12)
 
 type SheetRow = {
   Назва: string
@@ -48,6 +52,10 @@ type SheetRow = {
   'Фото 10'?: string
   'Фото 11'?: string
   'Фото 12'?: string
+  // New fields for product page
+  "Об'єм/Варіанти"?: string  // e.g., "20 мл,40 мл,80 мл"
+  'Рейтинг'?: string         // e.g., "4.5"
+  'Кількість відгуків'?: string // e.g., "12"
 }
 
 function parseBool(input?: string) {
@@ -452,28 +460,34 @@ export async function syncSheetToDatabase() {
           ? Math.round(originalPrice - salePrice)
           : null)
 
-      // Get first available photo URL
-      // We use the Google Drive direct view URL instead of uploading to Blob
-      // This is faster and avoids timeout issues
-      let imageUrl: string | null = null
-      const photoFields = [
-        'Фото 1', 'Фото 2', 'Фото 3', 'Фото 4', 'Фото 5', 'Фото 6',
-        'Фото 7', 'Фото 8', 'Фото 9', 'Фото 10', 'Фото 11', 'Фото 12'
-      ] as const
-      
-      for (const photoField of photoFields) {
-        const photoUrl = row[photoField]
-        
-        if (photoUrl && photoUrl.includes('drive.google.com')) {
-          // Extract file ID and create a direct thumbnail URL
-          const fileId = extractDriveFileId(photoUrl)
-          if (fileId) {
-            // Use Google Drive thumbnail URL (works for public/shared files)
-            imageUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`
-            console.log(`Row ${rowNum}: Using Drive thumbnail for ${photoField}`)
-            break
-          }
-        }
+      // Helper function to get Drive thumbnail URL from a photo field
+      const getDriveThumbnail = (photoUrl?: string): string | null => {
+        if (!photoUrl || !photoUrl.includes('drive.google.com')) return null
+        const fileId = extractDriveFileId(photoUrl)
+        if (!fileId) return null
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`
+      }
+
+      // Get all photo URLs (Фото 1-12)
+      const imageUrl = getDriveThumbnail(row['Фото 1'])
+      const imageUrl2 = getDriveThumbnail(row['Фото 2'])
+      const imageUrl3 = getDriveThumbnail(row['Фото 3'])
+      const imageUrl4 = getDriveThumbnail(row['Фото 4'])
+      const imageUrl5 = getDriveThumbnail(row['Фото 5'])
+      const imageUrl6 = getDriveThumbnail(row['Фото 6'])
+      const imageUrl7 = getDriveThumbnail(row['Фото 7'])
+      const imageUrl8 = getDriveThumbnail(row['Фото 8'])
+      const imageUrl9 = getDriveThumbnail(row['Фото 9'])
+      const imageUrl10 = getDriveThumbnail(row['Фото 10'])
+      const imageUrl11 = getDriveThumbnail(row['Фото 11'])
+      const imageUrl12 = getDriveThumbnail(row['Фото 12'])
+
+      // Count images for logging
+      const imageCount = [imageUrl, imageUrl2, imageUrl3, imageUrl4, imageUrl5, imageUrl6,
+                         imageUrl7, imageUrl8, imageUrl9, imageUrl10, imageUrl11, imageUrl12]
+                         .filter(Boolean).length
+      if (imageCount > 0) {
+        console.log(`Row ${rowNum}: Found ${imageCount} images`)
       }
 
       const now = new Date().toISOString()
@@ -483,6 +497,17 @@ export async function syncSheetToDatabase() {
         name,
         image_url: imageUrl,
         image_path: null,
+        image_url_2: imageUrl2,
+        image_url_3: imageUrl3,
+        image_url_4: imageUrl4,
+        image_url_5: imageUrl5,
+        image_url_6: imageUrl6,
+        image_url_7: imageUrl7,
+        image_url_8: imageUrl8,
+        image_url_9: imageUrl9,
+        image_url_10: imageUrl10,
+        image_url_11: imageUrl11,
+        image_url_12: imageUrl12,
         short_description: row['Короткий опис']?.trim() || null,
         long_description: row['Довгий опис']?.trim() || null,
         supplier: row.Постачальник?.trim() || null,
@@ -498,8 +523,11 @@ export async function syncSheetToDatabase() {
         sku: sku || null,
         barcode: barcode || null,
         brand: row.Бренд?.trim() || null,
+        // New fields for product page
+        volume_options: row["Об'єм/Варіанти"]?.trim() || null,
+        rating: parseNumber(row['Рейтинг']),
+        review_count: parseNumber(row['Кількість відгуків']) ? Math.round(parseNumber(row['Кількість відгуків'])!) : null,
         // ALWAYS set to active (1) - we want all imported products to be visible
-        // The sheet doesn't have this column filled, so we default to active
         is_active: 1,
         is_new: parseBool(row['Позначити як новинку']),
         is_exclusive: parseBool(row['Позначити як ексклюзив']),

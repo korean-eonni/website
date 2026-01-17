@@ -2,6 +2,7 @@ import Header from '@/components/layout/Header'
 import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
+import Link from 'next/link'
 import { listProducts } from '@/lib/productStore'
 
 export const dynamic = 'force-dynamic'
@@ -55,8 +56,8 @@ export default async function CatalogPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
-              <div key={product.id} className="w-full">
-                <div className="relative w-full h-[340px] sm:h-[360px] lg:h-[380px] xl:h-[400px] rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+              <Link href={`/product/${product.id}`} key={product.id} className="w-full group">
+                <div className="relative w-full h-[340px] sm:h-[360px] lg:h-[380px] xl:h-[400px] rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)] group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-shadow">
                   <Image
                     src={product.image}
                     alt={product.name}
@@ -132,7 +133,7 @@ export default async function CatalogPage() {
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

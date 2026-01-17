@@ -8,6 +8,18 @@ export type ProductRecord = {
   name: string
   image_url: string | null
   image_path: string | null
+  // Additional product images (Фото 2-12)
+  image_url_2: string | null
+  image_url_3: string | null
+  image_url_4: string | null
+  image_url_5: string | null
+  image_url_6: string | null
+  image_url_7: string | null
+  image_url_8: string | null
+  image_url_9: string | null
+  image_url_10: string | null
+  image_url_11: string | null
+  image_url_12: string | null
   short_description: string | null
   long_description: string | null
   supplier: string | null
@@ -23,6 +35,10 @@ export type ProductRecord = {
   sku: string | null
   barcode: string | null
   brand: string | null
+  // New fields for product page
+  volume_options: string | null  // e.g., "20 мл,40 мл,80 мл"
+  rating: number | null
+  review_count: number | null
   is_active: number
   is_new: number
   is_exclusive: number
@@ -61,6 +77,7 @@ async function ensurePostgresSchema() {
       updated_at TEXT NOT NULL
     );
   `
+  // Existing columns
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_path TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS original_price DOUBLE PRECISION;`
@@ -68,6 +85,24 @@ async function ensurePostgresSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS brand TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_new INTEGER NOT NULL DEFAULT 0;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_exclusive INTEGER NOT NULL DEFAULT 0;`
+  
+  // Additional image columns (Фото 2-12)
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_2 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_3 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_4 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_5 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_6 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_7 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_8 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_9 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_10 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_11 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_12 TEXT;`
+  
+  // New product page fields
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS volume_options TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS rating DOUBLE PRECISION;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS review_count INTEGER;`
 }
 
 // No seed data - all products come from Google Sheets
@@ -96,17 +131,24 @@ export async function replaceAllProducts(products: ProductRecord[]) {
       try {
         await sql`
           INSERT INTO products (
-            id, name, image_url, image_path, short_description, long_description,
+            id, name, image_url, image_path,
+            image_url_2, image_url_3, image_url_4, image_url_5, image_url_6,
+            image_url_7, image_url_8, image_url_9, image_url_10, image_url_11, image_url_12,
+            short_description, long_description,
             supplier, cost_price, sale_price, original_price, discount_amount,
             stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
-            brand, is_active, is_new, is_exclusive, created_at, updated_at
+            brand, volume_options, rating, review_count,
+            is_active, is_new, is_exclusive, created_at, updated_at
           ) VALUES (
             ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
+            ${p.image_url_2}, ${p.image_url_3}, ${p.image_url_4}, ${p.image_url_5}, ${p.image_url_6},
+            ${p.image_url_7}, ${p.image_url_8}, ${p.image_url_9}, ${p.image_url_10}, ${p.image_url_11}, ${p.image_url_12},
             ${p.short_description}, ${p.long_description}, ${p.supplier},
             ${p.cost_price}, ${p.sale_price}, ${p.original_price}, ${p.discount_amount},
             ${p.stock_quantity}, ${p.category}, ${p.subcategory}, ${p.weight_grams},
-            ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand}, ${p.is_active},
-            ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
+            ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand},
+            ${p.volume_options}, ${p.rating}, ${p.review_count},
+            ${p.is_active}, ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
           )
         `
         inserted++
