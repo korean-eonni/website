@@ -452,34 +452,28 @@ export async function syncSheetToDatabase() {
           ? Math.round(originalPrice - salePrice)
           : null)
 
-      // Process first available photo
+      // Get first available photo URL
+      // We use the Google Drive direct view URL instead of uploading to Blob
+      // This is faster and avoids timeout issues
       let imageUrl: string | null = null
       const photoFields = [
         'Фото 1', 'Фото 2', 'Фото 3', 'Фото 4', 'Фото 5', 'Фото 6',
         'Фото 7', 'Фото 8', 'Фото 9', 'Фото 10', 'Фото 11', 'Фото 12'
       ] as const
       
-      for (let photoIdx = 0; photoIdx < photoFields.length; photoIdx++) {
-        const photoField = photoFields[photoIdx]
+      for (const photoField of photoFields) {
         const photoUrl = row[photoField]
         
-        if (photoUrl) {
-          console.log(`Row ${rowNum}: Found ${photoField} = ${photoUrl.substring(0, 50)}...`)
-          
-          if (photoUrl.includes('drive.google.com')) {
-            imageUrl = await processImage(photoUrl, id, photoIdx + 1, auth)
-            if (imageUrl) {
-              console.log(`Row ${rowNum}: ✅ Uploaded image from ${photoField}`)
-              break // Use first successful image
-            } else {
-              console.log(`Row ${rowNum}: ❌ Failed to process ${photoField}`)
-            }
+        if (photoUrl && photoUrl.includes('drive.google.com')) {
+          // Extract file ID and create a direct thumbnail URL
+          const fileId = extractDriveFileId(photoUrl)
+          if (fileId) {
+            // Use Google Drive thumbnail URL (works for public/shared files)
+            imageUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`
+            console.log(`Row ${rowNum}: Using Drive thumbnail for ${photoField}`)
+            break
           }
         }
-      }
-      
-      if (!imageUrl) {
-        console.log(`Row ${rowNum}: No image found for "${name}"`)
       }
 
       const now = new Date().toISOString()
