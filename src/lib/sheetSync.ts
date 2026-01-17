@@ -207,63 +207,78 @@ async function processImage(
  * -----END PRIVATE KEY-----
  */
 function normalizePrivateKey(key: string): string {
-  // First, handle the case where the key might be JSON-stringified
-  // (i.e., it has escaped quotes and newlines)
   let normalized = key
   
-  // Step 1: Remove surrounding whitespace
+  // Step 1: Remove surrounding whitespace and quotes
   normalized = normalized.trim()
-  
-  // Step 2: Remove surrounding quotes (single or double)
   if ((normalized.startsWith('"') && normalized.endsWith('"')) ||
       (normalized.startsWith("'") && normalized.endsWith("'"))) {
     normalized = normalized.slice(1, -1)
   }
   
-  // Step 3: Handle escaped characters
-  // Replace literal backslash-n with actual newline
-  // This is the most common issue with Vercel env vars
-  while (normalized.includes('\\n')) {
+  // Step 2: Replace ALL literal \n with actual newlines
+  // Use a loop to handle multiple passes if needed
+  let prevLength = 0
+  while (normalized.length !== prevLength) {
+    prevLength = normalized.length
     normalized = normalized.replace(/\\n/g, '\n')
   }
   
-  // Also handle double-escaped newlines (\\\\n -> \n)
-  while (normalized.includes('\\\\n')) {
-    normalized = normalized.replace(/\\\\n/g, '\n')
-  }
+  // Step 3: Remove \r characters
+  normalized = normalized.replace(/\\r/g, '').replace(/\r/g, '')
   
-  // Step 4: Remove any \r characters
-  normalized = normalized.replace(/\r/g, '')
-  normalized = normalized.replace(/\\r/g, '')
-  
-  // Step 5: Handle keys that might have been URL-encoded
+  // Step 4: Handle URL-encoded newlines
   if (normalized.includes('%0A')) {
     normalized = decodeURIComponent(normalized)
   }
   
-  // Step 6: If there are no newlines but we have BEGIN/END markers,
-  // the key might be space-separated or all on one line
-  if (!normalized.includes('\n') && normalized.includes('-----BEGIN')) {
-    // Try to reconstruct the key with proper line breaks
-    // PEM format requires lines of max 64 chars
-    const match = normalized.match(/(-----BEGIN [A-Z ]+-----)(.*)(-----END [A-Z ]+-----)/)
-    if (match) {
-      const header = match[1]
-      const body = match[2].replace(/\s+/g, '') // Remove any spaces
-      const footer = match[3]
-      
-      // Split body into 64-char lines
-      const lines = body.match(/.{1,64}/g) || []
-      normalized = [header, ...lines, footer].join('\n')
+  // Step 5: Clean up any double newlines or trailing newlines in the middle
+  normalized = normalized.replace(/\n+/g, '\n').trim()
+  
+  // Step 6: Reconstruct the key if it's malformed
+  // Extract the base64 content and rebuild with proper formatting
+  const beginMatch = normalized.match(/-----BEGIN ([A-Z ]+)-----/)
+  const endMatch = normalized.match(/-----END ([A-Z ]+)-----/)
+  
+  if (beginMatch && endMatch) {
+    const keyType = beginMatch[1]
+    const header = `-----BEGIN ${keyType}-----`
+    const footer = `-----END ${keyType}-----`
+    
+    // Extract everything between header and footer
+    const startIdx = normalized.indexOf(header) + header.length
+    const endIdx = normalized.indexOf(footer)
+    let body = normalized.substring(startIdx, endIdx)
+    
+    // Remove all whitespace from body
+    body = body.replace(/\s+/g, '')
+    
+    // Validate body is base64
+    if (!/^[A-Za-z0-9+/=]+$/.test(body)) {
+      throw new Error('Invalid private key: body contains non-base64 characters')
     }
+    
+    // Rebuild with proper 64-char line breaks
+    const lines: string[] = []
+    for (let i = 0; i < body.length; i += 64) {
+      lines.push(body.substring(i, i + 64))
+    }
+    
+    normalized = [header, ...lines, footer].join('\n')
   }
   
-  // Step 7: Validate the key has proper PEM structure
+  // Step 7: Final validation
   if (!normalized.includes('-----BEGIN')) {
-    throw new Error(`Invalid private key format: missing BEGIN marker. Key starts with: ${normalized.substring(0, 50)}...`)
+    throw new Error(`Invalid private key format: missing BEGIN marker`)
   }
   if (!normalized.includes('-----END')) {
-    throw new Error(`Invalid private key format: missing END marker. Key ends with: ...${normalized.substring(normalized.length - 50)}`)
+    throw new Error(`Invalid private key format: missing END marker`)
+  }
+  
+  // Count lines - a valid RSA/PKCS8 private key should have 25+ lines
+  const lineCount = normalized.split('\n').length
+  if (lineCount < 10) {
+    throw new Error(`Invalid private key: only ${lineCount} lines (expected 25+)`)
   }
   
   return normalized
