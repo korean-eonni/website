@@ -455,7 +455,8 @@ export async function syncSheetToDatabase() {
         sku: sku || null,
         barcode: barcode || null,
         brand: row.Бренд?.trim() || null,
-        is_active: parseBool(row['Активний товар']),
+        // Default to active (1) if column is empty, only set to 0 if explicitly "false"/"ні"/"0"
+        is_active: row['Активний товар']?.trim() ? parseBool(row['Активний товар']) : 1,
         is_new: parseBool(row['Позначити як новинку']),
         is_exclusive: parseBool(row['Позначити як ексклюзив']),
         created_at: now,
