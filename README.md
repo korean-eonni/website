@@ -50,3 +50,4 @@ Update the following files with your Figma values:
 1. **Fonts**: Export from Figma and place in `src/assets/fonts/`
 2. **Images**: Export and place in `src/assets/images/` or `public/`
 3. **Icons**: Export as SVG and place in `src/assets/icons/`
+
