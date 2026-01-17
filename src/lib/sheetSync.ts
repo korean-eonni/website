@@ -198,6 +198,48 @@ async function processImage(
 }
 
 /**
+ * Normalize PEM private key from environment variable
+ * Handles various formats: JSON escaped, base64, literal newlines, etc.
+ */
+function normalizePrivateKey(key: string): string {
+  let normalized = key.trim()
+  
+  // Remove surrounding quotes if present
+  normalized = normalized.replace(/^["']|["']$/g, '')
+  
+  // Handle JSON-style escaped newlines (\\n -> \n)
+  normalized = normalized.replace(/\\n/g, '\n')
+  
+  // Handle escaped carriage returns
+  normalized = normalized.replace(/\\r/g, '')
+  
+  // If the key doesn't have proper PEM headers, it might be corrupted
+  if (!normalized.includes('-----BEGIN') && !normalized.includes('PRIVATE KEY')) {
+    // Try base64 decode if it looks like base64
+    if (/^[A-Za-z0-9+/=]+$/.test(normalized.replace(/\s/g, ''))) {
+      try {
+        const decoded = Buffer.from(normalized, 'base64').toString('utf-8')
+        if (decoded.includes('-----BEGIN')) {
+          normalized = decoded
+        }
+      } catch {
+        // Not base64, continue with original
+      }
+    }
+  }
+  
+  // Ensure proper line breaks in PEM format
+  // Some systems store the key with spaces instead of newlines
+  if (normalized.includes('-----BEGIN') && !normalized.includes('\n')) {
+    normalized = normalized
+      .replace(/-----BEGIN ([A-Z ]+)-----/, '-----BEGIN $1-----\n')
+      .replace(/-----END ([A-Z ]+)-----/, '\n-----END $1-----')
+  }
+  
+  return normalized
+}
+
+/**
  * Create Google Auth client
  */
 function createAuthClient() {
@@ -208,12 +250,12 @@ function createAuthClient() {
     throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_SERVICE_ACCOUNT_KEY')
   }
 
-  // Normalize private key: handle various formats from environment variables
-  const normalizedKey = privateKey
-    .trim()
-    .replace(/^["']|["']$/g, '') // Remove surrounding quotes
-    .replace(/\\n/g, '\n')       // Convert literal \n to newlines
-    .replace(/\\r/g, '')         // Remove \r
+  const normalizedKey = normalizePrivateKey(privateKey)
+  
+  // Debug: log key format (first/last chars only for security)
+  const keyPreview = normalizedKey.substring(0, 30) + '...' + normalizedKey.substring(normalizedKey.length - 30)
+  console.log(`[auth] Using key format: ${keyPreview}`)
+  console.log(`[auth] Key length: ${normalizedKey.length}, has BEGIN: ${normalizedKey.includes('-----BEGIN')}`)
 
   return new google.auth.JWT({
     email: clientEmail,
