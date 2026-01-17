@@ -429,109 +429,432 @@ function FAQSection() {
   )
 }
 
-// ============ PRODUCT REVIEWS SECTION ============
-const reviews = [
-  {
-    id: '1',
-    date: '29.04.2025',
-    name: 'Юлія Д.',
-    verified: 'Verified Purchase',
-    text: 'Кожна ефективна доглядова рутина починається з правильного очищення. Але корейська бʼюті-філософія давно довела, що очищення може бути не просто необхідним етапом, а справжнім ритуалом турботи, який відновлює шкіру, насичує її поживними компонентами та готує до подальшого догляду.',
-    background: '#FFE8F0',
-  },
-  {
-    id: '2',
-    date: '29.04.2025',
-    name: 'Юлія Д.',
-    verified: 'Verified Purchase',
-    text: 'Кожна ефективна доглядова рутина починається з правильного очищення. Але корейська бʼюті-філософія давно довела, що очищення може бути не просто необхідним етапом, а справжнім ритуалом турботи, який відновлює шкіру, насичує її поживними компонентами та готує до подальшого догляду.',
-    background: '#FFFFD5',
-  },
-  {
-    id: '3',
-    date: '29.04.2025',
-    name: 'Юлія Д.',
-    verified: 'Verified Purchase',
-    text: 'Кожна ефективна доглядова рутина починається з правильного очищення. Але корейська бʼюті-філософія давно довела, що очищення може бути не просто необхідним етапом, а справжнім ритуалом турботи, який відновлює шкіру, насичує її поживними компонентами та готує до подальшого догляду.',
-    background: '#CFECFE',
-  },
-]
+// ============ REVIEW TYPES ============
+type Review = {
+  id: string
+  product_id: string
+  author_name: string
+  author_email: string | null
+  rating: number
+  title: string | null
+  content: string
+  is_verified_purchase: boolean
+  is_approved: boolean
+  created_at: string
+  updated_at: string
+}
 
-function ProductReviewsSection() {
+// ============ REVIEW FORM MODAL ============
+function ReviewFormModal({ 
+  isOpen, 
+  onClose, 
+  productId,
+  productName,
+  onSubmitSuccess
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  productId: string
+  productName: string
+  onSubmitSuccess: () => void
+}) {
+  const [rating, setRating] = useState(5)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [authorName, setAuthorName] = useState('')
+  const [authorEmail, setAuthorEmail] = useState('')
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: productId,
+          author_name: authorName,
+          author_email: authorEmail || undefined,
+          rating,
+          title: title || undefined,
+          content,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Помилка при відправці відгуку')
+      }
+
+      setSuccess(true)
+      setTimeout(() => {
+        onSubmitSuccess()
+        onClose()
+        // Reset form
+        setRating(5)
+        setAuthorName('')
+        setAuthorEmail('')
+        setTitle('')
+        setContent('')
+        setSuccess(false)
+      }, 2000)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white rounded-[20px] w-full max-w-[600px] max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors"
+          aria-label="Закрити"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <h3 className="font-bebas text-[32px] sm:text-[40px] leading-[1.1] text-black mb-2">
+          ЗАЛИШИТИ ВІДГУК
+        </h3>
+        <p className="text-[16px] text-gray-600 mb-6">
+          Про товар: {productName}
+        </p>
+
+        {success ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <svg className="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="text-[18px] font-semibold text-green-800 mb-2">Дякуємо за ваш відгук!</p>
+            <p className="text-[14px] text-green-600">Він з'явиться після модерації.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Rating */}
+            <div>
+              <label className="block text-[14px] font-semibold text-black mb-2">
+                Ваша оцінка *
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill={(hoverRating || rating) >= star ? '#E57373' : 'none'}
+                      stroke="#E57373"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Name */}
+            <div>
+              <label htmlFor="author_name" className="block text-[14px] font-semibold text-black mb-2">
+                Ваше ім'я *
+              </label>
+              <input
+                id="author_name"
+                type="text"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                required
+                maxLength={50}
+                placeholder="Олена"
+                className="w-full h-[48px] px-4 border border-[#BBBBBB] rounded-lg text-[16px] focus:border-[#7C83C9] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Email (optional) */}
+            <div>
+              <label htmlFor="author_email" className="block text-[14px] font-semibold text-black mb-2">
+                Email <span className="font-normal text-gray-500">(необов'язково)</span>
+              </label>
+              <input
+                id="author_email"
+                type="email"
+                value={authorEmail}
+                onChange={(e) => setAuthorEmail(e.target.value)}
+                maxLength={100}
+                placeholder="email@example.com"
+                className="w-full h-[48px] px-4 border border-[#BBBBBB] rounded-lg text-[16px] focus:border-[#7C83C9] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Title (optional) */}
+            <div>
+              <label htmlFor="review_title" className="block text-[14px] font-semibold text-black mb-2">
+                Заголовок <span className="font-normal text-gray-500">(необов'язково)</span>
+              </label>
+              <input
+                id="review_title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={100}
+                placeholder="Чудовий продукт!"
+                className="w-full h-[48px] px-4 border border-[#BBBBBB] rounded-lg text-[16px] focus:border-[#7C83C9] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Content */}
+            <div>
+              <label htmlFor="review_content" className="block text-[14px] font-semibold text-black mb-2">
+                Ваш відгук *
+              </label>
+              <textarea
+                id="review_content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                required
+                minLength={10}
+                maxLength={2000}
+                rows={5}
+                placeholder="Поділіться своїм досвідом використання цього товару..."
+                className="w-full px-4 py-3 border border-[#BBBBBB] rounded-lg text-[16px] focus:border-[#7C83C9] focus:outline-none transition-colors resize-none"
+              />
+              <p className="mt-1 text-[12px] text-gray-500">
+                {content.length}/2000 символів (мінімум 10)
+              </p>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-[14px] text-red-600">{error}</p>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-[50px] bg-[#BCC2F4] text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-[#A8AFEB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Відправляємо...' : 'Відправити відгук'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============ PRODUCT REVIEWS SECTION ============
+const REVIEW_BACKGROUNDS = ['#FFE8F0', '#FFFFD5', '#CFECFE']
+
+function ProductReviewsSection({ 
+  productId, 
+  productName,
+  reviews,
+  onReviewSubmitted
+}: { 
+  productId: string
+  productName: string
+  reviews: Review[]
+  onReviewSubmitted: () => void
+}) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
+
+  const toggleExpand = (reviewId: string) => {
+    const newExpanded = new Set(expandedReviews)
+    if (newExpanded.has(reviewId)) {
+      newExpanded.delete(reviewId)
+    } else {
+      newExpanded.add(reviewId)
+    }
+    setExpandedReviews(newExpanded)
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('uk-UA', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
   return (
     <section id="reviews" className="bg-white py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-start sm:items-end justify-between gap-4 sm:gap-6 mb-12 flex-col sm:flex-row">
           <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
-            Відгуки
+            Відгуки {reviews.length > 0 && <span className="text-[#999999]">({reviews.length})</span>}
           </h2>
           <button
+            onClick={() => setIsModalOpen(true)}
             className="h-[50px] px-[61px] py-[14px] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-black hover:text-white transition-colors"
           >
             Залишити відгук
           </button>
         </div>
 
-        <div className="relative">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {reviews.map((review, index) => (
-              <div
-                key={review.id}
-                className="relative rounded-[20px] p-[30px] pt-[30px] pb-[40px]"
-                style={{ backgroundColor: review.background }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-gilroy text-[16px] leading-[21px] font-medium text-black">
-                    {review.date}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((_, idx) => (
-                      <Image
-                        key={`${review.id}-heart-${idx}`}
-                        src={idx === 0 ? '/comments/heart-outline.png' : '/comments/heart-filled.png'}
-                        alt=""
-                        width={20}
-                        height={20}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 mt-6">
-                  <div className="relative w-[48px] h-[48px] rounded-full overflow-hidden">
-                    <Image src="/comments/avatar.png" alt={review.name} fill className="object-cover" />
-                  </div>
-                  <div>
-                    <p className="font-gilroy text-[16px] leading-[21px] font-medium text-black">
-                      {review.name}
-                    </p>
-                    <p className="font-gilroy text-[14px] leading-[18px] font-normal text-black capitalize">
-                      {review.verified}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="mt-6 font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-normal tracking-[0.01em] text-black">
-                  {review.text}
-                </p>
-
-                <p className="mt-6 font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-semibold text-black cursor-pointer hover:underline">
-                  Читати далі
-                </p>
-
-                {index === 2 && (
-                  <button
-                    type="button"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 hidden h-[50px] w-[50px] items-center justify-center rounded-[12px] bg-white shadow-[0_10px_25px_rgba(0,0,0,0.12)] transition-opacity hover:opacity-80 lg:flex"
-                    aria-label="Наступний відгук"
-                  >
-                    <Image src="/arrow-next.png" alt="Наступний відгук" width={20} height={20} />
-                  </button>
-                )}
-              </div>
-            ))}
+        {reviews.length === 0 ? (
+          // Empty state
+          <div className="bg-[#F8F7FB] rounded-[20px] p-8 sm:p-12 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 bg-[#BCC2F4] rounded-full flex items-center justify-center">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-[24px] font-semibold text-black mb-3">
+              Поки немає відгуків
+            </h3>
+            <p className="text-[16px] text-gray-600 mb-6 max-w-md mx-auto">
+              Будьте першим, хто залишить відгук про цей товар! Ваша думка допоможе іншим покупцям зробити правильний вибір.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex h-[50px] px-8 items-center justify-center bg-[#BCC2F4] text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-[#A8AFEB] transition-colors"
+            >
+              Написати перший відгук
+            </button>
           </div>
-        </div>
+        ) : (
+          // Reviews grid
+          <div className="relative">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {reviews.slice(0, 6).map((review, index) => {
+                const isExpanded = expandedReviews.has(review.id)
+                const shouldTruncate = review.content.length > 200
+                
+                return (
+                  <div
+                    key={review.id}
+                    className="relative rounded-[20px] p-[30px] pt-[30px] pb-[40px]"
+                    style={{ backgroundColor: REVIEW_BACKGROUNDS[index % 3] }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-gilroy text-[16px] leading-[21px] font-medium text-black">
+                        {formatDate(review.created_at)}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <svg
+                            key={star}
+                            width="18"
+                            height="18"
+                            viewBox="0 0 20 20"
+                            fill={star <= review.rating ? '#E57373' : 'none'}
+                            stroke="#E57373"
+                            strokeWidth="1.5"
+                          >
+                            <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.26l-4.94 2.45.94-5.5-4-3.9 5.53-.8L10 1.5z" />
+                          </svg>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 mt-6">
+                      <div className="w-[48px] h-[48px] rounded-full bg-[#7C83C9] flex items-center justify-center text-white font-semibold text-[16px]">
+                        {getInitials(review.author_name)}
+                      </div>
+                      <div>
+                        <p className="font-gilroy text-[16px] leading-[21px] font-medium text-black">
+                          {review.author_name}
+                        </p>
+                        {review.is_verified_purchase && (
+                          <p className="font-gilroy text-[14px] leading-[18px] font-normal text-green-600 flex items-center gap-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                            </svg>
+                            Підтверджена покупка
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {review.title && (
+                      <p className="mt-4 font-gilroy text-[18px] leading-[24px] font-semibold text-black">
+                        {review.title}
+                      </p>
+                    )}
+
+                    <p className="mt-4 font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-normal tracking-[0.01em] text-black">
+                      {shouldTruncate && !isExpanded 
+                        ? `${review.content.slice(0, 200)}...` 
+                        : review.content
+                      }
+                    </p>
+
+                    {shouldTruncate && (
+                      <button
+                        onClick={() => toggleExpand(review.id)}
+                        className="mt-4 font-gilroy text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] font-semibold text-black hover:underline"
+                      >
+                        {isExpanded ? 'Згорнути' : 'Читати далі'}
+                      </button>
+                    )}
+
+                    {index === 2 && reviews.length > 3 && (
+                      <button
+                        type="button"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 hidden h-[50px] w-[50px] items-center justify-center rounded-[12px] bg-white shadow-[0_10px_25px_rgba(0,0,0,0.12)] transition-opacity hover:opacity-80 lg:flex"
+                        aria-label="Наступний відгук"
+                      >
+                        <Image src="/arrow-next.png" alt="Наступний відгук" width={20} height={20} />
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Review Form Modal */}
+        <ReviewFormModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          productId={productId}
+          productName={productName}
+          onSubmitSuccess={onReviewSubmitted}
+        />
       </div>
     </section>
   )
@@ -686,10 +1009,28 @@ export default function ProductPage() {
   
   const [product, setProduct] = useState<Product | null>(null)
   const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviewRating, setReviewRating] = useState<{ average: number; count: number }>({ average: 0, count: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [selectedVolume, setSelectedVolume] = useState<string>('')
+
+  const fetchReviews = async (id: string) => {
+    try {
+      const reviewsResponse = await fetch(`/api/reviews?product_id=${id}`)
+      if (reviewsResponse.ok) {
+        const reviewsData = await reviewsResponse.json()
+        setReviews(reviewsData.reviews || [])
+        setReviewRating({
+          average: reviewsData.rating || 0,
+          count: reviewsData.reviewCount || 0,
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err)
+    }
+  }
 
   useEffect(() => {
     async function fetchProduct() {
@@ -714,6 +1055,9 @@ export default function ProductPage() {
           const similarData = await similarResponse.json()
           setSimilarProducts(similarData.products || [])
         }
+
+        // Fetch reviews
+        await fetchReviews(productId)
       } catch (err) {
         setError('Товар не знайдено')
       } finally {
@@ -774,8 +1118,9 @@ export default function ProductPage() {
     ? product.volume_options.split(',').map((v) => v.trim()).filter(Boolean)
     : []
 
-  const rating = product.rating ?? 4.0
-  const reviewCount = product.review_count ?? 5
+  // Use real review data if available, otherwise fall back to product data
+  const rating = reviewRating.count > 0 ? reviewRating.average : (product.rating ?? 0)
+  const reviewCount = reviewRating.count > 0 ? reviewRating.count : (product.review_count ?? 0)
 
   return (
     <main className="min-h-screen bg-white">
@@ -854,7 +1199,12 @@ export default function ProductPage() {
       <FAQSection />
 
       {/* Reviews Section */}
-      <ProductReviewsSection />
+      <ProductReviewsSection 
+        productId={productId}
+        productName={product.name}
+        reviews={reviews}
+        onReviewSubmitted={() => fetchReviews(productId)}
+      />
 
       {/* Similar Products Section */}
       <SimilarProductsSection products={similarProducts} currentProductId={productId} />
