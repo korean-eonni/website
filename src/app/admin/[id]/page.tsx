@@ -62,6 +62,12 @@ async function updateProductAction(formData: FormData) {
     volume_options: existing?.volume_options ?? null,
     rating: existing?.rating ?? null,
     review_count: existing?.review_count ?? null,
+    // Extended product attributes
+    age_group: existing?.age_group ?? null,
+    ingredients: existing?.ingredients ?? null,
+    skin_type: existing?.skin_type ?? null,
+    series: existing?.series ?? null,
+    classification: existing?.classification ?? null,
     is_active: formData.get('is_active') ? 1 : 0,
     is_new: formData.get('is_new') ? 1 : 0,
     is_exclusive: formData.get('is_exclusive') ? 1 : 0,

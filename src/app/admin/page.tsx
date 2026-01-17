@@ -91,6 +91,12 @@ async function addProductAction(formData: FormData) {
     volume_options: null as string | null,
     rating: null as number | null,
     review_count: null as number | null,
+    // Extended product attributes
+    age_group: null as string | null,
+    ingredients: null as string | null,
+    skin_type: null as string | null,
+    series: null as string | null,
+    classification: null as string | null,
     is_active: formData.get('is_active') ? 1 : 0,
     is_new: formData.get('is_new') ? 1 : 0,
     is_exclusive: formData.get('is_exclusive') ? 1 : 0,
