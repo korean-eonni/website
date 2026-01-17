@@ -3,8 +3,8 @@ import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 import { replaceAllProducts } from '@/lib/productStore'
 
-// Sheet "Загальний" - columns A through AD (30 columns for Фото 1-10)
-const SHEET_RANGE = 'Загальний!A1:AD'
+// Sheet "Загальний" - columns A through AE (31 columns for Фото 1-12)
+const SHEET_RANGE = 'Загальний!A1:AE'
 
 // Column indices based on actual Google Sheet structure (0-indexed)
 // A=0: Назва, B=1: Постачальник, C=2: Категорія, D=3: Субкатегорія, E=4: Бренд
@@ -14,6 +14,7 @@ const SHEET_RANGE = 'Загальний!A1:AD'
 // R=17: Позначити як новинку, S=18: Позначити як ексклюзив
 // T=19: Фото 1, U=20: Фото 2, V=21: Фото 3, W=22: Фото 4, X=23: Фото 5
 // Y=24: Фото 6, Z=25: Фото 7, AA=26: Фото 8, AB=27: Фото 9, AC=28: Фото 10
+// AD=29: Фото 11, AE=30: Фото 12
 
 type SheetRow = {
   Назва: string
@@ -45,6 +46,8 @@ type SheetRow = {
   'Фото 8'?: string
   'Фото 9'?: string
   'Фото 10'?: string
+  'Фото 11'?: string
+  'Фото 12'?: string
 }
 
 function parseBool(input?: string) {
@@ -103,24 +106,25 @@ function extractDriveFileId(url: string): string | null {
 }
 
 /**
- * Download image from Google Drive using service account authentication
- * This is more reliable than public download links
+ * Download image from Google Drive
+ * First tries the Drive API (for private files), then falls back to public URL
  */
 async function downloadDriveImage(
   fileId: string,
   auth: any
 ): Promise<{ buffer: Buffer; contentType: string } | null> {
+  // Method 1: Try Drive API first (works for files shared with service account)
   try {
     const drive = google.drive({ version: 'v3', auth })
     
-    // Get file metadata to check if it's accessible
+    // Get file metadata
     const metadata = await drive.files.get({
       fileId,
       fields: 'id,name,mimeType,size',
     })
 
     if (!metadata.data.mimeType?.startsWith('image/')) {
-      console.warn(`File ${fileId} is not an image: ${metadata.data.mimeType}`)
+      console.warn(`[image] File ${fileId} is not an image: ${metadata.data.mimeType}`)
       return null
     }
 
@@ -130,14 +134,45 @@ async function downloadDriveImage(
       { responseType: 'arraybuffer' }
     )
 
+    console.log(`[image] Downloaded via Drive API: ${fileId}`)
     return {
       buffer: Buffer.from(response.data as ArrayBuffer),
       contentType: metadata.data.mimeType || 'image/jpeg',
     }
-  } catch (error: any) {
-    // Log specific error for debugging
-    const errorMsg = error?.errors?.[0]?.message || error?.message || 'Unknown error'
-    console.error(`Failed to download Drive file ${fileId}: ${errorMsg}`)
+  } catch (driveError: any) {
+    console.warn(`[image] Drive API failed for ${fileId}: ${driveError.message}`)
+  }
+
+  // Method 2: Try public download URL (works for publicly shared files)
+  try {
+    const publicUrl = `https://drive.google.com/uc?export=download&id=${fileId}`
+    const response = await fetch(publicUrl, {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; EonniBot/1.0)',
+      },
+    })
+
+    if (!response.ok) {
+      console.warn(`[image] Public URL failed for ${fileId}: ${response.status}`)
+      return null
+    }
+
+    const contentType = response.headers.get('content-type') || 'image/jpeg'
+    if (!contentType.startsWith('image/')) {
+      // Might be a Google warning page, not the actual image
+      console.warn(`[image] Public URL returned non-image: ${contentType}`)
+      return null
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    console.log(`[image] Downloaded via public URL: ${fileId}`)
+    return {
+      buffer: Buffer.from(arrayBuffer),
+      contentType,
+    }
+  } catch (fetchError: any) {
+    console.error(`[image] All methods failed for ${fileId}: ${fetchError.message}`)
     return null
   }
 }
@@ -419,18 +454,32 @@ export async function syncSheetToDatabase() {
 
       // Process first available photo
       let imageUrl: string | null = null
-      const photoFields = ['Фото 1', 'Фото 2', 'Фото 3', 'Фото 4', 'Фото 5'] as const
+      const photoFields = [
+        'Фото 1', 'Фото 2', 'Фото 3', 'Фото 4', 'Фото 5', 'Фото 6',
+        'Фото 7', 'Фото 8', 'Фото 9', 'Фото 10', 'Фото 11', 'Фото 12'
+      ] as const
       
       for (let photoIdx = 0; photoIdx < photoFields.length; photoIdx++) {
         const photoField = photoFields[photoIdx]
         const photoUrl = row[photoField]
-        if (photoUrl && photoUrl.includes('drive.google.com')) {
-          imageUrl = await processImage(photoUrl, id, photoIdx + 1, auth)
-          if (imageUrl) {
-            console.log(`Row ${rowNum}: Uploaded image from ${photoField}`)
-            break // Use first successful image
+        
+        if (photoUrl) {
+          console.log(`Row ${rowNum}: Found ${photoField} = ${photoUrl.substring(0, 50)}...`)
+          
+          if (photoUrl.includes('drive.google.com')) {
+            imageUrl = await processImage(photoUrl, id, photoIdx + 1, auth)
+            if (imageUrl) {
+              console.log(`Row ${rowNum}: ✅ Uploaded image from ${photoField}`)
+              break // Use first successful image
+            } else {
+              console.log(`Row ${rowNum}: ❌ Failed to process ${photoField}`)
+            }
           }
         }
+      }
+      
+      if (!imageUrl) {
+        console.log(`Row ${rowNum}: No image found for "${name}"`)
       }
 
       const now = new Date().toISOString()

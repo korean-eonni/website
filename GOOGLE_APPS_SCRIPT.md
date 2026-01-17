@@ -1,28 +1,133 @@
-# Google Apps Script for Auto-Sync
+# Google Apps Script for Korean Eonni
 
-You can add this script to your Google Sheet to automatically sync products to your website.
+This script does two things:
+1. **Syncs photo links** from your Google Drive folder to the sheet
+2. **Syncs products** from the sheet to your website
 
 ## Setup Instructions
 
 1. Open your Google Sheet: https://docs.google.com/spreadsheets/d/1rm5beP1P_eCIshYdaJBoyUmzEiOB8Ox3UssMhPv6K1I
 2. Go to **Extensions** → **Apps Script**
-3. Delete any existing code and paste the script below
+3. Delete any existing code and paste the ENTIRE script below
 4. Save the script (Ctrl+S or Cmd+S)
-5. Run `syncToWebsite()` once manually to authorize it
-6. Set up a trigger (see below)
+5. Run `onOpen()` once manually to create the menu
+6. Set up triggers (see below)
 
-## The Script
+## The Complete Script
 
 ```javascript
-/**
- * Sync products to Eonni website
- * This calls the /api/sync-sheet endpoint on your website
- */
+// ============================================
+// CONFIGURATION
+// ============================================
+const CONFIG = {
+  SHEET_NAME: 'Загальний',
+  PHOTO_FOLDER_ID: '1l0OnOXF3O8W1mGzg0vNz_aY50IH3rrXc',
+  WEBSITE_SYNC_URL: 'https://www.eonni.com.ua/api/sync-sheet',
+  HEADER_ROWS: 1,
+  NAME_COL: 1,        // Column A
+  OUT_START_COL: 20,  // Column T (where photos start)
+  OUT_COUNT: 12,      // 12 photo columns (T through AE)
+};
+
+// ============================================
+// MENU
+// ============================================
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('🛍️ Eonni')
+    .addItem('1. Sync Photo Links from Drive', 'syncProductPhotoLinks')
+    .addItem('2. Sync Products to Website', 'syncToWebsite')
+    .addSeparator()
+    .addItem('🔄 Full Sync (Photos + Website)', 'fullSync')
+    .addToUi();
+}
+
+// ============================================
+// FULL SYNC (runs both)
+// ============================================
+function fullSync() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  ss.toast('Step 1/2: Syncing photo links...', '🔄 Full Sync', -1);
+  syncProductPhotoLinks();
+  
+  ss.toast('Step 2/2: Syncing to website...', '🔄 Full Sync', -1);
+  syncToWebsite();
+  
+  ss.toast('Full sync completed!', '✅ Done', 5);
+}
+
+// ============================================
+// SYNC PHOTO LINKS FROM GOOGLE DRIVE
+// ============================================
+function syncProductPhotoLinks() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(CONFIG.SHEET_NAME);
+  if (!sh) throw new Error('Sheet not found: ' + CONFIG.SHEET_NAME);
+
+  // 1) Read all product names from column A
+  const lastRow = sh.getLastRow();
+  if (lastRow <= CONFIG.HEADER_ROWS) return;
+
+  const names = sh.getRange(CONFIG.HEADER_ROWS + 1, CONFIG.NAME_COL, lastRow - CONFIG.HEADER_ROWS, 1)
+    .getValues()
+    .flat();
+
+  // 2) Build map: baseName -> {index -> fileUrl}
+  const folder = DriveApp.getFolderById(CONFIG.PHOTO_FOLDER_ID);
+  const files = folder.getFiles();
+
+  const map = new Map();
+
+  // Pattern: "Base Name (3).jpg" / "Base Name (2).webp"
+  const re = /^(.*)\s+\((\d+)\)\.[^.]+$/;
+
+  while (files.hasNext()) {
+    const f = files.next();
+    const m = f.getName().match(re);
+    if (!m) continue;
+
+    const base = m[1].trim();
+    const idx = parseInt(m[2], 10);
+    if (!idx || idx < 1 || idx > CONFIG.OUT_COUNT) continue;
+
+    if (!map.has(base)) map.set(base, {});
+    map.get(base)[idx] = f.getUrl();
+  }
+
+  // 3) Prepare output array for photo columns
+  const out = names.map(n => {
+    const base = (n || '').toString().trim();
+    const row = new Array(CONFIG.OUT_COUNT).fill('');
+    if (!base) return row;
+
+    const hits = map.get(base);
+    if (!hits) return row;
+
+    for (let i = 1; i <= CONFIG.OUT_COUNT; i++) {
+      const url = hits[i];
+      if (url) row[i - 1] = url;
+    }
+    return row;
+  });
+
+  // 4) Write to photo columns
+  sh.getRange(CONFIG.HEADER_ROWS + 1, CONFIG.OUT_START_COL, out.length, CONFIG.OUT_COUNT)
+    .setValues(out);
+
+  const photosFound = out.filter(row => row.some(cell => cell)).length;
+  ss.toast(`Found photos for ${photosFound} products`, '✅ Photos Synced', 5);
+  Logger.log(`Photo sync complete: ${photosFound} products with photos`);
+}
+
+// ============================================
+// SYNC PRODUCTS TO WEBSITE
+// ============================================
 function syncToWebsite() {
-  const WEBSITE_URL = 'https://www.eonni.com.ua/api/sync-sheet';
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   
   try {
-    const response = UrlFetchApp.fetch(WEBSITE_URL, {
+    const response = UrlFetchApp.fetch(CONFIG.WEBSITE_SYNC_URL, {
       method: 'GET',
       muteHttpExceptions: true,
       headers: {
@@ -41,82 +146,87 @@ function syncToWebsite() {
       Logger.log('Errors: ' + result.errors);
       Logger.log('Duration: ' + result.duration + 'ms');
       
-      // Optional: Show a toast notification
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'Imported ' + result.imported + ' products',
-        '✅ Sync Complete',
+      ss.toast(
+        `Imported ${result.imported} products (${result.errors} errors)`,
+        '✅ Website Sync',
         5
       );
     } else {
       Logger.log('❌ Sync failed with status: ' + statusCode);
       Logger.log('Response: ' + responseText);
       
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'Error: ' + statusCode,
-        '❌ Sync Failed',
-        10
-      );
+      ss.toast('Error: ' + statusCode, '❌ Sync Failed', 10);
     }
   } catch (error) {
     Logger.log('❌ Error: ' + error.message);
-    SpreadsheetApp.getActiveSpreadsheet().toast(
-      error.message,
-      '❌ Sync Error',
-      10
-    );
+    ss.toast(error.message, '❌ Sync Error', 10);
   }
 }
 
-/**
- * Add a custom menu to the spreadsheet
- */
-function onOpen() {
-  const ui = SpreadsheetApp.getUi();
-  ui.createMenu('🛍️ Eonni')
-    .addItem('Sync to Website', 'syncToWebsite')
-    .addToUi();
+// ============================================
+// AUTOMATIC SYNC (called by trigger)
+// ============================================
+function autoSync() {
+  // This function is called automatically by the time trigger
+  // It runs the full sync (photos + website)
+  Logger.log('Auto sync started at ' + new Date().toISOString());
+  
+  try {
+    syncProductPhotoLinks();
+    syncToWebsite();
+    Logger.log('Auto sync completed successfully');
+  } catch (error) {
+    Logger.log('Auto sync failed: ' + error.message);
+  }
 }
 ```
 
-## Setting Up Automatic Triggers
+## Setting Up Automatic Triggers (Every 5 Minutes)
 
-### Option 1: Every 5 Minutes (Recommended)
-
-1. In Apps Script, click the clock icon (Triggers) in the left sidebar
+1. In Apps Script, click the **clock icon** (Triggers) in the left sidebar
 2. Click **+ Add Trigger**
 3. Configure:
-   - Function: `syncToWebsite`
-   - Event source: `Time-driven`
-   - Type: `Minutes timer`
-   - Interval: `Every 5 minutes`
+   - **Function to run:** `autoSync`
+   - **Event source:** `Time-driven`
+   - **Type of time based trigger:** `Minutes timer`
+   - **Select minute interval:** `Every 5 minutes`
 4. Click **Save**
+5. Google will ask for permissions - click **Allow**
 
-### Option 2: On Edit (Sync when you make changes)
+## How It Works
 
-1. In Apps Script, click the clock icon (Triggers)
-2. Click **+ Add Trigger**
-3. Configure:
-   - Function: `syncToWebsite`
-   - Event source: `From spreadsheet`
-   - Event type: `On edit`
-4. Click **Save**
+### Every 5 Minutes (Automatic):
+1. `autoSync()` runs
+2. First, it syncs photo links from your Google Drive folder to the sheet
+3. Then, it syncs all products from the sheet to your website
 
-Note: "On edit" will sync every time ANY cell changes, which might be too frequent. Consider using a debounce or only syncing on specific sheet changes.
+### Manual (from the menu):
+- **🛍️ Eonni → 1. Sync Photo Links from Drive** - Only updates photo URLs in the sheet
+- **🛍️ Eonni → 2. Sync Products to Website** - Only syncs to website
+- **🛍️ Eonni → 🔄 Full Sync** - Does both
 
-### Option 3: Manual Only
+## Important Notes
 
-Just use the **🛍️ Eonni** → **Sync to Website** menu item whenever you want to sync.
+### Photo Naming Convention
+Your photos in Google Drive should be named like:
+- `Product Name (1).jpg` - First photo
+- `Product Name (2).jpg` - Second photo
+- `Product Name (3).webp` - Third photo
 
-## Troubleshooting
+The name before `(N)` must EXACTLY match the product name in column A.
 
-- **Authorization Required**: The first time you run the script, Google will ask for permission to access external URLs. Click "Allow".
-- **Script Not Running**: Make sure you saved the script and that triggers are set up correctly.
-- **Sync Errors**: Check the Apps Script logs (View → Logs) for detailed error messages.
+### Sharing the Drive Folder
+Make sure your photo folder is either:
+1. Shared with the service account: `eonni-777@algotcha.iam.gserviceaccount.com`
+2. Or set to "Anyone with the link can view"
 
-## Current Setup
+### Troubleshooting
+- **Photos not appearing:** Check that file names match product names exactly
+- **Sync errors:** Check Apps Script logs (View → Logs)
+- **Permission errors:** Re-authorize the script when prompted
 
-- **Vercel Cron**: Runs daily at 6:00 AM UTC (automatic backup sync)
-- **Google Apps Script**: Can run every 5 minutes or on-demand (your choice)
-
-This gives you the best of both worlds - automatic daily sync as a backup, plus frequent updates when you need them!
-
+## Current Configuration
+- **Sheet:** Загальний
+- **Photo Folder ID:** 1l0OnOXF3O8W1mGzg0vNz_aY50IH3rrXc
+- **Website URL:** https://www.eonni.com.ua/api/sync-sheet
+- **Photo Columns:** T through AE (12 photos per product)
