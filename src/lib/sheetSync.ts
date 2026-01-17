@@ -200,40 +200,47 @@ async function processImage(
 /**
  * Normalize PEM private key from environment variable
  * Handles various formats: JSON escaped, base64, literal newlines, etc.
+ * 
+ * The key should look like:
+ * -----BEGIN PRIVATE KEY-----
+ * MIIEvgIBADANBgkqhkiG9w0BAQE...
+ * -----END PRIVATE KEY-----
  */
 function normalizePrivateKey(key: string): string {
-  let normalized = key.trim()
+  let normalized = key
   
-  // Remove surrounding quotes if present
-  normalized = normalized.replace(/^["']|["']$/g, '')
+  // Step 1: Remove surrounding whitespace
+  normalized = normalized.trim()
   
-  // Handle JSON-style escaped newlines (\\n -> \n)
-  normalized = normalized.replace(/\\n/g, '\n')
-  
-  // Handle escaped carriage returns
-  normalized = normalized.replace(/\\r/g, '')
-  
-  // If the key doesn't have proper PEM headers, it might be corrupted
-  if (!normalized.includes('-----BEGIN') && !normalized.includes('PRIVATE KEY')) {
-    // Try base64 decode if it looks like base64
-    if (/^[A-Za-z0-9+/=]+$/.test(normalized.replace(/\s/g, ''))) {
-      try {
-        const decoded = Buffer.from(normalized, 'base64').toString('utf-8')
-        if (decoded.includes('-----BEGIN')) {
-          normalized = decoded
-        }
-      } catch {
-        // Not base64, continue with original
-      }
-    }
+  // Step 2: Remove surrounding quotes (single or double)
+  if ((normalized.startsWith('"') && normalized.endsWith('"')) ||
+      (normalized.startsWith("'") && normalized.endsWith("'"))) {
+    normalized = normalized.slice(1, -1)
   }
   
-  // Ensure proper line breaks in PEM format
-  // Some systems store the key with spaces instead of newlines
-  if (normalized.includes('-----BEGIN') && !normalized.includes('\n')) {
+  // Step 3: Replace literal \n sequences with actual newlines
+  // This handles keys stored as: "-----BEGIN...-----\nMIIE...\n-----END...-----"
+  normalized = normalized.split('\\n').join('\n')
+  
+  // Step 4: Remove any \r characters
+  normalized = normalized.replace(/\r/g, '')
+  
+  // Step 5: If there are no newlines but we have BEGIN/END markers,
+  // the key might be space-separated or all on one line
+  if (!normalized.includes('\n') && normalized.includes('-----BEGIN')) {
+    // Try to fix malformed single-line keys
+    // Replace spaces between base64 chunks with newlines
     normalized = normalized
-      .replace(/-----BEGIN ([A-Z ]+)-----/, '-----BEGIN $1-----\n')
-      .replace(/-----END ([A-Z ]+)-----/, '\n-----END $1-----')
+      .replace(/(-----BEGIN [A-Z ]+-----)/, '$1\n')
+      .replace(/(-----END [A-Z ]+-----)/, '\n$1')
+  }
+  
+  // Step 6: Validate the key has proper PEM structure
+  if (!normalized.includes('-----BEGIN')) {
+    throw new Error('Invalid private key format: missing BEGIN marker')
+  }
+  if (!normalized.includes('-----END')) {
+    throw new Error('Invalid private key format: missing END marker')
   }
   
   return normalized
@@ -246,25 +253,39 @@ function createAuthClient() {
   const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
   const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY
   
-  if (!clientEmail || !privateKey) {
-    throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_SERVICE_ACCOUNT_KEY')
+  if (!clientEmail) {
+    throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL environment variable')
+  }
+  if (!privateKey) {
+    throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_KEY environment variable')
   }
 
-  const normalizedKey = normalizePrivateKey(privateKey)
+  let normalizedKey: string
+  try {
+    normalizedKey = normalizePrivateKey(privateKey)
+  } catch (e: any) {
+    throw new Error(`Failed to normalize private key: ${e.message}`)
+  }
   
-  // Debug: log key format (first/last chars only for security)
-  const keyPreview = normalizedKey.substring(0, 30) + '...' + normalizedKey.substring(normalizedKey.length - 30)
-  console.log(`[auth] Using key format: ${keyPreview}`)
-  console.log(`[auth] Key length: ${normalizedKey.length}, has BEGIN: ${normalizedKey.includes('-----BEGIN')}`)
+  // Debug: log key info (safe preview only)
+  const hasBegin = normalizedKey.includes('-----BEGIN PRIVATE KEY-----')
+  const hasRSABegin = normalizedKey.includes('-----BEGIN RSA PRIVATE KEY-----')
+  const lineCount = normalizedKey.split('\n').length
+  console.log(`[auth] Key info: lines=${lineCount}, hasPKCS8=${hasBegin}, hasRSA=${hasRSABegin}`)
+  console.log(`[auth] Email: ${clientEmail}`)
 
-  return new google.auth.JWT({
-    email: clientEmail,
-    key: normalizedKey,
-    scopes: [
-      'https://www.googleapis.com/auth/spreadsheets.readonly',
-      'https://www.googleapis.com/auth/drive.readonly',
-    ],
-  })
+  try {
+    return new google.auth.JWT({
+      email: clientEmail,
+      key: normalizedKey,
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets.readonly',
+        'https://www.googleapis.com/auth/drive.readonly',
+      ],
+    })
+  } catch (e: any) {
+    throw new Error(`Failed to create JWT auth: ${e.message}`)
+  }
 }
 
 /**
