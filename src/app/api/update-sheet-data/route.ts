@@ -4,8 +4,15 @@ import { google } from 'googleapis'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const SPREADSHEET_ID = '1rm5beP1P_eCIshYdaJBoyUm3EiOB8Ox3UssMhPv6K1I'
 const SHEET_NAME = 'Загальний'
+
+function getSpreadsheetId() {
+  const id = process.env.GOOGLE_SHEETS_ID
+  if (!id) {
+    throw new Error('Missing GOOGLE_SHEETS_ID environment variable')
+  }
+  return id
+}
 
 // All product data
 const productData: Record<string, {
@@ -374,9 +381,11 @@ export async function GET() {
     const auth = await getAuthClient()
     const sheets = google.sheets({ version: 'v4', auth })
 
+    const spreadsheetId = getSpreadsheetId()
+    
     // Get all existing data
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId,
       range: `${SHEET_NAME}!A:AK`,
     })
 
@@ -429,7 +438,7 @@ export async function GET() {
 
     if (updates.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId,
         requestBody: {
           valueInputOption: 'RAW',
           data: updates,
