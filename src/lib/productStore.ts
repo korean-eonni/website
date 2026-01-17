@@ -39,6 +39,12 @@ export type ProductRecord = {
   volume_options: string | null  // e.g., "20 мл,40 мл,80 мл"
   rating: number | null
   review_count: number | null
+  // Extended product attributes
+  age_group: string | null       // e.g., "18+", "25+", "Всі віки"
+  ingredients: string | null     // Key ingredients
+  skin_type: string | null       // e.g., "Всі типи", "Жирна", "Суха"
+  series: string | null          // Product series/line
+  classification: string | null  // e.g., "Натуральна", "Професійна"
   is_active: number
   is_new: number
   is_exclusive: number
@@ -103,6 +109,13 @@ async function ensurePostgresSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS volume_options TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS rating DOUBLE PRECISION;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS review_count INTEGER;`
+  
+  // Extended product attributes
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS age_group TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS ingredients TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS skin_type TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS series TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS classification TEXT;`
 }
 
 // No seed data - all products come from Google Sheets
@@ -138,6 +151,7 @@ export async function replaceAllProducts(products: ProductRecord[]) {
             supplier, cost_price, sale_price, original_price, discount_amount,
             stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
             brand, volume_options, rating, review_count,
+            age_group, ingredients, skin_type, series, classification,
             is_active, is_new, is_exclusive, created_at, updated_at
           ) VALUES (
             ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
@@ -148,6 +162,7 @@ export async function replaceAllProducts(products: ProductRecord[]) {
             ${p.stock_quantity}, ${p.category}, ${p.subcategory}, ${p.weight_grams},
             ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand},
             ${p.volume_options}, ${p.rating}, ${p.review_count},
+            ${p.age_group}, ${p.ingredients}, ${p.skin_type}, ${p.series}, ${p.classification},
             ${p.is_active}, ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
           )
         `

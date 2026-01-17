@@ -56,6 +56,12 @@ type SheetRow = {
   "Об'єм/Варіанти"?: string  // e.g., "20 мл,40 мл,80 мл"
   'Рейтинг'?: string         // e.g., "4.5"
   'Кількість відгуків'?: string // e.g., "12"
+  // Extended product attributes
+  'Вік'?: string             // e.g., "18+", "25+", "Всі віки"
+  'Інгредієнти'?: string     // Key ingredients
+  'Тип шкіри'?: string       // e.g., "Всі типи", "Жирна", "Суха"
+  'Серія'?: string           // Product series/line
+  'Класифікація'?: string    // e.g., "Натуральна", "Професійна"
 }
 
 function parseBool(input?: string) {
@@ -527,6 +533,12 @@ export async function syncSheetToDatabase() {
         volume_options: row["Об'єм/Варіанти"]?.trim() || null,
         rating: parseNumber(row['Рейтинг']),
         review_count: parseNumber(row['Кількість відгуків']) ? Math.round(parseNumber(row['Кількість відгуків'])!) : null,
+        // Extended product attributes
+        age_group: row['Вік']?.trim() || null,
+        ingredients: row['Інгредієнти']?.trim() || null,
+        skin_type: row['Тип шкіри']?.trim() || null,
+        series: row['Серія']?.trim() || null,
+        classification: row['Класифікація']?.trim() || null,
         // ALWAYS set to active (1) - we want all imported products to be visible
         is_active: 1,
         is_new: parseBool(row['Позначити як новинку']),
