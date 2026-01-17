@@ -230,10 +230,12 @@ export default function CatalogContent() {
       try {
         const res = await fetch('/api/products')
         const data = await res.json()
-        setProducts(data)
+        // Handle both array response and {products: [...]} response
+        const productsArray = Array.isArray(data) ? data : (data.products || [])
+        setProducts(productsArray)
         
         // Calculate max price
-        const prices = data.map((p: Product) => p.sale_price ?? 0).filter((p: number) => p > 0)
+        const prices = productsArray.map((p: Product) => p.sale_price ?? 0).filter((p: number) => p > 0)
         if (prices.length > 0) {
           const max = Math.max(...prices)
           setMaxPrice(max)
@@ -241,7 +243,7 @@ export default function CatalogContent() {
         }
         
         // Get exclusive products for the section
-        const exclusive = data
+        const exclusive = productsArray
           .filter((p: Product) => p.is_exclusive === 1)
           .slice(0, 6)
           .map((p: Product) => ({
