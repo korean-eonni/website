@@ -12,12 +12,25 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const navRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     setMobileMenuOpen(false)
     setSearchOpen(false)
+    setOpenDropdown(null)
   }, [pathname])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
@@ -96,17 +109,31 @@ export default function Header() {
               <Logo />
             </div>
 
-            <nav className="hidden lg:flex flex-1 items-center justify-center gap-8 xl:gap-10 text-[16px] xl:text-[18px] leading-[18px] tracking-[0.01em]">
+            <nav ref={navRef} className="hidden lg:flex flex-1 items-center justify-center gap-8 xl:gap-10 text-[16px] xl:text-[18px] leading-[18px] tracking-[0.01em]">
               {navLinks.map((link) => (
-                <div key={link.label} className="relative group">
-                  <Link href={link.href} className="text-black hover:text-[#666666] transition-colors duration-200">
-                    {link.label}
-                  </Link>
+                <div
+                  key={link.label}
+                  className="relative"
+                  onMouseEnter={() => link.hasDropdown && setOpenDropdown(link.label)}
+                  onMouseLeave={() => setOpenDropdown(null)}
+                >
+                  {link.hasDropdown ? (
+                    <button
+                      onClick={() => setOpenDropdown(openDropdown === link.label ? null : link.label)}
+                      className="text-black hover:text-[#666666] transition-colors duration-200"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link href={link.href} className="text-black hover:text-[#666666] transition-colors duration-200">
+                      {link.label}
+                    </Link>
+                  )}
                   {link.hasDropdown && link.dropdownItems && (
-                    <div className="absolute left-1/2 top-full z-20 -translate-x-1/2 pt-3 opacity-0 pointer-events-none transition-all duration-200 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                    <div className={`absolute left-1/2 top-full z-20 -translate-x-1/2 pt-3 transition-all duration-200 ${openDropdown === link.label ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                       <div className="w-[260px] rounded-[14px] border border-[#E5E5E5] bg-white py-3 shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
                         {link.dropdownItems.map((item) => (
-                          <Link key={item.label} href={item.href} className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">
+                          <Link key={item.label} href={item.href} onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">
                             {item.label}
                           </Link>
                         ))}
@@ -129,18 +156,22 @@ export default function Header() {
                 </svg>
               </button>
               
-              <div className="relative group hidden sm:block">
+              <div
+                className="relative hidden sm:block"
+                onMouseEnter={() => setOpenDropdown('profile')}
+                onMouseLeave={() => setOpenDropdown(null)}
+              >
                 <Link href="/account" className="w-6 h-6 flex items-center justify-center hover:opacity-70 transition-opacity" aria-label="Профіль">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
                 </Link>
-                <div className="absolute right-0 top-full z-20 pt-3 opacity-0 pointer-events-none transition-all duration-200 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                <div className={`absolute right-0 top-full z-20 pt-3 transition-all duration-200 ${openDropdown === 'profile' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                   <div className="w-[220px] rounded-[14px] border border-[#E5E5E5] bg-white py-3 shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-                    <Link href="/account" className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">Профіль</Link>
-                    <Link href="/account?tab=orders" className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">Мої замовлення</Link>
-                    <Link href="/account?tab=wishlist" className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">Список бажань</Link>
+                    <Link href="/account" onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">Профіль</Link>
+                    <Link href="/account?tab=orders" onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">Мої замовлення</Link>
+                    <Link href="/account?tab=wishlist" onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[16px] text-black hover:bg-[#F8F7FB] transition-colors">Список бажань</Link>
                   </div>
                 </div>
               </div>
