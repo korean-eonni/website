@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
-import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -244,10 +243,6 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <main className="min-h-screen bg-white">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-          <Header />
-        </div>
-        <div className="h-[64px] sm:h-[80px]" />
         <section className="py-20">
           <div className="max-w-[600px] mx-auto px-6 text-center">
             <svg className="w-20 h-20 mx-auto text-[#BBBBBB] mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -270,14 +265,6 @@ export default function CheckoutPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F7FB]">
-      {/* Fixed header for mobile */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-        <Header />
-      </div>
-      
-      {/* Spacer for fixed header */}
-      <div className="h-[64px] sm:h-[80px]" />
-
       <section className="py-8 sm:py-12">
         <div className="max-w-[1200px] mx-auto px-6">
           {/* Breadcrumbs */}

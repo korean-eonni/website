@@ -1,5 +1,3 @@
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -9,10 +7,6 @@ export default function BrandsPage() {
   return (
     <main className="min-h-screen bg-white relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_8%,_rgba(188,194,244,0.65),_rgba(255,255,255,0)_55%),radial-gradient(circle_at_85%_12%,_rgba(255,228,237,0.55),_rgba(255,255,255,0)_55%),radial-gradient(circle_at_20%_40%,_rgba(207,236,254,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_80%_45%,_rgba(255,245,213,0.55),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_30%_75%,_rgba(246,241,255,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_70%_80%,_rgba(244,248,243,0.5),_rgba(255,255,255,0)_60%)]" />
-      <div className="relative z-10">
-        <Header />
-        <PromoBanner />
-      </div>
 
       <section className="relative py-16 sm:py-20">
         <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">

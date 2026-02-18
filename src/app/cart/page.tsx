@@ -1,8 +1,6 @@
 'use client'
 
 import { useCart } from '@/contexts/CartContext'
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -16,15 +14,6 @@ export default function CartPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Fixed header for mobile */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-        <Header />
-        <PromoBanner />
-      </div>
-      
-      {/* Spacer for fixed header */}
-      <div className="h-[116px] sm:h-[132px]" />
-
       <section className="py-12 sm:py-16">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           {/* Breadcrumbs */}

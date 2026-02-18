@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import ExclusiveProducts from '@/components/sections/ExclusiveProducts'
 import ReviewsSection from '@/components/sections/ReviewsSection'
 import SubscribeSection from '@/components/sections/SubscribeSection'
@@ -497,9 +495,6 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
 
   return (
     <main className="min-h-screen bg-white">
-      <Header />
-      <PromoBanner />
-      
       {/* Hero Banner */}
       <section className="relative h-[200px] sm:h-[250px] overflow-hidden bg-gradient-to-r from-[#E8E0F0] via-[#D4E8F0] to-[#E8F0E0]">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/20" />

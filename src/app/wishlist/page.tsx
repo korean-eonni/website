@@ -1,5 +1,3 @@
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import type { Metadata } from 'next'
 
@@ -11,9 +9,6 @@ export const metadata: Metadata = {
 export default function WishlistPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Header />
-      <PromoBanner />
-
       <section className="relative overflow-hidden py-16 sm:py-20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(188,194,244,0.35),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_15%,_rgba(255,228,237,0.35),_rgba(255,255,255,0)_60%)]" />
         <div className="relative max-w-[960px] mx-auto px-6 sm:px-8">

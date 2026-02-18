@@ -1,5 +1,3 @@
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import Hero from '@/components/sections/Hero'
 import FeaturedIn from '@/components/sections/FeaturedIn'
 import NewProducts from '@/components/sections/NewProducts'
@@ -72,23 +70,14 @@ export default async function Home() {
   const exclusiveProducts = exclusiveRows.map(mapRow)
 
   return (
-    <main className="min-h-screen">
-      {/* Fixed header - always on top */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white">
-        <Header />
-        <PromoBanner />
-      </header>
-      
-      {/* Spacer for fixed header */}
-      <div className="h-[108px] sm:h-[112px]" />
-      
-      {/* Hero section - fixed behind content */}
-      <div className="fixed top-[108px] sm:top-[112px] left-0 right-0 h-[520px] sm:h-[600px] lg:h-[calc(100vh-112px)] z-0">
+    <main className="min-h-screen -mt-[116px] sm:-mt-[132px]">
+      {/* Hero section - fixed behind content, positioned below the layout header */}
+      <div className="fixed top-[116px] sm:top-[132px] left-0 right-0 h-[520px] sm:h-[600px] lg:h-[calc(100vh-132px)] z-0">
         <Hero />
       </div>
       
-      {/* Spacer to push content below hero */}
-      <div className="h-[460px] sm:h-[520px] lg:h-[calc(100vh-192px)]" />
+      {/* Spacer: header height + hero visible area */}
+      <div className="h-[576px] sm:h-[652px] lg:h-[calc(100vh)]" />
       
       {/* Content sections that scroll over the hero */}
       <div className="relative z-10 bg-white rounded-t-[30px] sm:rounded-t-[40px] shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">

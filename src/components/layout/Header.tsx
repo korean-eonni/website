@@ -84,7 +84,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-[#E5E5E5] sticky top-0 z-50">
+      <header className="bg-white border-b border-[#E5E5E5]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6">
           <div className="flex items-center h-16 sm:h-20">
           {/* Logo */}

@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
@@ -1095,11 +1093,6 @@ export default function ProductPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-white">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-          <Header />
-          <PromoBanner />
-        </div>
-        <div className="h-[116px] sm:h-[132px]" />
         <div className="flex items-center justify-center py-32">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#BCC2F4]"></div>
         </div>
@@ -1111,11 +1104,6 @@ export default function ProductPage() {
   if (error || !product) {
     return (
       <main className="min-h-screen bg-white">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-          <Header />
-          <PromoBanner />
-        </div>
-        <div className="h-[116px] sm:h-[132px]" />
         <div className="flex flex-col items-center justify-center py-32">
           <h1 className="text-2xl font-semibold text-black mb-4">Товар не знайдено</h1>
           <Link href="/catalog" className="text-[#7C83C9] hover:underline">
@@ -1152,15 +1140,6 @@ export default function ProductPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Fixed header for mobile */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-        <Header />
-        <PromoBanner />
-      </div>
-      
-      {/* Spacer for fixed header */}
-      <div className="h-[116px] sm:h-[132px]" />
-
       {/* Product Hero Section */}
       <section className="py-8 sm:py-12">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">

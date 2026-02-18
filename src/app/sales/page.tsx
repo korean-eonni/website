@@ -1,5 +1,3 @@
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -96,9 +94,6 @@ const brands = [
 export default function SalesPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Header />
-      <PromoBanner />
-
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-24">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />

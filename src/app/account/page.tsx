@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Header from '@/components/layout/Header'
-import PromoBanner from '@/components/sections/PromoBanner'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -872,9 +870,6 @@ function AccountContent() {
 export default function AccountPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Header />
-      <PromoBanner />
-      
       <section className="py-10 sm:py-16">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[72px] xl:px-[100px]">
           <Suspense fallback={

@@ -29,6 +29,15 @@ const config: Config = {
         '18': '4.5rem',
         '88': '22rem',
       },
+      animation: {
+        'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
+      },
+      keyframes: {
+        'pulse-slow': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(96, 70, 163, 0.4)' },
+          '50%': { boxShadow: '0 0 0 12px rgba(96, 70, 163, 0)' },
+        },
+      },
     },
   },
   plugins: [],
