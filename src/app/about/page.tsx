@@ -81,7 +81,7 @@ const stats = [
   { value: '100', suffix: '+', label: 'товарів в асортименті' },
   { value: '30', suffix: '+', label: 'брендів K-beauty' },
   { value: '100', suffix: '%', label: 'оригінальна продукція' },
-  { value: '24/7', suffix: '', label: 'підтримка клієнтів' },
+  { value: 'Пн-Пт', suffix: '', label: 'підтримка 10:00-20:00' },
 ]
 
 export default function AboutPage() {

@@ -179,7 +179,7 @@ export default function PrivacyPolicyPage() {
             та захищаємо ваші персональні дані.
           </p>
           <div className="mt-6 text-[14px] text-[#666666]">
-            Остання редакція: 15 січня 2025 року
+            Остання редакція: 15 січня 2026 року
           </div>
         </div>
       </section>

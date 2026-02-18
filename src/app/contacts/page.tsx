@@ -1,19 +1,8 @@
+'use client'
+
+import { useState, FormEvent } from 'react'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Контакти | Eonni — Корейська косметика',
-  description:
-    "Зв'яжіться з Eonni: телефон +380732737330, email support@eonni.com.ua, Instagram @eonni_korean_cosmetics. Працюємо щодня з 10:00 до 20:00. Київ, вул. Левка Лук'яненка, 21.",
-  keywords: 'контакти Eonni, корейська косметика Київ, телефон, email, Instagram',
-  openGraph: {
-    title: 'Контакти | Eonni — Корейська косметика',
-    description: 'Зв\'яжіться з нами: телефон, email, соціальні мережі. Працюємо щодня з 10:00 до 20:00.',
-    type: 'website',
-    locale: 'uk_UA',
-  },
-}
 
 const contactMethods = [
   {
@@ -99,6 +88,14 @@ const faqItems = [
 ]
 
 export default function ContactsPage() {
+  const [submitted, setSubmitted] = useState(false)
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' })
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSubmitted(true)
+  }
+
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
@@ -260,53 +257,57 @@ export default function ContactsPage() {
                 Залиште повідомлення, і ми відповімо протягом робочого дня
               </p>
             </div>
-            <form className="grid gap-5">
-              <div className="grid gap-4 sm:grid-cols-2">
+            {submitted ? (
+              <div className="text-center py-8">
+                <div className="text-5xl mb-4">✅</div>
+                <p className="font-gilroy text-[18px] text-black font-semibold">
+                  Дякуємо! Ми зв&apos;яжемося з вами найближчим часом.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="grid gap-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-[14px] font-semibold text-black mb-2">Ваше ім&apos;я</label>
+                    <input
+                      type="text"
+                      placeholder="Введіть ім'я"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-black mb-2">Email</label>
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-[14px] font-semibold text-black mb-2">Ваше ім\'я</label>
-                  <input
-                    type="text"
-                    placeholder="Введіть ім'я"
-                    className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors"
+                  <label className="block text-[14px] font-semibold text-black mb-2">Ваше повідомлення</label>
+                  <textarea
+                    placeholder="Опишіть ваше питання..."
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    className="w-full min-h-[140px] rounded-[12px] border border-[#E5E5E5] px-4 py-3 focus:border-[#BCC2F4] focus:outline-none transition-colors resize-none"
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-[14px] font-semibold text-black mb-2">Телефон або Email</label>
-                  <input
-                    type="text"
-                    placeholder="+380 або email"
-                    className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[14px] font-semibold text-black mb-2">Тема звернення</label>
-                <select className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors bg-white">
-                  <option value="">Оберіть тему</option>
-                  <option value="order">Питання щодо замовлення</option>
-                  <option value="product">Консультація з підбору</option>
-                  <option value="delivery">Доставка та оплата</option>
-                  <option value="return">Повернення та обмін</option>
-                  <option value="other">Інше</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[14px] font-semibold text-black mb-2">Ваше повідомлення</label>
-                <textarea
-                  placeholder="Опишіть ваше питання..."
-                  className="w-full min-h-[140px] rounded-[12px] border border-[#E5E5E5] px-4 py-3 focus:border-[#BCC2F4] focus:outline-none transition-colors resize-none"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="h-[52px] w-full sm:w-auto sm:px-12 rounded-[12px] bg-black text-white uppercase font-gilroy text-[16px] font-semibold hover:opacity-80 transition-opacity"
-              >
-                Надіслати повідомлення
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  className="h-[52px] w-full sm:w-auto sm:px-12 rounded-[12px] bg-black text-white uppercase font-gilroy text-[16px] font-semibold hover:opacity-80 transition-opacity"
+                >
+                  Надіслати повідомлення
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>

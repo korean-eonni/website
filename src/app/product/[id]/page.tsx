@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import SubscribeSection from '@/components/sections/SubscribeSection'
@@ -38,6 +38,7 @@ type Product = {
   review_count?: number | null
   stock_quantity: number | null
   tags?: string | null
+  ingredients: string | null
   weight_grams?: number | null
 }
 
@@ -330,7 +331,7 @@ function ProductTabs({ product }: { product: Product }) {
             <div className="text-[16px] leading-[1.6] text-black">
               <p className="font-semibold mb-2">Інгредієнти:</p>
               <p>
-                {product.tags || 'Trehalose, Авокадо, Алантоїн, Бетаїн, Виноградні кісточки, Вітамін E, Гліцерин, Гіалуронова кислота, Колаген, Ламінарія, Лецитин, Сечовина, Сорбітол'}
+                {product.ingredients || 'Trehalose, Авокадо, Алантоїн, Бетаїн, Виноградні кісточки, Вітамін E, Гліцерин, Гіалуронова кислота, Колаген, Ламінарія, Лецитин, Сечовина, Сорбітол'}
               </p>
             </div>
           )}
@@ -829,16 +830,6 @@ function ProductReviewsSection({
                         {isExpanded ? 'Згорнути' : 'Читати далі'}
                       </button>
                     )}
-
-                    {index === 2 && reviews.length > 3 && (
-                      <button
-                        type="button"
-                        className="absolute right-4 top-1/2 -translate-y-1/2 hidden h-[50px] w-[50px] items-center justify-center rounded-[12px] bg-white shadow-[0_10px_25px_rgba(0,0,0,0.12)] transition-opacity hover:opacity-80 lg:flex"
-                        aria-label="Наступний відгук"
-                      >
-                        <Image src="/arrow-next.png" alt="Наступний відгук" width={20} height={20} />
-                      </button>
-                    )}
                   </div>
                 )
               })}
@@ -1023,6 +1014,7 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
 // ============ MAIN PRODUCT PAGE ============
 export default function ProductPage() {
   const params = useParams()
+  const router = useRouter()
   const productId = params.id as string
   const { addToCart } = useCart()
   
@@ -1192,9 +1184,7 @@ export default function ProductPage() {
                 <button 
                   onClick={async () => {
                     setAddingToCart(true)
-                    for (let i = 0; i < quantity; i++) {
-                      await addToCart(productId)
-                    }
+                    await addToCart(productId, quantity)
                     setTimeout(() => setAddingToCart(false), 1000)
                   }}
                   disabled={addingToCart}
@@ -1206,19 +1196,18 @@ export default function ProductPage() {
                 >
                   {addingToCart ? '✓ Додано в кошик' : 'Додати в кошик'}
                 </button>
-                <Link 
-                  href="/checkout"
-                  onClick={async (e) => {
-                    e.preventDefault()
-                    for (let i = 0; i < quantity; i++) {
-                      await addToCart(productId)
-                    }
-                    window.location.href = '/checkout'
+                <button 
+                  onClick={async () => {
+                    setAddingToCart(true)
+                    await addToCart(productId, quantity)
+                    setAddingToCart(false)
+                    router.push('/checkout')
                   }}
+                  disabled={addingToCart}
                   className="w-full max-w-[605px] h-[50px] bg-white border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
                 >
                   Купити в один клік
-                </Link>
+                </button>
               </div>
             </div>
           </div>

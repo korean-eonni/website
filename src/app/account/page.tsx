@@ -454,7 +454,7 @@ function OrdersList({ orders, showCustomerInfo = false }: { orders: Order[]; sho
               )}
             </div>
             <Link
-              href={`/orders/${order.id}`}
+              href={`/orders/${order.id}/success`}
               className="text-[14px] text-[#6046A3] font-medium hover:underline"
             >
               Детальніше →
