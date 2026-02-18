@@ -1,61 +1,64 @@
-import Image from 'next/image'
 import Link from 'next/link'
 
 const catalogLinks = [
-  'Весь асортимент',
-  'Косметика для обличчя',
-  'Косметика для тіла',
-  'HEALTH & CARE',
-  'Макіяж',
-  'Знижки',
+  { label: 'Весь асортимент', href: '/catalog' },
+  { label: 'Косметика для обличчя', href: '/catalog?category=face' },
+  { label: 'Косметика для тіла', href: '/catalog?category=body' },
+  { label: 'Для волосся', href: '/catalog?category=hair' },
+  { label: 'Макіяж', href: '/catalog?category=makeup' },
+  { label: 'Знижки', href: '/sales' },
 ]
 
-const accountLinks = ['Профіль', 'Відстежити замовлення', 'Вішліст']
+const accountLinks = [
+  { label: 'Профіль', href: '/account' },
+  { label: 'Мої замовлення', href: '/account?tab=orders' },
+  { label: 'Список бажань', href: '/account?tab=wishlist' },
+]
 
 const serviceLinks = [
-  { label: 'Повернення та Обмін', href: '/returns-exchange' },
+  { label: 'Повернення та обмін', href: '/returns-exchange' },
   { label: 'Доставка та оплата', href: '/payment-delivery' },
+  { label: 'Блог', href: '/blog' },
 ]
 
 const companyLinks = [
-  { label: 'Про Нас', href: '/about' },
+  { label: 'Про нас', href: '/about' },
   { label: 'Контакти', href: '/contacts' },
-  { label: 'Умови Ведення Бізнесу', href: '/business-terms' },
-  { label: 'Захист Персональних даних', href: '/privacy-policy' },
+  { label: 'Умови використання', href: '/business-terms' },
+  { label: 'Політика конфіденційності', href: '/privacy-policy' },
 ]
 
 export default function Footer() {
   return (
     <footer className="bg-[#BCC2F4]">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px] py-16">
-        <div className="grid gap-10 lg:gap-6 lg:grid-cols-[320px_repeat(4,minmax(0,1fr))]">
-          <div className="flex flex-col items-center gap-6 text-center">
-            <Link href="/" className="inline-flex">
-              <Image src="/logo.svg" alt="Eonni" width={260} height={117} />
+      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px] py-12 sm:py-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Logo & Social */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href="/" className="inline-block">
+              <span className="font-bebas text-[48px] text-black leading-none">eonni</span>
+              <span className="block text-[11px] tracking-[0.2em] text-black/70 uppercase -mt-1">Korean Cosmetics</span>
             </Link>
-            <div className="flex items-center justify-center gap-4 w-full">
+            
+            {/* Social Icons */}
+            <div className="flex items-center gap-3 mt-6">
               <a
                 href="mailto:support@eonni.com.ua"
                 aria-label="Email"
-                className="h-12 w-12 rounded-full flex items-center justify-center bg-white text-black hover:scale-[1.05] transition-transform"
+                className="w-11 h-11 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 transition-transform"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M20 4H4a2 2 0 0 0-2 2v1.2l10 5.8 10-5.8V6a2 2 0 0 0-2-2Zm0 6.2-8.8 5.1a1 1 0 0 1-1 0L2 10.2V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"
-                    fill="currentColor"
-                  />
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </a>
               <a
                 href="tel:+380732737330"
                 aria-label="Телефон"
-                className="h-12 w-12 rounded-full flex items-center justify-center bg-white text-black hover:scale-[1.05] transition-transform"
+                className="w-11 h-11 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 transition-transform"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M18 15.5c-1.2 0-2.4-.2-3.5-.6-.3-.1-.7 0-.9.2l-1.8 1.8c-2.6-1.3-4.8-3.5-6.1-6.1l1.8-1.8c.3-.3.3-.6.2-.9-.4-1.1-.6-2.3-.6-3.5 0-.5-.4-.9-.9-.9H4C3.4 4 3 4.4 3 5c0 9.4 7.6 17 17 17 .6 0 1-.4 1-1v-2.2c0-.5-.4-.9-.9-.9Z"
-                    fill="currentColor"
-                  />
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </a>
               <a
@@ -63,104 +66,69 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="h-12 w-12 rounded-full flex items-center justify-center bg-white text-black hover:scale-[1.05] transition-transform"
+                className="w-11 h-11 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 transition-transform"
               >
-                <Image
-                  src="/social/instagram.png"
-                  alt="Instagram"
-                  width={26}
-                  height={26}
-                />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2"/>
+                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
+                  <circle cx="18" cy="6" r="1" fill="currentColor"/>
+                </svg>
               </a>
               <a
                 href="https://t.me/eonni_korean_cosmetics"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telegram"
-                className="h-12 w-12 rounded-full flex items-center justify-center bg-white text-black hover:scale-[1.05] transition-transform"
+                className="w-11 h-11 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 transition-transform"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M21.9 3.5c.3-.1.6.2.5.6l-3.5 15c-.1.4-.5.5-.8.3l-4.2-3.1-2.1 2c-.2.2-.6.1-.7-.2l-.7-2.7-3.5-1.1c-.4-.1-.4-.6 0-.8l15.9-10Z"
-                    fill="currentColor"
-                  />
+                  <path d="M21 3L9 13M21 3L14 21L9 13M21 3L3 10L9 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="TikTok"
-                className="h-12 w-12 rounded-full flex items-center justify-center bg-white text-black hover:scale-[1.05] transition-transform"
-              >
-                <Image
-                  src="/social/tiktok.png"
-                  alt="TikTok"
-                  width={18}
-                  height={24}
-                />
               </a>
             </div>
           </div>
 
+          {/* Catalog */}
           <div>
-            <p
-              className="text-black uppercase"
-              style={{
-                fontFamily: 'Gilroy, sans-serif',
-                fontSize: '18px',
-                lineHeight: '18px',
-                fontWeight: 400,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Каталог
-            </p>
-            <ul className="mt-6 flex flex-col gap-[15px]">
-              {catalogLinks.map((label) => (
-                <li key={label} className="text-black text-[18px] leading-[18px]">
-                  {label}
+            <p className="text-black font-semibold text-[16px] mb-5">Каталог</p>
+            <ul className="space-y-3">
+              {catalogLinks.map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    href={link.href} 
+                    className="text-black/80 text-[15px] hover:text-black transition-colors"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
+          {/* Account */}
           <div>
-            <p
-              className="text-black uppercase"
-              style={{
-                fontFamily: 'Gilroy, sans-serif',
-                fontSize: '18px',
-                lineHeight: '18px',
-                fontWeight: 400,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Мій акаунт
-            </p>
-            <ul className="mt-6 flex flex-col gap-[15px]">
-              {accountLinks.map((label) => (
-                <li key={label} className="text-black text-[18px] leading-[18px]">
-                  {label}
+            <p className="text-black font-semibold text-[16px] mb-5">Мій акаунт</p>
+            <ul className="space-y-3">
+              {accountLinks.map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    href={link.href} 
+                    className="text-black/80 text-[15px] hover:text-black transition-colors"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
-            <p
-              className="mt-10 text-black uppercase"
-              style={{
-                fontFamily: 'Gilroy, sans-serif',
-                fontSize: '18px',
-                lineHeight: '18px',
-                fontWeight: 400,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Eonni Service
-            </p>
-            <ul className="mt-6 flex flex-col gap-[15px]">
+            
+            <p className="text-black font-semibold text-[16px] mt-8 mb-5">Допомога</p>
+            <ul className="space-y-3">
               {serviceLinks.map((link) => (
-                <li key={link.label} className="text-black text-[18px] leading-[18px]">
-                  <Link href={link.href} className="hover:text-[#555555] transition-colors">
+                <li key={link.href}>
+                  <Link 
+                    href={link.href} 
+                    className="text-black/80 text-[15px] hover:text-black transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -168,28 +136,61 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Company */}
           <div>
-            <p
-              className="text-black uppercase"
-              style={{
-                fontFamily: 'Gilroy, sans-serif',
-                fontSize: '18px',
-                lineHeight: '18px',
-                fontWeight: 400,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Компанія
-            </p>
-            <ul className="mt-6 flex flex-col gap-[15px]">
+            <p className="text-black font-semibold text-[16px] mb-5">Компанія</p>
+            <ul className="space-y-3">
               {companyLinks.map((link) => (
-                <li key={link.label} className="text-black text-[18px] leading-[18px]">
-                  <Link href={link.href} className="hover:text-[#555555] transition-colors">
+                <li key={link.href}>
+                  <Link 
+                    href={link.href} 
+                    className="text-black/80 text-[15px] hover:text-black transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <p className="text-black font-semibold text-[16px] mb-5">Контакти</p>
+            <div className="space-y-3 text-[15px]">
+              <p className="text-black/80">
+                <a href="tel:+380732737330" className="hover:text-black transition-colors">
+                  +380 73 273 73 30
+                </a>
+              </p>
+              <p className="text-black/80">
+                <a href="mailto:support@eonni.com.ua" className="hover:text-black transition-colors">
+                  support@eonni.com.ua
+                </a>
+              </p>
+              <p className="text-black/80 mt-4">
+                м. Київ, Оболонський район<br />
+                вул. Левка Лук&apos;яненка, 21
+              </p>
+              <p className="text-black/60 text-[13px] mt-4">
+                Пн-Пт: 10:00 - 20:00<br />
+                Сб-Нд: 11:00 - 18:00
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-8 border-t border-black/10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-black/60">
+            <p>© 2026 Eonni. Всі права захищені.</p>
+            <div className="flex items-center gap-4">
+              <Link href="/business-terms" className="hover:text-black transition-colors">
+                Умови використання
+              </Link>
+              <Link href="/privacy-policy" className="hover:text-black transition-colors">
+                Конфіденційність
+              </Link>
+            </div>
           </div>
         </div>
       </div>

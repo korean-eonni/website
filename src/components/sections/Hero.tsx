@@ -30,7 +30,7 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   return (
-    <section className="relative min-h-[520px] sm:min-h-[600px] lg:h-[calc(100vh-108px)] bg-[#F5F5F5] overflow-hidden">
+    <section className="relative h-full w-full bg-[#F5F5F5] overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -54,33 +54,24 @@ export default function Hero() {
           {/* Content */}
           <div className="relative h-full max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 flex items-center">
             <div className="max-w-[767px] text-white drop-shadow-md">
-              <h1 className="text-[48px] leading-[52px] sm:text-[72px] sm:leading-[80px] lg:text-[120px] lg:leading-[120px] font-bebas uppercase tracking-[0]">
+              <h1 className="text-[44px] leading-[48px] sm:text-[72px] sm:leading-[80px] lg:text-[100px] lg:leading-[100px] font-bebas uppercase tracking-[0]">
                 {slide.title}
               </h1>
 
-              <p className="mt-6 max-w-[500px] text-[16px] leading-[22px] sm:text-[18px] sm:leading-[24px] lg:text-[21px] lg:leading-[27px] font-gilroy">
+              <p className="mt-4 sm:mt-6 max-w-[500px] text-[15px] leading-[21px] sm:text-[18px] sm:leading-[24px] lg:text-[20px] lg:leading-[26px] font-gilroy">
                 {slide.subtitle}
               </p>
 
-              <div className="mt-10 flex flex-wrap items-center gap-4">
+              <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
                 <Link
                   href={slide.buttonLink}
-                  className="inline-flex items-center justify-center bg-primary hover:bg-primary-light text-black uppercase transition-all duration-300"
-                  style={{
-                    width: '200px',
-                    height: '50px',
-                    fontFamily: 'Gilroy, sans-serif',
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    lineHeight: '18px',
-                    letterSpacing: '0',
-                  }}
+                  className="inline-flex items-center justify-center bg-primary hover:bg-primary-light text-black uppercase transition-all duration-300 w-[160px] sm:w-[200px] h-[46px] sm:h-[50px] text-[16px] sm:text-[18px] font-semibold"
                 >
                   {slide.buttonText}
                 </Link>
                 <Link
                   href="/brands"
-                  className="inline-flex items-center justify-center bg-black hover:bg-[#333333] text-white font-semibold text-[15px] tracking-[0.1em] px-12 py-4 transition-all duration-300 uppercase"
+                  className="inline-flex items-center justify-center bg-black hover:bg-[#333333] text-white font-semibold text-[14px] sm:text-[15px] tracking-[0.05em] sm:tracking-[0.1em] px-8 sm:px-12 py-3 sm:py-4 transition-all duration-300 uppercase"
                 >
                   Бренди
                 </Link>

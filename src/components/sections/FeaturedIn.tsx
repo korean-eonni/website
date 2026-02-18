@@ -1,47 +1,59 @@
+'use client'
+
 export default function FeaturedIn() {
-  const logos = [
-    { name: 'Men\'s Health', logo: 'MensHealth' },
-    { name: 'Bloomberg', logo: 'Bloomberg' },
-    { name: 'WIRED', logo: 'WIRED' },
-    { name: 'Y Combinator', logo: 'Y Combinator' },
+  const brands = [
+    'COSRX',
+    'ANUA',
+    'Beauty of Joseon',
+    'TORRIDEN',
+    'ISNTREE',
+    'Round Lab',
+    'MEDICUBE',
+    'NEOGEN',
+    'SKIN1004',
+    'SOME BY MI',
   ]
 
+  // Double the brands array for seamless infinite scroll
+  const allBrands = [...brands, ...brands]
+
   return (
-    <section className="bg-gradient-to-b from-[#F5EDE8] to-white py-12">
-      <div className="max-w-[1440px] mx-auto px-6">
-        <div className="flex items-center justify-center gap-16 lg:gap-24 flex-wrap">
-          {logos.map((item, index) => (
-            <div 
-              key={index} 
-              className="grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-            >
-              {item.logo === 'MensHealth' && (
-                <div className="text-2xl font-bold tracking-tight">Men's Health</div>
-              )}
-              {item.logo === 'Bloomberg' && (
-                <div className="text-2xl font-bold">Bloomberg</div>
-              )}
-              {item.logo === 'WIRED' && (
-                <div className="flex items-center gap-0.5 text-2xl font-bold">
-                  <span className="border-2 border-black px-2 py-0.5">W</span>
-                  <span className="border-2 border-l-0 border-black px-2 py-0.5">I</span>
-                  <span className="border-2 border-l-0 border-black px-2 py-0.5">R</span>
-                  <span className="border-2 border-l-0 border-black px-2 py-0.5">E</span>
-                  <span className="border-2 border-l-0 border-black px-2 py-0.5">D</span>
-                </div>
-              )}
-              {item.logo === 'Y Combinator' && (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-black text-white flex items-center justify-center font-bold text-xl">
-                    Y
-                  </div>
-                  <span className="text-lg font-medium">Combinator</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+    <section className="relative bg-white py-6 sm:py-8 lg:py-10 overflow-hidden">
+      {/* Gradient overlays for fade effect on edges */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+      
+      {/* Animated marquee container */}
+      <div className="flex animate-marquee">
+        {allBrands.map((brand, index) => (
+          <div
+            key={`${brand}-${index}`}
+            className="flex-shrink-0 px-6 sm:px-10 lg:px-12"
+          >
+            <span className="text-[16px] sm:text-[20px] lg:text-[24px] font-semibold text-black/30 hover:text-black/70 transition-colors duration-300 whitespace-nowrap cursor-default">
+              {brand}
+            </span>
+          </div>
+        ))}
       </div>
+
+      {/* CSS for animation */}
+      <style jsx>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 25s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </section>
   )
 }

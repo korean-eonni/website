@@ -1,0 +1,6 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" rx="8" fill="#ED1C24"/>
+  <path d="M10 20L15 15V18H25V15L30 20L25 25V22H15V25L10 20Z" fill="white"/>
+  <text x="20" y="32" font-size="6" fill="white" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold">НП</text>
+</svg>
+

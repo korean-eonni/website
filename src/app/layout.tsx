@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
+import { CartProvider } from '@/contexts/CartContext'
 
 export const metadata: Metadata = {
   title: 'Eonni - Корейська косметика',
@@ -21,7 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="uk">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <CartProvider>
+          {children}
+        </CartProvider>
+      </body>
     </html>
   )
 }

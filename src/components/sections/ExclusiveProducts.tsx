@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { useCart } from '@/contexts/CartContext'
 
 export interface Product {
   id: string
@@ -48,28 +50,104 @@ const fallbackProducts: Product[] = [
   },
 ]
 
+// Product Card Component
+function ProductCard({ product, addingId, onAddToCart }: { 
+  product: Product
+  addingId: string | null
+  onAddToCart: (id: string) => void 
+}) {
+  return (
+    <Link
+      href={`/product/${product.id}`}
+      className="group block"
+    >
+      <div className="relative w-full aspect-square rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)] group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-shadow">
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(min-width: 1024px) 360px, (min-width: 640px) 320px, 50vw"
+        />
+
+        {product.isNew && (
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 h-[20px] sm:h-[22px] px-2 rounded-[6px] bg-white text-black uppercase flex items-center text-[12px] sm:text-[14px] font-medium">
+            NEW
+          </div>
+        )}
+
+        {product.discount && (
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 h-[24px] sm:h-[30px] px-2 sm:px-3 rounded-[6px] sm:rounded-[8px] bg-[#BCC2F4] text-black text-[12px] sm:text-[14px] font-semibold flex items-center">
+            -₴{product.discount}
+          </div>
+        )}
+
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onAddToCart(product.id)
+          }}
+          disabled={addingId === product.id}
+          className={`absolute bottom-2 right-2 sm:bottom-3 sm:right-3 rounded-lg p-2 sm:p-2.5 transition-all shadow-md ${
+            addingId === product.id 
+              ? 'bg-[#6046A3] text-white' 
+              : 'bg-white hover:bg-[#F5F5F5] text-black'
+          }`}
+          aria-label="Додати в кошик"
+        >
+          {addingId === product.id ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Product Info */}
+      <div className="mt-3">
+        <h3 className="text-black text-[14px] sm:text-[16px] leading-[18px] sm:leading-[22px] font-normal mb-1 line-clamp-2 min-h-[36px] sm:min-h-[44px]">
+          {product.name}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          <span className="text-black text-[16px] sm:text-[18px] font-semibold">
+            ₴{product.price}
+          </span>
+          {product.originalPrice && (
+            <span className="text-[#999999] line-through text-[12px] sm:text-[14px]">
+              ₴{product.originalPrice}
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 export default function ExclusiveProducts({ products }: ExclusiveProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [itemsPerView, setItemsPerView] = useState(3)
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const { addToCart } = useCart()
   const displayProducts = products && products.length > 0 ? products : fallbackProducts
 
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth
-      if (width < 768) {
-        setItemsPerView(1)
-      } else if (width < 1024) {
-        setItemsPerView(2)
-      } else {
-        setItemsPerView(3)
-      }
-    }
-
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
+  // For desktop slider
+  const itemsPerView = 3
   const maxIndex = Math.max(0, displayProducts.length - itemsPerView)
 
   useEffect(() => {
@@ -86,129 +164,66 @@ export default function ExclusiveProducts({ products }: ExclusiveProductsProps) 
     setCurrentIndex((prev) => (prev < maxIndex ? prev + 1 : maxIndex))
   }
 
-  const handleAddToCart = (productId: string) => {
-    console.log('Add to cart:', productId)
+  const handleAddToCart = async (productId: string) => {
+    setAddingId(productId)
+    await addToCart(productId)
+    setTimeout(() => setAddingId(null), 500)
   }
 
-  const visibleProducts = displayProducts.slice(currentIndex, currentIndex + itemsPerView)
+  const sliderProducts = displayProducts.slice(currentIndex, currentIndex + itemsPerView)
+  const mobileProducts = displayProducts.slice(0, 6)
 
   return (
-    <section className="bg-white py-16 sm:py-20">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
-        <div className="flex items-start justify-between gap-6 mb-10">
-          <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
+    <section className="bg-white py-10 sm:py-16 lg:py-20">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[72px] xl:px-[100px]">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 sm:mb-10">
+          <h2 className="font-bebas uppercase text-black text-[40px] leading-[44px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
             Ексклюзивно у нас
           </h2>
-          <div className="flex items-start">
-            <a
-              href="/catalog"
-              className="inline-flex items-center justify-center bg-primary hover:bg-primary-light text-black font-semibold text-[15px] tracking-[0.1em] px-10 py-4 rounded-[12px] transition-colors duration-300 uppercase shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
-            >
-              Купити
-            </a>
-          </div>
+          <Link
+            href="/catalog?exclusive=true"
+            className="inline-flex items-center justify-center bg-[#BCC2F4] hover:bg-[#A8B0E8] text-black font-semibold text-[14px] sm:text-[15px] tracking-[0.05em] px-6 sm:px-10 py-3 sm:py-4 rounded-[10px] sm:rounded-[12px] transition-colors uppercase self-start"
+          >
+            Купити
+          </Link>
         </div>
 
-        <div className="relative">
+        {/* Mobile: 2-column grid (hidden on md+) */}
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {mobileProducts.map((product) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              addingId={addingId}
+              onAddToCart={handleAddToCart}
+            />
+          ))}
+        </div>
+
+        {/* Desktop: Slider (hidden on mobile) */}
+        <div className="hidden md:block relative">
           <div className="overflow-hidden">
-            <div className="flex gap-5 sm:gap-6">
-              {visibleProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex-shrink-0 w-full sm:w-[320px] lg:w-[360px] xl:w-[393px]"
-                >
-                  <div className="relative w-full h-[340px] sm:h-[360px] lg:h-[380px] xl:h-[400px] rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 1280px) 393px, (min-width: 1024px) 360px, (min-width: 640px) 320px, 100vw"
-                      priority
-                    />
-
-                    {product.discount && (
-                      <div className="absolute top-3 left-3 h-[30px] px-3 rounded-[8px] bg-[#BCC2F4] text-black text-[16px] font-semibold tracking-[0.02em] flex items-center shadow-[0_6px_16px_rgba(188,194,244,0.45)]">
-                        Знижка ₴{product.discount}
-                      </div>
-                    )}
-
-                    {product.isNew && (
-                      <div
-                        className="absolute top-3 right-3 h-[22px] px-2 rounded-[6px] bg-white text-black uppercase flex items-center"
-                        style={{
-                          fontFamily: 'Gilroy, sans-serif',
-                          fontSize: '16px',
-                          lineHeight: '22px',
-                          fontWeight: 400,
-                          letterSpacing: '0',
-                        }}
-                      >
-                        NEW
-                      </div>
-                    )}
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAddToCart(product.id)
-                      }}
-                      className="absolute bottom-3 right-3 bg-white rounded-lg p-2.5 hover:bg-[#F5F5F5] transition-colors shadow-md"
-                      aria-label="Add to cart"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="9" cy="21" r="1" />
-                        <circle cx="20" cy="21" r="1" />
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div>
-                    <h3
-                      className="text-black text-[18px] leading-[24px] font-normal mb-2"
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        minHeight: '48px',
-                      }}
-                    >
-                      {product.name}
-                    </h3>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-black text-[18px] leading-[24px] font-semibold">
-                        ₴{product.price}
-                      </span>
-                      {product.originalPrice && (
-                        <span className="text-[#999999] line-through text-[14px] leading-[20px] font-normal">
-                          ₴{product.originalPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+            <div className="flex gap-6">
+              {sliderProducts.map((product) => (
+                <div key={product.id} className="flex-shrink-0 w-[320px] lg:w-[360px] xl:w-[393px]">
+                  <ProductCard 
+                    product={product} 
+                    addingId={addingId}
+                    onAddToCart={handleAddToCart}
+                  />
                 </div>
               ))}
             </div>
           </div>
 
-          {displayProducts.length > 1 && (
+          {/* Navigation Buttons */}
+          {displayProducts.length > 3 && (
             <>
               <button
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
-                className="absolute left-0 lg:-left-10 top-[170px] sm:top-[180px] lg:top-[190px] xl:top-[200px] disabled:opacity-0 disabled:pointer-events-none p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
+                className="absolute -left-4 lg:-left-10 top-[180px] lg:top-[190px] disabled:opacity-0 disabled:pointer-events-none p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
                 aria-label="Попередній продукт"
               >
                 <Image
@@ -222,7 +237,7 @@ export default function ExclusiveProducts({ products }: ExclusiveProductsProps) 
               <button
                 onClick={handleNext}
                 disabled={currentIndex >= maxIndex}
-                className="absolute right-4 sm:right-6 lg:right-8 top-[170px] sm:top-[180px] lg:top-[190px] xl:top-[200px] disabled:opacity-30 disabled:cursor-not-allowed p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
+                className="absolute right-6 lg:right-8 top-[180px] lg:top-[190px] disabled:opacity-30 disabled:cursor-not-allowed p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
                 aria-label="Наступний продукт"
               >
                 <Image
@@ -235,6 +250,18 @@ export default function ExclusiveProducts({ products }: ExclusiveProductsProps) 
             </>
           )}
         </div>
+
+        {/* View All Link on Mobile */}
+        {displayProducts.length > 6 && (
+          <div className="mt-6 text-center md:hidden">
+            <Link
+              href="/catalog?exclusive=true"
+              className="text-[#6046A3] font-semibold text-[14px] hover:underline"
+            >
+              Переглянути всі →
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   )

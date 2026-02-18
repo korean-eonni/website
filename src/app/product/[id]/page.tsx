@@ -9,6 +9,7 @@ import PromoBanner from '@/components/sections/PromoBanner'
 import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
+import { useCart } from '@/contexts/CartContext'
 
 type Product = {
   id: string
@@ -864,9 +865,17 @@ function ProductReviewsSection({
 function SimilarProductsSection({ products, currentProductId }: { products: SimilarProduct[]; currentProductId: string }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [itemsPerView, setItemsPerView] = useState(3)
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const { addToCart } = useCart()
   
   // Filter out current product
   const similarProducts = products.filter(p => p.id !== currentProductId).slice(0, 6)
+  
+  const handleAddToCart = async (productId: string) => {
+    setAddingId(productId)
+    await addToCart(productId)
+    setTimeout(() => setAddingId(null), 500)
+  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -944,16 +953,27 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        console.log('Add to cart:', product.id)
+                        handleAddToCart(product.id)
                       }}
-                      className="absolute bottom-3 right-3 bg-white rounded-lg p-2.5 hover:bg-[#F5F5F5] transition-colors shadow-md"
-                      aria-label="Add to cart"
+                      disabled={addingId === product.id}
+                      className={`absolute bottom-3 right-3 rounded-lg p-2.5 transition-all shadow-md ${
+                        addingId === product.id 
+                          ? 'bg-[#6046A3] text-white' 
+                          : 'bg-white hover:bg-[#F5F5F5] text-black'
+                      }`}
+                      aria-label="Додати в кошик"
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="9" cy="21" r="1" />
-                        <circle cx="20" cy="21" r="1" />
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                      </svg>
+                      {addingId === product.id ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="21" r="1" />
+                          <circle cx="20" cy="21" r="1" />
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                        </svg>
+                      )}
                     </button>
                   </div>
 
@@ -1006,6 +1026,7 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
 export default function ProductPage() {
   const params = useParams()
   const productId = params.id as string
+  const { addToCart } = useCart()
   
   const [product, setProduct] = useState<Product | null>(null)
   const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([])
@@ -1015,6 +1036,7 @@ export default function ProductPage() {
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [selectedVolume, setSelectedVolume] = useState<string>('')
+  const [addingToCart, setAddingToCart] = useState(false)
 
   const fetchReviews = async (id: string) => {
     try {
@@ -1073,8 +1095,11 @@ export default function ProductPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-white">
-        <Header />
-        <PromoBanner />
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+          <Header />
+          <PromoBanner />
+        </div>
+        <div className="h-[116px] sm:h-[132px]" />
         <div className="flex items-center justify-center py-32">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#BCC2F4]"></div>
         </div>
@@ -1086,8 +1111,11 @@ export default function ProductPage() {
   if (error || !product) {
     return (
       <main className="min-h-screen bg-white">
-        <Header />
-        <PromoBanner />
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+          <Header />
+          <PromoBanner />
+        </div>
+        <div className="h-[116px] sm:h-[132px]" />
         <div className="flex flex-col items-center justify-center py-32">
           <h1 className="text-2xl font-semibold text-black mb-4">Товар не знайдено</h1>
           <Link href="/catalog" className="text-[#7C83C9] hover:underline">
@@ -1124,9 +1152,15 @@ export default function ProductPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Header />
-      <PromoBanner />
+      {/* Fixed header for mobile */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+        <Header />
+        <PromoBanner />
+      </div>
       
+      {/* Spacer for fixed header */}
+      <div className="h-[116px] sm:h-[132px]" />
+
       {/* Product Hero Section */}
       <section className="py-8 sm:py-12">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
@@ -1176,12 +1210,36 @@ export default function ProductPage() {
               </div>
 
               <div className="flex flex-col gap-3 mt-auto">
-                <button className="w-full max-w-[605px] h-[50px] bg-[#BCC2F4] text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-[#A8AFEB] transition-colors">
-                  Додати в кошик
+                <button 
+                  onClick={async () => {
+                    setAddingToCart(true)
+                    for (let i = 0; i < quantity; i++) {
+                      await addToCart(productId)
+                    }
+                    setTimeout(() => setAddingToCart(false), 1000)
+                  }}
+                  disabled={addingToCart}
+                  className={`w-full max-w-[605px] h-[50px] font-semibold text-[16px] uppercase tracking-wide transition-all ${
+                    addingToCart 
+                      ? 'bg-[#6046A3] text-white' 
+                      : 'bg-[#BCC2F4] text-black hover:bg-[#A8AFEB]'
+                  }`}
+                >
+                  {addingToCart ? '✓ Додано в кошик' : 'Додати в кошик'}
                 </button>
-                <button className="w-full max-w-[605px] h-[50px] bg-white border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors">
+                <Link 
+                  href="/checkout"
+                  onClick={async (e) => {
+                    e.preventDefault()
+                    for (let i = 0; i < quantity; i++) {
+                      await addToCart(productId)
+                    }
+                    window.location.href = '/checkout'
+                  }}
+                  className="w-full max-w-[605px] h-[50px] bg-white border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
+                >
                   Купити в один клік
-                </button>
+                </Link>
               </div>
             </div>
           </div>

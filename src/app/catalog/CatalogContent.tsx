@@ -11,6 +11,7 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { useCart } from '@/contexts/CartContext'
 
 type Product = {
   id: string
@@ -33,25 +34,8 @@ type Product = {
   ingredients: string | null
 }
 
-// Toggle component
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`w-[55px] h-[30px] rounded-[20px] border border-[#BBBBBB] p-[5px] transition-colors ${
-        checked ? 'bg-[#BCC2F4]' : 'bg-white'
-      }`}
-    >
-      <div
-        className={`w-[20px] h-[20px] rounded-full transition-all ${
-          checked ? 'bg-[#6046A3] translate-x-[25px]' : 'bg-[#BBBBBB] translate-x-0'
-        }`}
-      />
-    </button>
-  )
-}
+const PRODUCTS_PER_PAGE = 20
 
-// Checkbox component
 function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer group">
@@ -72,24 +56,14 @@ function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (c
   )
 }
 
-// Filter section component
 function FilterSection({ 
-  title, 
-  isOpen, 
-  onToggle, 
-  children 
+  title, isOpen, onToggle, children 
 }: { 
-  title: string; 
-  isOpen: boolean; 
-  onToggle: () => void; 
-  children: React.ReactNode 
+  title: string; isOpen: boolean; onToggle: () => void; children: React.ReactNode 
 }) {
   return (
     <div className="border-b border-[#E5E5E5] pb-4">
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-between w-full py-2"
-      >
+      <button onClick={onToggle} className="flex items-center justify-between w-full py-2">
         <span className="font-gilroy font-medium text-[16px] leading-[21px] text-black">{title}</span>
         <span className="text-[20px] text-[#666]">{isOpen ? '−' : '+'}</span>
       </button>
@@ -98,7 +72,6 @@ function FilterSection({
   )
 }
 
-// Active filter tag
 function ActiveFilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <div className="inline-flex items-center gap-[10px] h-[30px] px-[10px] bg-[#FFE8F0] rounded-sm">
@@ -112,7 +85,6 @@ function ActiveFilterTag({ label, onRemove }: { label: string; onRemove: () => v
   )
 }
 
-// Volume option button
 function VolumeButton({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
   return (
     <button
@@ -126,11 +98,16 @@ function VolumeButton({ label, selected, onClick }: { label: string; selected: b
   )
 }
 
-// Product card component
-function ProductCard({ product }: { product: Product }) {
-  const displayName = product.short_description 
-    ? `${product.short_description} – ${product.name}`
-    : product.name
+function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (productId: string) => void }) {
+  const [adding, setAdding] = useState(false)
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setAdding(true)
+    await onAddToCart(product.id)
+    setTimeout(() => setAdding(false), 500)
+  }
 
   return (
     <Link href={`/product/${product.id}`} className="group block">
@@ -140,10 +117,11 @@ function ProductCard({ product }: { product: Product }) {
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
-          sizes="(min-width: 1024px) 288px, (min-width: 640px) 50vw, 100vw"
+          sizes="(min-width: 1280px) 288px, (min-width: 640px) 50vw, 100vw"
+          loading="lazy"
         />
         
-        {product.discount_amount && product.discount_amount > 0 && (
+        {product.discount_amount != null && product.discount_amount > 0 && (
           <div className="absolute top-3 left-3 h-[30px] px-3 bg-[#BCC2F4] text-black text-[14px] font-semibold flex items-center">
             Знижка ₴{product.discount_amount}
           </div>
@@ -156,18 +134,24 @@ function ProductCard({ product }: { product: Product }) {
         )}
         
         <button
-          className="absolute bottom-3 right-3 w-[40px] h-[40px] bg-white rounded-lg flex items-center justify-center hover:bg-[#F5F5F5] transition-colors shadow-sm"
+          className={`absolute bottom-3 right-3 w-[40px] h-[40px] rounded-lg flex items-center justify-center transition-all shadow-sm ${
+            adding ? 'bg-[#6046A3] text-white' : 'bg-white hover:bg-[#F5F5F5] text-black'
+          }`}
           aria-label="Додати в кошик"
-          onClick={(e) => {
-            e.preventDefault()
-            // Add to cart logic
-          }}
+          onClick={handleAddToCart}
+          disabled={adding}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
+          {adding ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+          )}
         </button>
       </div>
       
@@ -181,7 +165,7 @@ function ProductCard({ product }: { product: Product }) {
           minHeight: '72px',
         }}
       >
-        {displayName}
+        {product.name}
       </h3>
       
       <div className="flex items-center gap-2">
@@ -198,24 +182,42 @@ function ProductCard({ product }: { product: Product }) {
   )
 }
 
-export default function CatalogContent() {
+function ProductSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="w-full aspect-square bg-gray-200 mb-4 rounded-lg" />
+      <div className="h-[72px] bg-gray-200 mb-2 rounded" />
+      <div className="h-[27px] w-[80px] bg-gray-200 rounded" />
+    </div>
+  )
+}
+
+export default function CatalogContent({ initialProducts }: { initialProducts?: Product[] }) {
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get('category')
+  const searchParam = searchParams.get('search')
+  const { addToCart } = useCart()
   
-  const [products, setProducts] = useState<Product[]>([])
-  const [exclusiveProducts, setExclusiveProducts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<Product[]>(initialProducts || [])
+  const [loading, setLoading] = useState(!(initialProducts && initialProducts.length > 0))
   const [filtersOpen, setFiltersOpen] = useState(false)
   
+  const [displayCount, setDisplayCount] = useState(PRODUCTS_PER_PAGE)
+  const [loadingMore, setLoadingMore] = useState(false)
+  
   // Filter states
-  const [inStockOnly, setInStockOnly] = useState(false)
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000])
-  const [maxPrice, setMaxPrice] = useState(5000)
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000])
+  const [priceInitialized, setPriceInitialized] = useState(false)
   const [selectedSkinTypes, setSelectedSkinTypes] = useState<string[]>([])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedVolumes, setSelectedVolumes] = useState<string[]>([])
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'price-desc' | 'price-asc' | 'newest'>('price-desc')
+  
+  // Show more states
+  const [showAllBrands, setShowAllBrands] = useState(false)
+  const [showAllIngredients, setShowAllIngredients] = useState(false)
+  const [showAllSkinTypes, setShowAllSkinTypes] = useState(false)
   
   // Filter section open states
   const [priceOpen, setPriceOpen] = useState(true)
@@ -224,49 +226,63 @@ export default function CatalogContent() {
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
   const [volumeOpen, setVolumeOpen] = useState(true)
   
-  // Fetch products
+  // Computed max price
+  const maxPrice = useMemo(() => {
+    const prices = products.map(p => p.sale_price ?? 0).filter(p => p > 0)
+    return prices.length > 0 ? Math.ceil(Math.max(...prices)) : 5000
+  }, [products])
+  
+  // Initialize price range once when products are loaded
   useEffect(() => {
+    if (!priceInitialized && products.length > 0) {
+      setPriceRange([0, maxPrice])
+      setPriceInitialized(true)
+    }
+  }, [maxPrice, priceInitialized, products.length])
+  
+  // Fetch products client-side only if not prefetched
+  useEffect(() => {
+    if (initialProducts && initialProducts.length > 0) return
+    
     async function fetchProducts() {
       try {
         const res = await fetch('/api/products')
         const data = await res.json()
-        // Handle both array response and {products: [...]} response
         const productsArray = Array.isArray(data) ? data : (data.products || [])
         setProducts(productsArray)
-        
-        // Calculate max price
-        const prices = productsArray.map((p: Product) => p.sale_price ?? 0).filter((p: number) => p > 0)
-        if (prices.length > 0) {
-          const max = Math.max(...prices)
-          setMaxPrice(max)
-          setPriceRange([0, max])
-        }
-        
-        // Get exclusive products for the section
-        const exclusive = productsArray
-          .filter((p: Product) => p.is_exclusive === 1)
-          .slice(0, 6)
-          .map((p: Product) => ({
-            id: p.id,
-            name: p.name,
-            price: p.sale_price ?? 0,
-            originalPrice: p.original_price ?? undefined,
-            discount: p.discount_amount ?? undefined,
-            image: p.image_url || p.image_path || '/products/product-1.png',
-            isNew: p.is_new === 1,
-            slug: p.id,
-          }))
-        setExclusiveProducts(exclusive)
-      } catch (error) {
-        console.error('Failed to fetch products:', error)
+      } catch {
+        // Failed to fetch
       } finally {
         setLoading(false)
       }
     }
     fetchProducts()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   
-  // Extract unique filter values
+  // Exclusive products for the section below
+  const exclusiveProducts = useMemo(() => {
+    return products
+      .filter(p => p.is_exclusive === 1)
+      .slice(0, 6)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.sale_price ?? 0,
+        originalPrice: p.original_price ?? undefined,
+        discount: p.discount_amount ?? undefined,
+        image: p.image_url || p.image_path || '/products/product-1.png',
+        isNew: p.is_new === 1,
+        slug: p.id,
+      }))
+  }, [products])
+  
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(PRODUCTS_PER_PAGE)
+  }, [categoryParam, searchParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, sortBy])
+  
+  // Extract unique filter values - split comma-separated values
   const filterOptions = useMemo(() => {
     const skinTypes = new Set<string>()
     const brands = new Set<string>()
@@ -274,14 +290,24 @@ export default function CatalogContent() {
     const ingredients = new Set<string>()
     
     products.forEach(p => {
-      if (p.skin_type) skinTypes.add(p.skin_type)
+      if (p.skin_type) {
+        p.skin_type.split(',').forEach(st => {
+          const trimmed = st.trim()
+          if (trimmed) skinTypes.add(trimmed)
+        })
+      }
       if (p.brand) brands.add(p.brand)
       if (p.volume_options) {
-        p.volume_options.split(',').forEach(v => volumes.add(v.trim()))
+        p.volume_options.split(',').forEach(v => {
+          const trimmed = v.trim()
+          if (trimmed) volumes.add(trimmed)
+        })
       }
       if (p.ingredients) {
-        // Extract key ingredients (first few)
-        p.ingredients.split(',').slice(0, 5).forEach(i => ingredients.add(i.trim()))
+        p.ingredients.split(',').forEach(i => {
+          const trimmed = i.trim()
+          if (trimmed) ingredients.add(trimmed)
+        })
       }
     })
     
@@ -293,7 +319,7 @@ export default function CatalogContent() {
         const numB = parseInt(b) || 0
         return numA - numB
       }),
-      ingredients: Array.from(ingredients).filter(Boolean).sort().slice(0, 15),
+      ingredients: Array.from(ingredients).filter(Boolean).sort(),
     }
   }, [products])
   
@@ -301,17 +327,26 @@ export default function CatalogContent() {
   const filteredProducts = useMemo(() => {
     let result = [...products]
     
+    // Search filter
+    if (searchParam) {
+      const query = searchParam.toLowerCase()
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(query) ||
+        (p.brand && p.brand.toLowerCase().includes(query)) ||
+        (p.tags && p.tags.toLowerCase().includes(query)) ||
+        (p.short_description && p.short_description.toLowerCase().includes(query)) ||
+        (p.category && p.category.toLowerCase().includes(query)) ||
+        (p.subcategory && p.subcategory.toLowerCase().includes(query)) ||
+        (p.ingredients && p.ingredients.toLowerCase().includes(query))
+      )
+    }
+    
     // Category filter from URL
     if (categoryParam) {
       result = result.filter(p => 
         p.category?.toLowerCase().includes(categoryParam.toLowerCase()) ||
         p.subcategory?.toLowerCase().includes(categoryParam.toLowerCase())
       )
-    }
-    
-    // In stock filter
-    if (inStockOnly) {
-      result = result.filter(p => (p.stock_quantity ?? 0) > 0)
     }
     
     // Price filter
@@ -322,9 +357,11 @@ export default function CatalogContent() {
     
     // Skin type filter
     if (selectedSkinTypes.length > 0) {
-      result = result.filter(p => 
-        selectedSkinTypes.some(st => p.skin_type?.includes(st))
-      )
+      result = result.filter(p => {
+        if (!p.skin_type) return false
+        const productTypes = p.skin_type.split(',').map(s => s.trim())
+        return selectedSkinTypes.some(st => productTypes.some(pt => pt.includes(st)))
+      })
     }
     
     // Brand filter
@@ -341,9 +378,11 @@ export default function CatalogContent() {
     
     // Ingredients filter
     if (selectedIngredients.length > 0) {
-      result = result.filter(p => 
-        selectedIngredients.some(i => p.ingredients?.toLowerCase().includes(i.toLowerCase()))
-      )
+      result = result.filter(p => {
+        if (!p.ingredients) return false
+        const productIngredients = p.ingredients.toLowerCase()
+        return selectedIngredients.some(i => productIngredients.includes(i.toLowerCase()))
+      })
     }
     
     // Sort
@@ -360,11 +399,36 @@ export default function CatalogContent() {
     }
     
     return result
-  }, [products, categoryParam, inStockOnly, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, sortBy])
+  }, [products, searchParam, categoryParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, sortBy])
   
-  // Get active filters for display
+  const displayedProducts = useMemo(() => {
+    return filteredProducts.slice(0, displayCount)
+  }, [filteredProducts, displayCount])
+  
+  const hasMoreProducts = displayCount < filteredProducts.length
+  
+  const loadMoreProducts = useCallback(() => {
+    setLoadingMore(true)
+    setTimeout(() => {
+      setDisplayCount(prev => prev + PRODUCTS_PER_PAGE)
+      setLoadingMore(false)
+    }, 300)
+  }, [])
+  
   const activeFilters = useMemo(() => {
     const filters: { label: string; onRemove: () => void }[] = []
+    
+    if (searchParam) {
+      filters.push({
+        label: `Пошук: "${searchParam}"`,
+        onRemove: () => {
+          const url = new URL(window.location.href)
+          url.searchParams.delete('search')
+          window.history.replaceState({}, '', url.toString())
+          window.location.reload()
+        }
+      })
+    }
     
     selectedSkinTypes.forEach(st => {
       filters.push({
@@ -395,35 +459,41 @@ export default function CatalogContent() {
     })
     
     return filters
-  }, [selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients])
+  }, [searchParam, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients])
   
   const clearAllFilters = useCallback(() => {
-    setInStockOnly(false)
     setPriceRange([0, maxPrice])
     setSelectedSkinTypes([])
     setSelectedBrands([])
     setSelectedVolumes([])
     setSelectedIngredients([])
-  }, [maxPrice])
+    if (searchParam) {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('search')
+      window.history.replaceState({}, '', url.toString())
+      window.location.reload()
+    }
+  }, [maxPrice, searchParam])
   
-  // Get page title based on category
   const pageTitle = useMemo(() => {
+    if (searchParam) return `Пошук: "${searchParam}"`
     if (categoryParam) {
       const categoryMap: Record<string, string> = {
         'face': 'Косметика для Обличчя',
         'body': 'Косметика для Тіла',
+        'hair': 'Косметика для Волосся',
         'health': 'HEALTH & CARE',
         'makeup': 'Макіяж',
+        'testers': 'Тестери',
       }
       return categoryMap[categoryParam.toLowerCase()] || categoryParam
     }
     return 'Каталог'
-  }, [categoryParam])
-  
-  // Count in-stock products
-  const inStockCount = useMemo(() => {
-    return products.filter(p => (p.stock_quantity ?? 0) > 0).length
-  }, [products])
+  }, [categoryParam, searchParam])
+
+  const visibleBrands = showAllBrands ? filterOptions.brands : filterOptions.brands.slice(0, 8)
+  const visibleSkinTypes = showAllSkinTypes ? filterOptions.skinTypes : filterOptions.skinTypes.slice(0, 6)
+  const visibleIngredients = showAllIngredients ? filterOptions.ingredients : filterOptions.ingredients.slice(0, 8)
 
   return (
     <main className="min-h-screen bg-white">
@@ -452,7 +522,6 @@ export default function CatalogContent() {
             
             {/* Filters Sidebar */}
             <aside className="w-full lg:w-[260px] flex-shrink-0">
-              {/* Mobile filter toggle */}
               <button
                 onClick={() => setFiltersOpen(!filtersOpen)}
                 className="lg:hidden w-[150px] h-[40px] px-[24px] py-[10px] border border-black flex items-center gap-[10px] mb-6"
@@ -464,16 +533,9 @@ export default function CatalogContent() {
               </button>
               
               <div className={`${filtersOpen ? 'block' : 'hidden'} lg:block space-y-6`}>
-                {/* Results count */}
                 <p className="font-gilroy text-[18px] leading-[24px] text-black">
                   Результати: {filteredProducts.length}
                 </p>
-                
-                {/* In stock toggle */}
-                <div className="flex items-center gap-3">
-                  <Toggle checked={inStockOnly} onChange={setInStockOnly} />
-                  <span className="font-gilroy text-[14px] text-black">В наявності ({inStockCount})</span>
-                </div>
                 
                 {/* Price filter */}
                 <FilterSection title="Ціна" isOpen={priceOpen} onToggle={() => setPriceOpen(!priceOpen)}>
@@ -517,83 +579,101 @@ export default function CatalogContent() {
                 </FilterSection>
                 
                 {/* Skin Type filter */}
-                <FilterSection title={`За типом шкіри (${filterOptions.skinTypes.length})`} isOpen={skinTypeOpen} onToggle={() => setSkinTypeOpen(!skinTypeOpen)}>
-                  {filterOptions.skinTypes.map(st => (
-                    <Checkbox
-                      key={st}
-                      checked={selectedSkinTypes.includes(st)}
-                      onChange={(checked) => {
-                        if (checked) {
-                          setSelectedSkinTypes([...selectedSkinTypes, st])
-                        } else {
-                          setSelectedSkinTypes(selectedSkinTypes.filter(s => s !== st))
-                        }
-                      }}
-                      label={st}
-                    />
-                  ))}
-                </FilterSection>
-                
-                {/* Brand filter */}
-                <FilterSection title="Бренд" isOpen={brandOpen} onToggle={() => setBrandOpen(!brandOpen)}>
-                  {filterOptions.brands.slice(0, 6).map(brand => (
-                    <Checkbox
-                      key={brand}
-                      checked={selectedBrands.includes(brand)}
-                      onChange={(checked) => {
-                        if (checked) {
-                          setSelectedBrands([...selectedBrands, brand])
-                        } else {
-                          setSelectedBrands(selectedBrands.filter(b => b !== brand))
-                        }
-                      }}
-                      label={brand}
-                    />
-                  ))}
-                  {filterOptions.brands.length > 6 && (
-                    <button className="text-[14px] text-[#6046A3] hover:underline mt-2">
-                      Показати більше
-                    </button>
-                  )}
-                </FilterSection>
-                
-                {/* Ingredients filter */}
-                <FilterSection title="За активними компонентами" isOpen={ingredientsOpen} onToggle={() => setIngredientsOpen(!ingredientsOpen)}>
-                  {filterOptions.ingredients.map(ing => (
-                    <Checkbox
-                      key={ing}
-                      checked={selectedIngredients.includes(ing)}
-                      onChange={(checked) => {
-                        if (checked) {
-                          setSelectedIngredients([...selectedIngredients, ing])
-                        } else {
-                          setSelectedIngredients(selectedIngredients.filter(i => i !== ing))
-                        }
-                      }}
-                      label={ing}
-                    />
-                  ))}
-                </FilterSection>
-                
-                {/* Volume filter */}
-                <FilterSection title="Розмір" isOpen={volumeOpen} onToggle={() => setVolumeOpen(!volumeOpen)}>
-                  <div className="flex flex-wrap gap-2">
-                    {filterOptions.volumes.map(vol => (
-                      <VolumeButton
-                        key={vol}
-                        label={vol}
-                        selected={selectedVolumes.includes(vol)}
-                        onClick={() => {
-                          if (selectedVolumes.includes(vol)) {
-                            setSelectedVolumes(selectedVolumes.filter(v => v !== vol))
-                          } else {
-                            setSelectedVolumes([...selectedVolumes, vol])
-                          }
+                {filterOptions.skinTypes.length > 0 && (
+                  <FilterSection title={`За типом шкіри (${filterOptions.skinTypes.length})`} isOpen={skinTypeOpen} onToggle={() => setSkinTypeOpen(!skinTypeOpen)}>
+                    {visibleSkinTypes.map(st => (
+                      <Checkbox
+                        key={st}
+                        checked={selectedSkinTypes.includes(st)}
+                        onChange={(checked) => {
+                          if (checked) setSelectedSkinTypes(prev => [...prev, st])
+                          else setSelectedSkinTypes(prev => prev.filter(s => s !== st))
                         }}
+                        label={st}
                       />
                     ))}
-                  </div>
-                </FilterSection>
+                    {filterOptions.skinTypes.length > 6 && (
+                      <button
+                        onClick={() => setShowAllSkinTypes(!showAllSkinTypes)}
+                        className="text-[14px] text-[#6046A3] hover:underline mt-2"
+                      >
+                        {showAllSkinTypes ? 'Показати менше' : `Показати ще (${filterOptions.skinTypes.length - 6})`}
+                      </button>
+                    )}
+                  </FilterSection>
+                )}
+                
+                {/* Brand filter */}
+                {filterOptions.brands.length > 0 && (
+                  <FilterSection title="Бренд" isOpen={brandOpen} onToggle={() => setBrandOpen(!brandOpen)}>
+                    {visibleBrands.map(brand => (
+                      <Checkbox
+                        key={brand}
+                        checked={selectedBrands.includes(brand)}
+                        onChange={(checked) => {
+                          if (checked) setSelectedBrands(prev => [...prev, brand])
+                          else setSelectedBrands(prev => prev.filter(b => b !== brand))
+                        }}
+                        label={brand}
+                      />
+                    ))}
+                    {filterOptions.brands.length > 8 && (
+                      <button
+                        onClick={() => setShowAllBrands(!showAllBrands)}
+                        className="text-[14px] text-[#6046A3] hover:underline mt-2"
+                      >
+                        {showAllBrands ? 'Показати менше' : `Показати ще (${filterOptions.brands.length - 8})`}
+                      </button>
+                    )}
+                  </FilterSection>
+                )}
+                
+                {/* Ingredients filter */}
+                {filterOptions.ingredients.length > 0 && (
+                  <FilterSection title="За активними компонентами" isOpen={ingredientsOpen} onToggle={() => setIngredientsOpen(!ingredientsOpen)}>
+                    {visibleIngredients.map(ing => (
+                      <Checkbox
+                        key={ing}
+                        checked={selectedIngredients.includes(ing)}
+                        onChange={(checked) => {
+                          if (checked) setSelectedIngredients(prev => [...prev, ing])
+                          else setSelectedIngredients(prev => prev.filter(i => i !== ing))
+                        }}
+                        label={ing}
+                      />
+                    ))}
+                    {filterOptions.ingredients.length > 8 && (
+                      <button
+                        onClick={() => setShowAllIngredients(!showAllIngredients)}
+                        className="text-[14px] text-[#6046A3] hover:underline mt-2"
+                      >
+                        {showAllIngredients ? 'Показати менше' : `Показати ще (${filterOptions.ingredients.length - 8})`}
+                      </button>
+                    )}
+                  </FilterSection>
+                )}
+                
+                {/* Volume filter */}
+                {filterOptions.volumes.length > 0 && (
+                  <FilterSection title="Розмір" isOpen={volumeOpen} onToggle={() => setVolumeOpen(!volumeOpen)}>
+                    <div className="flex flex-wrap gap-2">
+                      {filterOptions.volumes.map(vol => (
+                        <VolumeButton
+                          key={vol}
+                          label={vol}
+                          selected={selectedVolumes.includes(vol)}
+                          onClick={() => {
+                            if (selectedVolumes.includes(vol)) {
+                              setSelectedVolumes(selectedVolumes.filter(v => v !== vol))
+                            } else {
+                              setSelectedVolumes([...selectedVolumes, vol])
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </FilterSection>
+                )}
               </div>
             </aside>
             
@@ -619,7 +699,7 @@ export default function CatalogContent() {
                   <span className="font-gilroy text-[14px] text-[#666]">Сортувати:</span>
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e) => setSortBy(e.target.value as 'price-desc' | 'price-asc' | 'newest')}
                     className="font-gilroy text-[14px] text-black bg-transparent border-none outline-none cursor-pointer"
                   >
                     <option value="price-desc">За ціною (від більшої до меншої)</option>
@@ -633,17 +713,13 @@ export default function CatalogContent() {
               {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="w-full aspect-square bg-gray-200 mb-4" />
-                      <div className="h-[72px] bg-gray-200 mb-2" />
-                      <div className="h-[27px] w-[80px] bg-gray-200" />
-                    </div>
+                    <ProductSkeleton key={i} />
                   ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-16">
                   <p className="font-gilroy text-[18px] text-[#666] mb-4">
-                    Товарів не знайдено
+                    {searchParam ? `За запитом "${searchParam}" нічого не знайдено` : 'Товарів не знайдено'}
                   </p>
                   <button
                     onClick={clearAllFilters}
@@ -653,33 +729,53 @@ export default function CatalogContent() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10">
+                    {displayedProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+                    ))}
+                  </div>
+                  
+                  {/* Show More Button */}
+                  {hasMoreProducts && (
+                    <div className="mt-10 text-center">
+                      <p className="font-gilroy text-[14px] text-[#666] mb-4">
+                        Показано {displayedProducts.length} з {filteredProducts.length} товарів
+                      </p>
+                      <button
+                        onClick={loadMoreProducts}
+                        disabled={loadingMore}
+                        className="inline-flex items-center justify-center h-[50px] px-10 border-2 border-black text-black font-semibold text-[15px] uppercase tracking-[0.05em] hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        {loadingMore ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Завантаження...
+                          </>
+                        ) : (
+                          `Показати ще ${Math.min(PRODUCTS_PER_PAGE, filteredProducts.length - displayCount)} товарів`
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
       </section>
       
-      {/* Exclusive Products Section */}
       {exclusiveProducts.length > 0 && (
         <ExclusiveProducts products={exclusiveProducts} />
       )}
       
-      {/* Reviews Section */}
       <ReviewsSection />
-      
-      {/* Subscribe Section */}
       <SubscribeSection />
-      
-      {/* Delivery Section */}
       <DeliverySection />
-      
       <Footer />
     </main>
   )
 }
-

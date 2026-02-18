@@ -47,14 +47,14 @@ export default function BrandsPage() {
       <section className="relative bg-transparent pb-20">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_25%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_75%_28%,_rgba(207,236,254,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_35%_78%,_rgba(255,245,213,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_80%,_rgba(188,194,244,0.4),_rgba(255,255,255,0)_60%)]" />
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {brands.map((brand) => (
               <div
                 key={brand.slug}
-                className="group rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)]"
+                className="group rounded-[16px] sm:rounded-[20px] border border-[#E5E5E5] bg-white p-3 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)]"
               >
                 <div
-                  className="flex items-center justify-center h-[140px] rounded-[16px] overflow-hidden"
+                  className="flex items-center justify-center h-[100px] sm:h-[140px] rounded-[12px] sm:rounded-[16px] overflow-hidden"
                   style={{ backgroundColor: brand.tone }}
                 >
                   <Image
@@ -62,14 +62,14 @@ export default function BrandsPage() {
                     alt={brand.name}
                     width={180}
                     height={90}
-                    className={`max-h-[70px] max-w-[180px] w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] ${
+                    className={`max-h-[50px] sm:max-h-[70px] max-w-[120px] sm:max-w-[180px] w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] ${
                       brand.logoClassName ?? 'mix-blend-multiply'
                     }`}
                     style={{ transform: `scale(${brand.scale ?? 1})` }}
                   />
                 </div>
-                <div className="mt-4 text-center">
-                  <p className="font-gilroy text-[16px] font-semibold text-black uppercase">
+                <div className="mt-3 sm:mt-4 text-center">
+                  <p className="font-gilroy text-[13px] sm:text-[16px] font-semibold text-black uppercase">
                     {brand.name}
                   </p>
                   <Link
