@@ -117,18 +117,17 @@ export default function Header() {
                   onMouseEnter={() => link.hasDropdown && setOpenDropdown(link.label)}
                   onMouseLeave={() => setOpenDropdown(null)}
                 >
-                  {link.hasDropdown ? (
-                    <button
-                      onClick={() => setOpenDropdown(openDropdown === link.label ? null : link.label)}
-                      className="text-black hover:text-[#666666] transition-colors duration-200"
-                    >
-                      {link.label}
-                    </button>
-                  ) : (
-                    <Link href={link.href} className="text-black hover:text-[#666666] transition-colors duration-200">
-                      {link.label}
-                    </Link>
-                  )}
+                  <Link
+                    href={link.href}
+                    onClick={(e) => {
+                      if (link.hasDropdown) {
+                        (e.target as HTMLElement).blur()
+                      }
+                    }}
+                    className="text-black hover:text-[#666666] transition-colors duration-200"
+                  >
+                    {link.label}
+                  </Link>
                   {link.hasDropdown && link.dropdownItems && (
                     <div className={`absolute left-1/2 top-full z-20 -translate-x-1/2 pt-3 transition-all duration-200 ${openDropdown === link.label ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                       <div className="w-[260px] rounded-[14px] border border-[#E5E5E5] bg-white py-3 shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
