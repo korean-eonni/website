@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface Category {
   id: string
   name: string
   image: string
-  slug: string
+  href: string
 }
 
 export default function Categories() {
@@ -20,31 +21,31 @@ export default function Categories() {
       id: '1',
       name: 'ВЕСЬ АСОРТИМЕНТ',
       image: '/categories/category-1.png',
-      slug: 'all',
+      href: '/catalog',
     },
     {
       id: '2',
       name: 'КОРЕЙСЬКА КОСМЕТИКА\nДЛЯ ОБЛИЧЧЯ',
       image: '/categories/category-2.png',
-      slug: 'face',
+      href: '/catalog?category=face',
     },
     {
       id: '3',
       name: 'КОРЕЙСЬКА КОСМЕТИКА\nДЛЯ ТІЛА',
       image: '/categories/category-3.jpg',
-      slug: 'body',
+      href: '/catalog?category=body',
     },
     {
       id: '4',
       name: 'HEALTH & CARE',
       image: '/categories/category-4.png',
-      slug: 'health-care',
+      href: '/catalog?category=health',
     },
     {
       id: '5',
       name: 'КОРЕЙСЬКА КОСМЕТИКА\nДЛЯ ВОЛОССЯ',
       image: '/categories/category-5.png',
-      slug: 'hair',
+      href: '/catalog?category=hair',
     },
   ]
 
@@ -97,17 +98,18 @@ export default function Categories() {
         >
           <div className="flex gap-5 sm:gap-6 w-max">
             {categories.map((category) => (
-              <div
+              <Link
                 key={category.id}
+                href={category.href}
                 data-category-card
-                className="flex-shrink-0 w-[220px] sm:w-[240px] lg:w-[260px] xl:w-[288px] group cursor-pointer"
+                className="flex-shrink-0 w-[220px] sm:w-[240px] lg:w-[260px] xl:w-[288px] group"
               >
                 <div className="relative w-full h-[240px] sm:h-[260px] xl:h-[288px] rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
                   <Image
                     src={category.image}
                     alt={category.name}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(min-width: 1280px) 288px, (min-width: 1024px) 260px, (min-width: 640px) 240px, 100vw"
                   />
 
@@ -138,7 +140,7 @@ export default function Categories() {
                 >
                   {category.name}
                 </h3>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
