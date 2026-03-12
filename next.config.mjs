@@ -7,7 +7,7 @@ const nextConfig = {
         hostname: '**',
       },
     ],
-    unoptimized: true,
+    minimumCacheTTL: 2592000,
   },
 };
 
