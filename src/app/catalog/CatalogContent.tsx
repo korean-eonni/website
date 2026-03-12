@@ -30,6 +30,7 @@ type Product = {
   stock_quantity: number | null
   skin_type: string | null
   ingredients: string | null
+  rating: number | null
 }
 
 const PRODUCTS_PER_PAGE = 20
@@ -210,15 +211,24 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedVolumes, setSelectedVolumes] = useState<string[]>([])
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([])
+  const [onSaleOnly, setOnSaleOnly] = useState(false)
+  const [minRating, setMinRating] = useState<number>(0)
   const [sortBy, setSortBy] = useState<'price-desc' | 'price-asc' | 'newest'>('price-desc')
-  
+
   // Show more states
   const [showAllBrands, setShowAllBrands] = useState(false)
   const [showAllIngredients, setShowAllIngredients] = useState(false)
   const [showAllSkinTypes, setShowAllSkinTypes] = useState(false)
-  
+  const [showAllSubcategories, setShowAllSubcategories] = useState(false)
+
   // Filter section open states
+  const [categoryOpen, setCategoryOpen] = useState(true)
+  const [subcategoryOpen, setSubcategoryOpen] = useState(true)
   const [priceOpen, setPriceOpen] = useState(true)
+  const [saleOpen, setSaleOpen] = useState(true)
+  const [ratingOpen, setRatingOpen] = useState(true)
   const [skinTypeOpen, setSkinTypeOpen] = useState(true)
   const [brandOpen, setBrandOpen] = useState(true)
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
@@ -278,16 +288,20 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
   // Reset display count when filters change
   useEffect(() => {
     setDisplayCount(PRODUCTS_PER_PAGE)
-  }, [categoryParam, searchParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, sortBy])
+  }, [categoryParam, searchParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, selectedCategories, selectedSubcategories, onSaleOnly, minRating, sortBy])
   
   // Extract unique filter values - split comma-separated values
   const filterOptions = useMemo(() => {
+    const categories = new Set<string>()
+    const subcategories = new Set<string>()
     const skinTypes = new Set<string>()
     const brands = new Set<string>()
     const volumes = new Set<string>()
     const ingredients = new Set<string>()
-    
+
     products.forEach(p => {
+      if (p.category) categories.add(p.category)
+      if (p.subcategory) subcategories.add(p.subcategory)
       if (p.skin_type) {
         p.skin_type.split(',').forEach(st => {
           const trimmed = st.trim()
@@ -308,8 +322,10 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         })
       }
     })
-    
+
     return {
+      categories: Array.from(categories).filter(Boolean).sort(),
+      subcategories: Array.from(subcategories).filter(Boolean).sort(),
       skinTypes: Array.from(skinTypes).filter(Boolean).sort(),
       brands: Array.from(brands).filter(Boolean).sort(),
       volumes: Array.from(volumes).filter(Boolean).sort((a, b) => {
@@ -341,12 +357,32 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     
     // Category filter from URL
     if (categoryParam) {
-      result = result.filter(p => 
+      result = result.filter(p =>
         p.category?.toLowerCase().includes(categoryParam.toLowerCase()) ||
         p.subcategory?.toLowerCase().includes(categoryParam.toLowerCase())
       )
     }
-    
+
+    // Category checkbox filter
+    if (selectedCategories.length > 0) {
+      result = result.filter(p => selectedCategories.includes(p.category || ''))
+    }
+
+    // Subcategory / product type filter
+    if (selectedSubcategories.length > 0) {
+      result = result.filter(p => selectedSubcategories.includes(p.subcategory || ''))
+    }
+
+    // On sale filter
+    if (onSaleOnly) {
+      result = result.filter(p => p.discount_amount != null && p.discount_amount > 0)
+    }
+
+    // Rating filter
+    if (minRating > 0) {
+      result = result.filter(p => (p.rating ?? 0) >= minRating)
+    }
+
     // Price filter
     result = result.filter(p => {
       const price = p.sale_price ?? 0
@@ -397,7 +433,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     }
     
     return result
-  }, [products, searchParam, categoryParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, sortBy])
+  }, [products, searchParam, categoryParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, selectedCategories, selectedSubcategories, onSaleOnly, minRating, sortBy])
   
   const displayedProducts = useMemo(() => {
     return filteredProducts.slice(0, displayCount)
@@ -427,7 +463,35 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         }
       })
     }
-    
+
+    selectedCategories.forEach(c => {
+      filters.push({
+        label: c,
+        onRemove: () => setSelectedCategories(prev => prev.filter(cat => cat !== c))
+      })
+    })
+
+    selectedSubcategories.forEach(sc => {
+      filters.push({
+        label: sc,
+        onRemove: () => setSelectedSubcategories(prev => prev.filter(s => s !== sc))
+      })
+    })
+
+    if (onSaleOnly) {
+      filters.push({
+        label: 'Зі знижкою',
+        onRemove: () => setOnSaleOnly(false)
+      })
+    }
+
+    if (minRating > 0) {
+      filters.push({
+        label: `Від ${minRating} ★`,
+        onRemove: () => setMinRating(0)
+      })
+    }
+
     selectedSkinTypes.forEach(st => {
       filters.push({
         label: st,
@@ -457,10 +521,14 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     })
     
     return filters
-  }, [searchParam, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients])
+  }, [searchParam, selectedCategories, selectedSubcategories, onSaleOnly, minRating, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients])
   
   const clearAllFilters = useCallback(() => {
     setPriceRange([0, maxPrice])
+    setSelectedCategories([])
+    setSelectedSubcategories([])
+    setOnSaleOnly(false)
+    setMinRating(0)
     setSelectedSkinTypes([])
     setSelectedBrands([])
     setSelectedVolumes([])
@@ -491,6 +559,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
 
   const visibleBrands = showAllBrands ? filterOptions.brands : filterOptions.brands.slice(0, 8)
   const visibleSkinTypes = showAllSkinTypes ? filterOptions.skinTypes : filterOptions.skinTypes.slice(0, 6)
+  const visibleSubcategories = showAllSubcategories ? filterOptions.subcategories : filterOptions.subcategories.slice(0, 8)
   const visibleIngredients = showAllIngredients ? filterOptions.ingredients : filterOptions.ingredients.slice(0, 8)
 
   return (
@@ -532,6 +601,48 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
                   Результати: {filteredProducts.length}
                 </p>
                 
+                {/* Category filter */}
+                {filterOptions.categories.length > 0 && (
+                  <FilterSection title="Категорія" isOpen={categoryOpen} onToggle={() => setCategoryOpen(!categoryOpen)}>
+                    {filterOptions.categories.map(cat => (
+                      <Checkbox
+                        key={cat}
+                        checked={selectedCategories.includes(cat)}
+                        onChange={(checked) => {
+                          if (checked) setSelectedCategories(prev => [...prev, cat])
+                          else setSelectedCategories(prev => prev.filter(c => c !== cat))
+                        }}
+                        label={cat}
+                      />
+                    ))}
+                  </FilterSection>
+                )}
+
+                {/* Subcategory / Product type filter */}
+                {filterOptions.subcategories.length > 0 && (
+                  <FilterSection title="Тип продукту" isOpen={subcategoryOpen} onToggle={() => setSubcategoryOpen(!subcategoryOpen)}>
+                    {visibleSubcategories.map(sc => (
+                      <Checkbox
+                        key={sc}
+                        checked={selectedSubcategories.includes(sc)}
+                        onChange={(checked) => {
+                          if (checked) setSelectedSubcategories(prev => [...prev, sc])
+                          else setSelectedSubcategories(prev => prev.filter(s => s !== sc))
+                        }}
+                        label={sc}
+                      />
+                    ))}
+                    {filterOptions.subcategories.length > 8 && (
+                      <button
+                        onClick={() => setShowAllSubcategories(!showAllSubcategories)}
+                        className="text-[14px] text-[#6046A3] hover:underline mt-2"
+                      >
+                        {showAllSubcategories ? 'Показати менше' : `Показати ще (${filterOptions.subcategories.length - 8})`}
+                      </button>
+                    )}
+                  </FilterSection>
+                )}
+
                 {/* Price filter */}
                 <FilterSection title="Ціна" isOpen={priceOpen} onToggle={() => setPriceOpen(!priceOpen)}>
                   <div className="flex items-center gap-2 mb-3">
@@ -573,6 +684,39 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
                   </div>
                 </FilterSection>
                 
+                {/* On Sale filter */}
+                <FilterSection title="Знижки" isOpen={saleOpen} onToggle={() => setSaleOpen(!saleOpen)}>
+                  <Checkbox
+                    checked={onSaleOnly}
+                    onChange={setOnSaleOnly}
+                    label="Тільки зі знижкою"
+                  />
+                </FilterSection>
+
+                {/* Rating filter */}
+                <FilterSection title="Рейтинг" isOpen={ratingOpen} onToggle={() => setRatingOpen(!ratingOpen)}>
+                  <div className="space-y-2">
+                    {[4, 3, 2, 1].map(stars => (
+                      <button
+                        key={stars}
+                        onClick={() => setMinRating(minRating === stars ? 0 : stars)}
+                        className={`flex items-center gap-2 w-full py-1 px-2 rounded transition-colors ${
+                          minRating === stars ? 'bg-[#F5F3FF]' : 'hover:bg-[#F8F7FB]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <svg key={i} width="16" height="16" viewBox="0 0 16 16" fill={i <= stars ? '#F5A623' : 'none'} stroke={i <= stars ? '#F5A623' : '#BBBBBB'} strokeWidth="1">
+                              <path d="M8 1.5l1.76 3.57 3.94.57-2.85 2.78.67 3.93L8 10.52l-3.52 1.83.67-3.93L2.3 5.64l3.94-.57L8 1.5z"/>
+                            </svg>
+                          ))}
+                        </div>
+                        <span className="font-gilroy text-[14px] text-[#666]">від {stars}</span>
+                      </button>
+                    ))}
+                  </div>
+                </FilterSection>
+
                 {/* Skin Type filter */}
                 {filterOptions.skinTypes.length > 0 && (
                   <FilterSection title={`За типом шкіри (${filterOptions.skinTypes.length})`} isOpen={skinTypeOpen} onToggle={() => setSkinTypeOpen(!skinTypeOpen)}>
