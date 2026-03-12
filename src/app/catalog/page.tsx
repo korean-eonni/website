@@ -53,6 +53,7 @@ type CatalogProduct = {
   stock_quantity: number | null
   skin_type: string | null
   ingredients: string | null
+  rating: number | null
 }
 
 export default async function CatalogPage() {
@@ -78,6 +79,7 @@ export default async function CatalogPage() {
       stock_quantity: p.stock_quantity,
       skin_type: p.skin_type,
       ingredients: p.ingredients,
+      rating: p.rating,
     }))
   } catch {
     // Fallback: CatalogContent will fetch client-side
