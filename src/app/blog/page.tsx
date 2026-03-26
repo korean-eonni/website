@@ -1,9 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, FormEvent } from 'react'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 import Image from 'next/image'
+
+function BlogNewsletter() {
+  const [email, setEmail] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    if (!email) return
+    setSubmitted(true)
+  }
+
+  if (submitted) {
+    return (
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <div className="w-[48px] h-[48px] rounded-full bg-[#BCC2F4] flex items-center justify-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <p className="font-gilroy text-[18px] font-semibold">Дякуємо! Ви підписані.</p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-8 flex flex-col sm:flex-row gap-4 max-w-[500px] mx-auto">
+      <input
+        type="email"
+        name="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Ваш email"
+        className="flex-grow h-[52px] rounded-[12px] px-5 bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:border-[#BCC2F4] focus:outline-none"
+        required
+      />
+      <button
+        type="submit"
+        className="h-[52px] px-8 rounded-[12px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[15px] font-semibold hover:bg-[#A8AFEB] transition-colors whitespace-nowrap"
+      >
+        Підписатись
+      </button>
+    </form>
+  )
+}
 
 const featuredPost = {
   slug: '10-step-korean-skincare-routine',
@@ -252,20 +296,7 @@ export default function BlogPage() {
             <p className="mt-3 font-gilroy text-[16px] text-white/80 max-w-[500px] mx-auto">
               Підпишіться на розсилку та дізнавайтесь про нові статті, поради та акції першими.
             </p>
-            <form className="mt-8 flex flex-col sm:flex-row gap-4 max-w-[500px] mx-auto">
-              <input
-                type="email"
-                placeholder="Ваш email"
-                className="flex-grow h-[52px] rounded-[12px] px-5 bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:border-[#BCC2F4] focus:outline-none"
-                required
-              />
-              <button
-                type="submit"
-                className="h-[52px] px-8 rounded-[12px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[15px] font-semibold hover:bg-[#A8AFEB] transition-colors whitespace-nowrap"
-              >
-                Підписатись
-              </button>
-            </form>
+            <BlogNewsletter />
           </div>
         </div>
       </section>

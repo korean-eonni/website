@@ -30,7 +30,7 @@ export default function FeaturedIn() {
             key={`${brand}-${index}`}
             className="flex-shrink-0 px-6 sm:px-10 lg:px-12"
           >
-            <span className="text-[16px] sm:text-[20px] lg:text-[24px] font-semibold text-black/30 hover:text-black/70 transition-colors duration-300 whitespace-nowrap cursor-default">
+            <span className="text-[16px] sm:text-[20px] lg:text-[24px] font-semibold text-[#5C6A7F] hover:text-[#3D4A5C] transition-colors duration-300 whitespace-nowrap cursor-default">
               {brand}
             </span>
           </div>
@@ -48,7 +48,7 @@ export default function FeaturedIn() {
           }
         }
         .animate-marquee {
-          animation: marquee 25s linear infinite;
+          animation: marquee 30s linear infinite;
         }
         .animate-marquee:hover {
           animation-play-state: paused;

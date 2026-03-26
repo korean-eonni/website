@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
+import FloatingIcons from '@/components/FloatingIcons'
 
 export interface Product {
   id: string
@@ -12,6 +13,7 @@ export interface Product {
   originalPrice?: number
   discount?: number
   image: string
+  images?: string[]
   isNew: boolean
   slug: string
 }
@@ -51,24 +53,64 @@ const fallbackProducts: Product[] = [
 ]
 
 // Product Card Component
-function ProductCard({ product, addingId, onAddToCart }: { 
+function ProductCard({ product, addingId, onAddToCart }: {
   product: Product
   addingId: string | null
-  onAddToCart: (id: string) => void 
+  onAddToCart: (id: string) => void
 }) {
+  const allImages = product.images && product.images.length > 1 ? product.images : [product.image]
+  const [hoveredIndex, setHoveredIndex] = useState(0)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const startCycling = () => {
+    if (allImages.length <= 1) return
+    intervalRef.current = setInterval(() => {
+      setHoveredIndex((prev) => (prev + 1) % allImages.length)
+    }, 1000)
+  }
+
+  const stopCycling = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    setHoveredIndex(0)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
+
   return (
     <Link
       href={`/product/${product.id}`}
       className="group block"
     >
-      <div className="relative w-full aspect-square rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)] group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-shadow">
+      <div
+        className="relative w-full aspect-square rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)] group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-shadow"
+        onMouseEnter={startCycling}
+        onMouseLeave={stopCycling}
+      >
         <Image
-          src={product.image}
+          src={allImages[hoveredIndex]}
           alt={product.name}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-cover transition-opacity duration-300"
           sizes="(min-width: 1024px) 360px, (min-width: 640px) 320px, 50vw"
+          loading="lazy"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYwIiBoZWlnaHQ9IjM2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjhGN0ZCIi8+PC9zdmc+"
         />
+        {/* Image dots indicator */}
+        {allImages.length > 1 && (
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-1.5 z-[2]">
+            {allImages.map((_, i) => (
+              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === hoveredIndex ? 'bg-white' : 'bg-white/50'}`} />
+            ))}
+          </div>
+        )}
 
         {product.isNew && (
           <div className="absolute top-2 right-2 sm:top-3 sm:right-3 h-[20px] sm:h-[22px] px-2 rounded-[6px] bg-white text-black uppercase flex items-center text-[12px] sm:text-[14px] font-medium">
@@ -174,8 +216,9 @@ export default function NewProducts({ products }: NewProductsProps) {
   const mobileProducts = displayProducts.slice(0, 6)
 
   return (
-    <section className="bg-white py-10 sm:py-16 lg:py-20">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[72px] xl:px-[100px]">
+    <section className="relative bg-white py-16 sm:py-20 overflow-hidden">
+      <FloatingIcons count={6} offset={0} />
+      <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[72px] xl:px-[100px]">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6 sm:mb-10">
           <h2 className="font-bebas uppercase text-black text-[40px] leading-[44px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
@@ -224,7 +267,7 @@ export default function NewProducts({ products }: NewProductsProps) {
               <button
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
-                className="absolute -left-4 lg:-left-10 top-[180px] lg:top-[190px] disabled:opacity-0 disabled:pointer-events-none p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
+                className="absolute -left-4 lg:-left-10 top-[180px] lg:top-[190px] disabled:opacity-30 disabled:cursor-not-allowed p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
                 aria-label="Попередній продукт"
               >
                 <Image

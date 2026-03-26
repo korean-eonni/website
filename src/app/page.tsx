@@ -20,12 +20,13 @@ type ProductCard = {
   originalPrice?: number
   discount?: number
   image: string
+  images: string[]
   isNew: boolean
   slug: string
 }
 
 export default async function Home() {
-  const mapRow = (row: {
+  type RawRow = {
     id: string
     name: string
     sale_price: number | null
@@ -33,38 +34,31 @@ export default async function Home() {
     discount_amount: number | null
     image_path: string | null
     image_url: string | null
+    image_url_2: string | null
+    image_url_3: string | null
+    image_url_4: string | null
+    image_url_5: string | null
     is_new: number
-  }): ProductCard => ({
-    id: row.id,
-    name: row.name,
-    price: row.sale_price ?? 0,
-    originalPrice: row.original_price ?? undefined,
-    discount: row.discount_amount ?? undefined,
-    image: row.image_path || row.image_url || '/products/product-1.png',
-    isNew: row.is_new === 1,
-    slug: row.id,
-  })
+  }
 
-  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 6) as Array<{
-    id: string
-    name: string
-    sale_price: number | null
-    original_price: number | null
-    discount_amount: number | null
-    image_path: string | null
-    image_url: string | null
-    is_new: number
-  }>
-  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 6) as Array<{
-    id: string
-    name: string
-    sale_price: number | null
-    original_price: number | null
-    discount_amount: number | null
-    image_path: string | null
-    image_url: string | null
-    is_new: number
-  }>
+  const mapRow = (row: RawRow): ProductCard => {
+    const mainImage = row.image_path || row.image_url || '/products/product-1.png'
+    const allImages = [mainImage, row.image_url_2, row.image_url_3, row.image_url_4, row.image_url_5].filter(Boolean) as string[]
+    return {
+      id: row.id,
+      name: row.name,
+      price: row.sale_price ?? 0,
+      originalPrice: row.original_price ?? undefined,
+      discount: row.discount_amount ?? undefined,
+      image: mainImage,
+      images: allImages,
+      isNew: row.is_new === 1,
+      slug: row.id,
+    }
+  }
+
+  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 6) as RawRow[]
+  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 6) as RawRow[]
 
   const newProducts = newRows.map(mapRow)
   const exclusiveProducts = exclusiveRows.map(mapRow)

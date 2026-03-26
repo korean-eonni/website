@@ -28,7 +28,7 @@ export default function TipsSection() {
           </h2>
           <Link
             href="/blog"
-            className="inline-flex h-[50px] w-[200px] items-center justify-center rounded-[10px] bg-black text-white uppercase font-gilroy text-[16px] font-semibold leading-[18px] transition-opacity duration-300 hover:opacity-80"
+            className="inline-flex h-[50px] w-[200px] items-center justify-center rounded-[12px] bg-black text-white uppercase font-gilroy text-[16px] font-semibold leading-[18px] transition-opacity duration-300 hover:opacity-80"
           >
             Усі поради
           </Link>

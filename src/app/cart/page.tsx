@@ -17,10 +17,10 @@ export default function CartPage() {
       <section className="py-12 sm:py-16">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           {/* Breadcrumbs */}
-          <nav className="text-[14px] text-[#666666] mb-6">
-            <Link href="/" className="hover:underline">Головна</Link>
-            {' > '}
-            <span className="text-black">Кошик</span>
+          <nav className="flex items-center gap-1.5 text-[14px] text-[#666666] mb-6">
+            <Link href="/" className="hover:text-[#6046A3] transition-colors">Головна</Link>
+            <svg className="w-3.5 h-3.5 text-[#BBBBBB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span className="text-black font-medium">Кошик</span>
           </nav>
 
           <h1 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px] mb-10">

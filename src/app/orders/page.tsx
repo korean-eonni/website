@@ -1,5 +1,6 @@
 import Footer from '@/components/layout/Footer'
 import type { Metadata } from 'next'
+import OrderLookupForm from './OrderLookupForm'
 
 export const metadata: Metadata = {
   title: 'Відстежити замовлення | Eonni',
@@ -20,28 +21,7 @@ export default function OrdersPage() {
             Вкажіть email та номер замовлення, щоб перевірити статус доставки.
           </p>
 
-          <div className="mt-10 rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
-            <form className="grid gap-4">
-              <input
-                type="email"
-                placeholder="Email"
-                className="h-12 rounded-[10px] border border-[#E5E5E5] px-4"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Номер замовлення"
-                className="h-12 rounded-[10px] border border-[#E5E5E5] px-4"
-                required
-              />
-              <button
-                type="submit"
-                className="h-[50px] w-full sm:w-[220px] rounded-[12px] bg-black text-white uppercase font-gilroy text-[16px] font-semibold hover:opacity-85 transition-opacity"
-              >
-                Перевірити статус
-              </button>
-            </form>
-          </div>
+          <OrderLookupForm />
         </div>
       </section>
 

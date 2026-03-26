@@ -41,7 +41,7 @@
   }
   
   body {
-    @apply antialiased text-black;
+    @apply antialiased text-black bg-[#D9EFFD];
     font-family: 'Gilroy', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', sans-serif;
     overflow-x: clip;
@@ -76,5 +76,28 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Floating decorative icons */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-28px) rotate(8deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-22px) rotate(-5deg); }
+}
+
+@keyframes float-drift {
+  0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+  33% { transform: translateY(-18px) translateX(12px) rotate(5deg); }
+  66% { transform: translateY(-10px) translateX(-8px) rotate(-3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-icon {
+    animation: none !important;
   }
 }

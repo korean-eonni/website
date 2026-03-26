@@ -41,9 +41,9 @@ const contactMethods = [
       </svg>
     ),
     title: 'Instagram',
-    value: '@eonni_korean_cosmetics',
+    value: '@eonni.korean.cosmetics',
     subtext: 'Новинки та акції',
-    href: 'https://www.instagram.com/eonni_korean_cosmetics',
+    href: 'https://www.instagram.com/eonni.korean.cosmetics?igsh=eGV0ZmMyZHFmdjQ2&utm_source=qr',
     action: 'Підписатися',
     tone: '#FFE8F0',
   },
@@ -54,7 +54,7 @@ const contactMethods = [
       </svg>
     ),
     title: 'Telegram',
-    value: '@eonni_korean_cosmetics',
+    value: '@eonni.korean.cosmetics',
     subtext: 'Швидкі відповіді',
     href: 'https://t.me/eonni_korean_cosmetics',
     action: 'Написати',
@@ -274,7 +274,7 @@ export default function ContactsPage() {
                       placeholder="Введіть ім'я"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors"
+                      className="w-full h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] focus:border-[#6046A3] focus:outline-none transition-colors"
                       required
                     />
                   </div>
@@ -285,7 +285,7 @@ export default function ContactsPage() {
                       placeholder="your@email.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full h-12 rounded-[12px] border border-[#E5E5E5] px-4 focus:border-[#BCC2F4] focus:outline-none transition-colors"
+                      className="w-full h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] focus:border-[#6046A3] focus:outline-none transition-colors"
                       required
                     />
                   </div>
@@ -296,7 +296,7 @@ export default function ContactsPage() {
                     placeholder="Опишіть ваше питання..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full min-h-[140px] rounded-[12px] border border-[#E5E5E5] px-4 py-3 focus:border-[#BCC2F4] focus:outline-none transition-colors resize-none"
+                    className="w-full min-h-[140px] rounded-[12px] border border-[#E5E5E5] px-4 py-3 font-gilroy text-[16px] focus:border-[#6046A3] focus:outline-none transition-colors resize-none"
                     required
                   />
                 </div>

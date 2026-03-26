@@ -30,7 +30,7 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   return (
-    <section className="relative h-full w-full bg-[#F5F5F5] overflow-hidden">
+    <section className="relative h-full w-full overflow-hidden" style={{ backgroundImage: "url('/promo-gradient.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {slides.map((slide, index) => (
         <div
           key={slide.id}

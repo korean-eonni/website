@@ -1,6 +1,7 @@
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import SalesNewsletter from './SalesNewsletter'
 
 export const metadata: Metadata = {
   title: 'Знижки та акції | Eonni — Вигідні пропозиції на корейську косметику',
@@ -115,7 +116,7 @@ export default function SalesPage() {
                 Перейти до каталогу
               </Link>
               <a
-                href="https://www.instagram.com/eonni_korean_cosmetics"
+                href="https://www.instagram.com/eonni.korean.cosmetics?igsh=eGV0ZmMyZHFmdjQ2&utm_source=qr"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] border-2 border-black text-black uppercase font-gilroy text-[16px] font-semibold transition-colors hover:bg-black hover:text-white"
@@ -282,20 +283,7 @@ export default function SalesPage() {
                   анонси розпродажів та корисні поради з догляду.
                 </p>
               </div>
-              <form className="flex flex-col sm:flex-row gap-4">
-                <input
-                  type="email"
-                  placeholder="Ваш email"
-                  className="flex-grow h-[52px] rounded-[12px] border border-[#E5E5E5] px-5 bg-white focus:border-[#BCC2F4] focus:outline-none"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="h-[52px] px-8 rounded-[12px] bg-black text-white uppercase font-gilroy text-[15px] font-semibold hover:opacity-80 transition-opacity whitespace-nowrap"
-                >
-                  Підписатись
-                </button>
-              </form>
+              <SalesNewsletter />
             </div>
           </div>
         </div>

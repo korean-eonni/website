@@ -216,6 +216,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
                 fill
                 className="object-cover"
                 sizes="110px"
+                loading="lazy"
               />
             </button>
           ))}
@@ -924,6 +925,9 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
                       fill
                       className="object-cover"
                       sizes="(min-width: 1280px) 393px, (min-width: 1024px) 360px, (min-width: 640px) 320px, 100vw"
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYwIiBoZWlnaHQ9IjM2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjhGN0ZCIi8+PC9zdmc+"
                     />
 
                     {product.is_new === 1 && (

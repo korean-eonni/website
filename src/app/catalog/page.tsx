@@ -43,6 +43,10 @@ type CatalogProduct = {
   discount_amount: number | null
   image_url: string | null
   image_path: string | null
+  image_url_2: string | null
+  image_url_3: string | null
+  image_url_4: string | null
+  image_url_5: string | null
   is_new: number
   is_exclusive: number
   category: string | null
@@ -69,6 +73,10 @@ export default async function CatalogPage() {
       discount_amount: p.discount_amount,
       image_url: p.image_url,
       image_path: p.image_path,
+      image_url_2: p.image_url_2 ?? null,
+      image_url_3: p.image_url_3 ?? null,
+      image_url_4: p.image_url_4 ?? null,
+      image_url_5: p.image_url_5 ?? null,
       is_new: p.is_new,
       is_exclusive: p.is_exclusive,
       category: p.category,

@@ -471,7 +471,7 @@ export async function syncSheetToDatabase() {
         if (!photoUrl || !photoUrl.includes('drive.google.com')) return null
         const fileId = extractDriveFileId(photoUrl)
         if (!fileId) return null
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`
       }
 
       // Get all photo URLs (Фото 1-12)

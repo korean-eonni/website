@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import FloatingIcons from '@/components/FloatingIcons'
 
 interface Category {
   id: string
@@ -81,8 +82,9 @@ export default function Categories() {
   }
 
   return (
-    <section className="bg-white py-16 sm:py-20">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+    <section className="relative bg-white py-16 sm:py-20 overflow-hidden">
+      <FloatingIcons count={5} offset={6} />
+      <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-end justify-between gap-6 mb-12">
           <h2 className="font-bebas text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px] uppercase text-black">
             Категорії
@@ -145,12 +147,22 @@ export default function Categories() {
           </div>
         </div>
 
+        {/* ПЕРЕЙТИ button */}
+        <div className="mt-8 sm:mt-10 text-center px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+          <Link
+            href="/catalog"
+            className="inline-flex items-center justify-center h-[46px] sm:h-[50px] px-10 sm:px-14 rounded-[12px] bg-[#75C6F7] hover:bg-[#5BB8F0] text-black font-semibold text-[15px] sm:text-[16px] uppercase tracking-[0.05em] transition-colors"
+          >
+            Перейти
+          </Link>
+        </div>
+
         {categories.length > 1 && (
           <>
             <button
               onClick={() => scrollByCard(-1)}
               disabled={!canScrollLeft}
-              className="absolute left-0 lg:left-6 top-1/2 -translate-y-1/2 disabled:opacity-0 disabled:pointer-events-none p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
+              className="absolute left-0 lg:left-6 top-1/2 -translate-y-1/2 disabled:opacity-30 disabled:cursor-not-allowed p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
               aria-label="Попередня категорія"
             >
               <Image

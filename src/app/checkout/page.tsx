@@ -268,12 +268,12 @@ export default function CheckoutPage() {
       <section className="py-8 sm:py-12">
         <div className="max-w-[1200px] mx-auto px-6">
           {/* Breadcrumbs */}
-          <nav className="text-[14px] text-[#666666] mb-6">
-            <Link href="/" className="hover:underline">Головна</Link>
-            {' > '}
-            <Link href="/cart" className="hover:underline">Кошик</Link>
-            {' > '}
-            <span className="text-black">Оформлення замовлення</span>
+          <nav className="flex items-center gap-1.5 text-[14px] text-[#666666] mb-6">
+            <Link href="/" className="hover:text-[#6046A3] transition-colors">Головна</Link>
+            <svg className="w-3.5 h-3.5 text-[#BBBBBB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <Link href="/cart" className="hover:text-[#6046A3] transition-colors">Кошик</Link>
+            <svg className="w-3.5 h-3.5 text-[#BBBBBB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span className="text-black font-medium">Оформлення замовлення</span>
           </nav>
 
           <h1 className="font-bebas uppercase text-black text-[40px] sm:text-[56px] leading-tight mb-8">

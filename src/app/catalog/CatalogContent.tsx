@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import ExclusiveProducts from '@/components/sections/ExclusiveProducts'
 import ReviewsSection from '@/components/sections/ReviewsSection'
 import SubscribeSection from '@/components/sections/SubscribeSection'
@@ -8,7 +8,7 @@ import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 
 type Product = {
@@ -20,6 +20,10 @@ type Product = {
   discount_amount: number | null
   image_url: string | null
   image_path: string | null
+  image_url_2: string | null
+  image_url_3: string | null
+  image_url_4: string | null
+  image_url_5: string | null
   is_new: number
   is_exclusive: number
   category: string | null
@@ -38,11 +42,16 @@ const PRODUCTS_PER_PAGE = 20
 function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer group">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={() => onChange(!checked)}
+        className="sr-only peer"
+      />
       <div
-        className={`w-[16px] h-[16px] border border-[#BBBBBB] rounded-sm flex items-center justify-center transition-colors ${
+        className={`w-[16px] h-[16px] border border-[#BBBBBB] rounded-sm flex items-center justify-center transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#6046A3] peer-focus-visible:ring-offset-1 ${
           checked ? 'bg-[#6046A3] border-[#6046A3]' : 'bg-white group-hover:border-[#999]'
         }`}
-        onClick={() => onChange(!checked)}
       >
         {checked && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -99,6 +108,31 @@ function VolumeButton({ label, selected, onClick }: { label: string; selected: b
 
 function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (productId: string) => void }) {
   const [adding, setAdding] = useState(false)
+  const mainImage = product.image_url || product.image_path || '/products/product-1.png'
+  const allImages = [mainImage, product.image_url_2, product.image_url_3, product.image_url_4, product.image_url_5].filter(Boolean) as string[]
+  const [hoveredIndex, setHoveredIndex] = useState(0)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const startCycling = () => {
+    if (allImages.length <= 1) return
+    intervalRef.current = setInterval(() => {
+      setHoveredIndex((prev) => (prev + 1) % allImages.length)
+    }, 1000)
+  }
+
+  const stopCycling = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    setHoveredIndex(0)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -110,15 +144,24 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
 
   return (
     <Link href={`/product/${product.id}`} className="group block">
-      <div className="relative w-full aspect-square bg-[#F8F7FB] overflow-hidden mb-4">
+      <div className="relative w-full aspect-square bg-[#F8F7FB] overflow-hidden mb-4" onMouseEnter={startCycling} onMouseLeave={stopCycling}>
         <Image
-          src={product.image_url || product.image_path || '/products/product-1.png'}
+          src={allImages[hoveredIndex]}
           alt={product.name}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-          sizes="(min-width: 1280px) 288px, (min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-opacity duration-300"
+          sizes="(min-width: 1280px) 288px, (min-width: 640px) 280px, 100vw"
           loading="lazy"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjg4IiBoZWlnaHQ9IjI4OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjhGN0ZCIi8+PC9zdmc+"
         />
+        {allImages.length > 1 && (
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-1.5 z-[2]">
+            {allImages.map((_, i) => (
+              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === hoveredIndex ? 'bg-white' : 'bg-white/50'}`} />
+            ))}
+          </div>
+        )}
         
         {product.discount_amount != null && product.discount_amount > 0 && (
           <div className="absolute top-3 left-3 h-[30px] px-3 bg-[#BCC2F4] text-black text-[14px] font-semibold flex items-center">
@@ -133,7 +176,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         )}
         
         <button
-          className={`absolute bottom-3 right-3 w-[40px] h-[40px] rounded-lg flex items-center justify-center transition-all shadow-sm ${
+          className={`absolute bottom-3 right-3 w-[40px] h-[40px] rounded-lg flex items-center justify-center transition-all shadow-sm disabled:cursor-not-allowed ${
             adding ? 'bg-[#6046A3] text-white' : 'bg-white hover:bg-[#F5F5F5] text-black'
           }`}
           aria-label="Додати в кошик"
@@ -154,25 +197,25 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         </button>
       </div>
       
-      <h3 
-        className="font-gilroy text-[18px] leading-[24px] text-black mb-2"
+      <h3
+        className="font-gilroy text-[14px] sm:text-[18px] leading-[18px] sm:leading-[24px] text-black mb-2"
         style={{
           display: '-webkit-box',
           WebkitLineClamp: 3,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
-          minHeight: '72px',
+          minHeight: '54px',
         }}
       >
         {product.name}
       </h3>
-      
+
       <div className="flex items-center gap-2">
-        <span className="font-gilroy font-semibold text-[21px] leading-[27px] text-black">
+        <span className="font-gilroy font-semibold text-[16px] sm:text-[21px] leading-[22px] sm:leading-[27px] text-black">
           ₴{product.sale_price ?? 0}
         </span>
         {product.original_price && product.original_price > (product.sale_price ?? 0) && (
-          <span className="font-gilroy text-[16px] text-[#999999] line-through">
+          <span className="font-gilroy text-[13px] sm:text-[16px] text-[#999999] line-through">
             ₴{product.original_price}
           </span>
         )}
@@ -193,6 +236,7 @@ function ProductSkeleton() {
 
 export default function CatalogContent({ initialProducts }: { initialProducts?: Product[] }) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const categoryParam = searchParams.get('category')
   const searchParam = searchParams.get('search')
   const { addToCart } = useCart()
@@ -458,8 +502,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         onRemove: () => {
           const url = new URL(window.location.href)
           url.searchParams.delete('search')
-          window.history.replaceState({}, '', url.toString())
-          window.location.reload()
+          router.replace(url.pathname + url.search)
         }
       })
     }
@@ -536,10 +579,9 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     if (searchParam) {
       const url = new URL(window.location.href)
       url.searchParams.delete('search')
-      window.history.replaceState({}, '', url.toString())
-      window.location.reload()
+      router.replace(url.pathname + url.search)
     }
-  }, [maxPrice, searchParam])
+  }, [maxPrice, searchParam, router])
   
   const pageTitle = useMemo(() => {
     if (searchParam) return `Пошук: "${searchParam}"`
@@ -856,20 +898,26 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
                   ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-16">
-                  <p className="font-gilroy text-[18px] text-[#666] mb-4">
+                <div className="text-center py-20 bg-[#F8F7FB] rounded-[24px]">
+                  <svg className="w-16 h-16 mx-auto text-[#BBBBBB] mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <h3 className="font-bebas text-[28px] text-black mb-3">
                     {searchParam ? `За запитом "${searchParam}" нічого не знайдено` : 'Товарів не знайдено'}
+                  </h3>
+                  <p className="text-[#666] mb-6 max-w-md mx-auto font-gilroy text-[15px]">
+                    Спробуйте змінити параметри пошуку або очистити фільтри
                   </p>
                   <button
                     onClick={clearAllFilters}
-                    className="font-gilroy text-[14px] text-[#6046A3] hover:underline"
+                    className="inline-block px-8 py-3 bg-[#6046A3] text-white font-semibold rounded-lg hover:bg-[#4D3882] transition-colors text-[14px]"
                   >
                     Очистити фільтри
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10">
+                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-6 sm:gap-y-10">
                     {displayedProducts.map((product) => (
                       <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
                     ))}

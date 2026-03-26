@@ -10,6 +10,7 @@ export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
@@ -68,10 +69,28 @@ export default function Header() {
     }
   }
 
+  const faceSubcategories = [
+    { label: 'Креми для догляду за обличчям', href: '/catalog?category=face&subcategory=creams' },
+    { label: 'Сироватки', href: '/catalog?category=face&subcategory=serums' },
+    { label: 'Очищення та демакіяж', href: '/catalog?category=face&subcategory=cleansing' },
+    { label: 'Догляд за губами', href: '/catalog?category=face&subcategory=lips' },
+    { label: 'Догляд за шкірою навколо очей', href: '/catalog?category=face&subcategory=eye-care' },
+    { label: 'Тонери та педи', href: '/catalog?category=face&subcategory=toners' },
+    { label: 'SPF', href: '/catalog?category=face&subcategory=spf' },
+    { label: 'Маски для догляду за обличчям', href: '/catalog?category=face&subcategory=masks' },
+    { label: 'Ексфоліація шкіри обличчя', href: '/catalog?category=face&subcategory=exfoliation' },
+  ]
+
+  const hairSubcategories = [
+    { label: 'Шампуні', href: '/catalog?category=hair&subcategory=shampoos' },
+    { label: 'Кондиціонери та бальзами', href: '/catalog?category=hair&subcategory=conditioners' },
+    { label: 'Сироватки та трітмент', href: '/catalog?category=hair&subcategory=treatments' },
+  ]
+
   const mobileCatalogLinks = [
     { label: 'Весь асортимент', href: '/catalog' },
-    { label: 'Обличчя', href: '/catalog?category=face' },
-    { label: 'Волосся', href: '/catalog?category=hair' },
+    { label: 'Обличчя', href: '/catalog?category=face', expandable: 'face' as const },
+    { label: 'Волосся', href: '/catalog?category=hair', expandable: 'hair' as const },
     { label: 'Тіло', href: '/catalog?category=body' },
     { label: 'HEALTH & CARE', href: '/catalog?category=health' },
     { label: 'Макіяж', href: '/catalog?category=makeup' },
@@ -255,9 +274,49 @@ export default function Header() {
                 <Link href="/catalog" onClick={() => setMobileMenuOpen(false)} className="block py-3 text-[18px] font-semibold text-black border-b border-[#F0F0F0]">Каталог</Link>
                 <div className="pl-4 space-y-0 pb-3">
                   {mobileCatalogLinks.map((item) => (
-                    <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 text-[15px] transition-colors ${item.highlight ? 'text-[#E91E63] font-medium' : 'text-[#555] hover:text-black'}`}>
-                      {item.label}
-                    </Link>
+                    <div key={item.href}>
+                      <div className="flex items-center justify-between">
+                        <Link href={item.href} onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 text-[15px] transition-colors flex-1 ${item.highlight ? 'text-[#E91E63] font-medium' : 'text-[#555] hover:text-black'}`}>
+                          {item.label}
+                        </Link>
+                        {item.expandable && (
+                          <button
+                            onClick={() => setExpandedMobileCategory(expandedMobileCategory === item.expandable ? null : (item.expandable ?? null))}
+                            className="w-8 h-8 flex items-center justify-center text-[#555] hover:text-black transition-colors"
+                            aria-label={expandedMobileCategory === item.expandable ? 'Згорнути' : 'Розгорнути'}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              {expandedMobileCategory === item.expandable ? (
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                              ) : (
+                                <>
+                                  <line x1="12" y1="5" x2="12" y2="19" />
+                                  <line x1="5" y1="12" x2="19" y2="12" />
+                                </>
+                              )}
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      {item.expandable === 'face' && expandedMobileCategory === 'face' && (
+                        <div className="pl-4 pb-2">
+                          {faceSubcategories.map((sub) => (
+                            <Link key={sub.href} href={sub.href} onClick={() => setMobileMenuOpen(false)} className="block py-2 text-[14px] text-[#777] hover:text-black transition-colors">
+                              {sub.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                      {item.expandable === 'hair' && expandedMobileCategory === 'hair' && (
+                        <div className="pl-4 pb-2">
+                          {hairSubcategories.map((sub) => (
+                            <Link key={sub.href} href={sub.href} onClick={() => setMobileMenuOpen(false)} className="block py-2 text-[14px] text-[#777] hover:text-black transition-colors">
+                              {sub.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
                 

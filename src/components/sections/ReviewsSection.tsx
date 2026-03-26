@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import FloatingIcons from '@/components/FloatingIcons'
 
 const reviews = [
   {
@@ -44,15 +45,16 @@ export default function ReviewsSection() {
   }
 
   return (
-    <section className="bg-white py-16 sm:py-20">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+    <section className="relative bg-white py-16 sm:py-20 overflow-hidden">
+      <FloatingIcons count={5} offset={17} />
+      <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
           <h2 className="font-bebas uppercase text-black text-[40px] leading-[44px] sm:text-[56px] sm:leading-[60px] lg:text-[72px] lg:leading-[72px]">
             Відгуки наших клієнтів
           </h2>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex h-[50px] px-8 items-center justify-center rounded-[10px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[14px] sm:text-[16px] font-semibold transition-colors hover:bg-[#A8AFEB] whitespace-nowrap"
+            className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[14px] sm:text-[16px] font-semibold transition-colors hover:bg-[#A8AFEB] whitespace-nowrap"
           >
             Залишити відгук
           </button>

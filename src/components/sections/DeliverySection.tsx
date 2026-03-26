@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import FloatingIcons from '@/components/FloatingIcons'
 
 const items = [
   {
@@ -29,8 +30,9 @@ const items = [
 
 export default function DeliverySection() {
   return (
-    <section className="bg-white py-16 sm:py-20">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+    <section className="relative bg-white py-16 sm:py-20 overflow-hidden">
+      <FloatingIcons count={5} offset={4} />
+      <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-end justify-between gap-6 mb-12">
           <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
             Зручна доставка і оплата
