@@ -21,8 +21,8 @@ const usePostgres = !!process.env.POSTGRES_URL   // true on Vercel
 ## 🔑 The golden rule: who owns each table
 | Ownership | Tables | Rule |
 |-----------|--------|------|
-| **Shared ownership** | `products` | Google Sheet owns catalogue metadata; Postgres owns runtime `stock_quantity` after initial import. Sync upserts by SKU → barcode → normalized name, preserves existing stock, and deactivates removed rows. Change catalogue content in `Загальний`; change live stock through the admin/stock operations. |
-| **Real runtime data** | `orders`, `order_items`, `users`, `user_sessions`, `wishlist`, `cart_items`, `reviews`, `app_oauth_tokens` | Customer/operational data that exists **only** in Postgres. **Never** truncate, "reset", or bulk-delete. Treat as production data. |
+| **Shared ownership** | `products` | Google Sheet owns catalogue metadata; Postgres owns runtime `stock_quantity` after initial import. Sync upserts by SKU → barcode → normalized name, preserves existing stock, and deactivates removed rows. Every runtime stock mutation is mirrored back to `Загальний` through `stock_sync_queue`. Change catalogue content in the Sheet; change live stock through checkout/admin stock operations. |
+| **Real runtime data** | `orders`, `order_items`, `users`, `user_sessions`, `wishlist`, `cart_items`, `reviews`, `app_oauth_tokens`, `stock_sync_queue` | Customer/operational data that exists **only** in Postgres. **Never** truncate, "reset", or bulk-delete. Treat as production data. |
 
 ---
 
@@ -63,6 +63,16 @@ created_at. New reviews are unapproved until an admin approves them.
 provider (PK), refresh_token, access_token, access_token_expires_at, account_email, scope, timestamps.
 Holds the admin's Google OAuth token so the server can upload product photos to Drive.
 
+### `stock_sync_queue`  (`stockSync.ts`)
+Durable, coalesced Postgres → Google Sheet outbox keyed by `product_id`. Each new stock mutation
+increments `version`, clears the previous error, and makes the row pending again. The worker writes the
+current **absolute** `products.stock_quantity` (never a delta), then marks the same version as synced.
+If a newer version appears while Google is being updated, the old worker cannot clear it.
+
+The worker locates the Sheet row by unique SKU first and normalized product name second, and locates
+the stock column by the exact `Кількість` header. Duplicate identities are reported as failed instead
+of updating an arbitrary row.
+
 ---
 
 ## Migrations (how to add/change columns)
@@ -102,8 +112,13 @@ The live APIs are also good read-only sources:
 
 ## Refreshing product data from the Sheet
 `/api/sync-sheet` upserts catalogue metadata and preserves runtime stock. Trigger manually with an admin cookie (see DEPLOY.md for the
-exact one-liner that mints it from `ADMIN_SECRET`). Response: `{ ok, imported, skipped, errors }` —
-expect `errors: 0` and `imported` ≈ named rows in the Sheet. Daily cron runs it at 06:00 (`vercel.json`).
+exact one-liner that mints it from `ADMIN_SECRET`). It then performs a full absolute stock
+reconciliation back to the Sheet. Response includes `{ ok, imported, skipped, errors, stockSync }` —
+expect `errors: 0` and `stockSync.failed: 0`. Daily cron runs it at 06:00 (`vercel.json`).
+
+`/api/sync-stock` processes pending outbox rows every 15 minutes as a retry safety net. Checkout,
+order cancellation/reopening, and admin stock edits also invoke the worker immediately. Both sync
+routes accept only the signed admin cookie or `Authorization: Bearer ${CRON_SECRET}`.
 
 ## Local SQLite (`data/shop.db`)
 Only the `products` table; created/seeded by `src/lib/db.ts`. Useful so the catalog renders offline,

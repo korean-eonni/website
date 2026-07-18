@@ -11,6 +11,7 @@ import {
 } from '@/lib/userStore'
 import { getProduct, restoreStock, tryDecrementStock } from '@/lib/productStore'
 import { sendOrderCreatedEmail } from '@/lib/emailDelivery'
+import { processStockSyncQueue } from '@/lib/stockSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -224,6 +225,21 @@ export async function POST(request: Request) {
     if (!order) {
       await restoreReservations(reserved)
       throw new Error('Order persistence completed without an order record')
+    }
+
+    // The reservation functions have already written durable, coalesced
+    // outbox entries. Push the latest absolute DB quantities to Google Sheet
+    // before responding; a temporary Google failure leaves those entries
+    // pending for the retry worker and never invalidates a completed order.
+    try {
+      const stockSync = await processStockSyncQueue()
+      if (stockSync.failed > 0) {
+        console.warn(
+          `[orders] ${stockSync.failed} stock update(s) remain queued after order ${order.id}`
+        )
+      }
+    } catch (error) {
+      console.warn(`[orders] Stock sync deferred for order ${order.id}:`, error)
     }
 
     // Clear cart on success.

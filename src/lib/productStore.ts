@@ -62,6 +62,19 @@ export type ProductRecord = {
 
 const usePostgres = !!process.env.POSTGRES_URL
 
+async function enqueueStockSync(productId: string, reason: string): Promise<void> {
+  if (!usePostgres) return
+  try {
+    const { queueStockSync } = await import('@/lib/stockSync')
+    await queueStockSync([productId], reason)
+  } catch (error) {
+    // Stock has already changed in Postgres. Do not misreport the business
+    // operation as failed because the outbox/Google path is temporarily down;
+    // the scheduled full reconciliation repairs any enqueue gap.
+    console.warn(`[stock-sync] Could not enqueue ${productId} (${reason}):`, error)
+  }
+}
+
 async function ensurePostgresSchema() {
   await sql`
     CREATE TABLE IF NOT EXISTS products (
@@ -572,6 +585,7 @@ export async function createProduct(product: ProductRecord) {
         ${product.updated_at}
       )
     `
+    await enqueueStockSync(product.id, 'product_created')
     return
   }
 
@@ -695,6 +709,7 @@ export async function updateProduct(product: ProductRecord, includeImage: boolea
         WHERE id = ${product.id}
       `
     }
+    await enqueueStockSync(product.id, 'admin_product_update')
     return
   }
 
@@ -749,7 +764,9 @@ export async function tryDecrementStock(productId: string, qty: number): Promise
       RETURNING stock_quantity
     `
     if (result.rows.length === 0) return null
-    return result.rows[0].stock_quantity as number
+    const stock = result.rows[0].stock_quantity as number
+    await enqueueStockSync(productId, 'checkout_reservation')
+    return stock
   }
   const db = getDb()
   const row = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get(productId) as
@@ -784,7 +801,9 @@ export async function restoreStock(productId: string, qty: number): Promise<numb
       RETURNING stock_quantity
     `
     if (result.rows.length === 0) return null
-    return result.rows[0].stock_quantity as number
+    const stock = result.rows[0].stock_quantity as number
+    await enqueueStockSync(productId, 'checkout_rollback')
+    return stock
   }
 
   const db = getDb()

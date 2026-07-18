@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncSheetToDatabase } from '@/lib/sheetSync'
 import { isAuthedRequest } from '@/lib/adminAuth'
+import {
+  processStockSyncQueue,
+  queueFullStockReconciliation,
+} from '@/lib/stockSync'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // Allow up to 60 seconds for sync (Vercel Pro/Enterprise)
@@ -28,13 +32,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await syncSheetToDatabase()
+    const queued = await queueFullStockReconciliation()
+    const stockSync = await processStockSyncQueue({ limit: 500 })
     const duration = Date.now() - startTime
     
-    console.log(`[sync-sheet] Success - imported: ${result.imported}, skipped: ${result.skipped}, errors: ${result.errors}, duration: ${duration}ms`)
+    console.log(`[sync-sheet] Success - imported: ${result.imported}, skipped: ${result.skipped}, errors: ${result.errors}, stock queued: ${queued}, stock failed: ${stockSync.failed}, duration: ${duration}ms`)
     
     return NextResponse.json({
       ok: true,
       ...result,
+      stockSync: {
+        ok: stockSync.acquired && stockSync.failed === 0,
+        queued,
+        ...stockSync,
+      },
       timestamp: new Date().toISOString(),
     })
   } catch (error: any) {

@@ -900,7 +900,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     })
     
     return filters
-  }, [searchParam, selectedCategories, selectedSubcategories, onSaleOnly, minRating, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients])
+  }, [searchParam, selectedCategories, selectedSubcategories, onSaleOnly, minRating, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, router])
   
   const clearAllFilters = useCallback(() => {
     setPriceRange([0, maxPrice])

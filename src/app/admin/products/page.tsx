@@ -18,6 +18,7 @@ import {
   uploadImagesToDrive,
 } from '@/lib/productCreate'
 import AdminFlash from '@/components/admin/AdminFlash'
+import { processStockSyncQueue } from '@/lib/stockSync'
 
 type ProductRow = {
   id: string
@@ -90,6 +91,11 @@ async function addProductAction(formData: FormData) {
   // Build product input shared by sheet-append and DB-insert paths.
   const ratingNum = toNumber(formData.get('rating'))
   const reviewCountNum = toNumber(formData.get('review_count'))
+  const rawStock = String(formData.get('stock_quantity') ?? '').trim()
+  const stockQuantity = Number(rawStock)
+  if (!rawStock || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+    redirect('/admin/products?error=invalid-stock')
+  }
   const sharedInput = {
     name,
     supplier: text('supplier', 80),
@@ -102,7 +108,7 @@ async function addProductAction(formData: FormData) {
     sale_price: toNumber(formData.get('sale_price')),
     original_price: toNumber(formData.get('original_price')),
     discount_amount: toNumber(formData.get('discount_amount')),
-    stock_quantity: toNumber(formData.get('stock_quantity')),
+    stock_quantity: stockQuantity,
     tags: text('tags', 200),
     short_description: text('short_description', 160),
     long_description: text('long_description', 5000),
@@ -194,6 +200,17 @@ async function addProductAction(formData: FormData) {
   } catch (err) {
     console.error('[admin/addProduct] DB insert failed:', err)
     redirect('/admin/products?error=db-insert-failed')
+  }
+
+  try {
+    const stockSync = await processStockSyncQueue()
+    if (stockSync.failed > 0) {
+      console.warn(
+        `[admin/addProduct] ${stockSync.failed} stock update(s) remain queued for ${product.id}`
+      )
+    }
+  } catch (err) {
+    console.warn(`[admin/addProduct] stock sync deferred for ${product.id}:`, err)
   }
 
   redirect('/admin/products?success=product-added')
@@ -477,7 +494,7 @@ export default async function AdminPage({
             </div>
             <div>
               <label className="block text-sm mb-2">Кількість на складі</label>
-              <input name="stock_quantity" type="number" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
+              <input name="stock_quantity" type="number" min="0" step="1" required className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
             </div>
             <div>
               <label className="block text-sm mb-2">Вага (г)</label>

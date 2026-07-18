@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres'
 import { randomUUID } from 'crypto'
 import bcrypt from 'bcryptjs'
+import { processStockSyncQueue, queueStockSync } from '@/lib/stockSync'
 
 export type User = {
   id: string
@@ -397,6 +398,7 @@ export async function getOrdersByEmail(email: string): Promise<Order[]> {
 export async function updateOrderStatus(id: string, status: Order['status'], trackingNumber?: string): Promise<void> {
   await ensureUserSchema()
   const now = new Date().toISOString()
+  const changedProductIds: string[] = []
 
   const client = await sql.connect()
   try {
@@ -445,6 +447,7 @@ export async function updateOrderStatus(id: string, status: Order['status'], tra
               : `Insufficient stock to reopen order ${id}`
           )
         }
+        changedProductIds.push(item.product_id)
       }
     }
 
@@ -465,6 +468,23 @@ export async function updateOrderStatus(id: string, status: Order['status'], tra
     throw error
   } finally {
     client.release()
+  }
+
+  if (changedProductIds.length > 0) {
+    try {
+      await queueStockSync(changedProductIds, `order_${status}`, id)
+      const stockSync = await processStockSyncQueue()
+      if (stockSync.failed > 0) {
+        console.warn(
+          `[orders] ${stockSync.failed} stock update(s) remain queued after status change ${id}`
+        )
+      }
+    } catch (error) {
+      // The order/status transaction is already committed. Never undo it
+      // because Google is temporarily unavailable; the daily full
+      // reconciliation heals any enqueue gap.
+      console.warn(`[orders] Stock sync deferred after status change ${id}:`, error)
+    }
   }
 }
 

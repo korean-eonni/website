@@ -11,6 +11,7 @@ import {
 import { storeImage } from '@/lib/uploads'
 import { brands } from '@/data/brands'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
+import { processStockSyncQueue } from '@/lib/stockSync'
 
 type ProductRow = ProductRecord
 
@@ -39,6 +40,11 @@ async function updateProductAction(formData: FormData) {
   }
 
   const existing = await getProduct(id)
+  const rawStock = String(formData.get('stock_quantity') ?? '').trim()
+  const stockQuantity = Number(rawStock)
+  if (!rawStock || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+    redirect(`/admin/${id}?error=invalid-stock`)
+  }
 
   const updates: ProductRecord = {
     id,
@@ -50,7 +56,7 @@ async function updateProductAction(formData: FormData) {
     sale_price: toNumber(formData.get('sale_price')),
     original_price: toNumber(formData.get('original_price')),
     discount_amount: toNumber(formData.get('discount_amount')),
-    stock_quantity: toNumber(formData.get('stock_quantity')),
+    stock_quantity: stockQuantity,
     category: String(formData.get('category') || '').trim() || null,
     subcategory: String(formData.get('subcategory') || '').trim() || null,
     weight_grams: toNumber(formData.get('weight_grams')),
@@ -111,6 +117,15 @@ async function updateProductAction(formData: FormData) {
   }
 
   await updateProduct(updates, includeImage)
+  let stockSyncFailed = false
+  try {
+    const stockSync = await processStockSyncQueue()
+    stockSyncFailed = stockSync.failed > 0
+  } catch (error) {
+    console.error('[admin/updateProduct] stock sync deferred:', error)
+    stockSyncFailed = true
+  }
+  if (stockSyncFailed) redirect('/admin/inventory?sync=error')
 
   redirect('/admin/products')
 }
@@ -301,6 +316,9 @@ export default async function AdminEditPage({ params }: { params: { id: string }
               <input
                 name="stock_quantity"
                 type="number"
+                min="0"
+                step="1"
+                required
                 defaultValue={product.stock_quantity ?? ''}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />

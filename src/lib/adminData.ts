@@ -521,6 +521,7 @@ export async function getSystemStatus(): Promise<SystemStatus> {
     'restock_requests',
     'email_deliveries',
     'app_oauth_tokens',
+    'stock_sync_queue',
   ]
   const databaseConfigured = Boolean(process.env.POSTGRES_URL)
   if (!databaseConfigured) {
@@ -583,8 +584,11 @@ function integrationStatus(): SystemStatus['integrations'] {
     },
     {
       name: 'Google Sheet',
-      configured: Boolean(process.env.GOOGLE_SHEET_ID && process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL),
-      detail: 'Джерело правди для каталогу й залишків',
+      configured: Boolean(
+        (process.env.GOOGLE_SHEETS_ID || process.env.GOOGLE_SHEET_ID) &&
+          process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+      ),
+      detail: 'Каталог надходить із Sheet; оперативний залишок дзеркалиться з Postgres',
     },
     {
       name: 'Google Drive',
