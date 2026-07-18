@@ -3,8 +3,9 @@ import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 import { replaceAllProducts } from '@/lib/productStore'
 
-// Sheet "Загальний" — 44 columns after 2026-05-06 expansion (split long description into 6 sections)
-const SHEET_RANGE = 'Загальний!A1:AQ'
+// Read through AS so newly added operational/catalogue columns are included.
+// Mapping below is header-name driven, so physical column reordering is safe.
+const SHEET_RANGE = 'Загальний!A1:AS'
 
 // Column layout (0-indexed). Code reads by HEADER NAME — these comments are just for reference.
 // A=0:  Назва                F=5:  SKU                       L=11: Теги
@@ -592,18 +593,21 @@ export async function syncSheetToDatabase() {
     }
   }
 
-  // Replace ALL products in database with sheet data
-  // This ensures the database is always in sync with the Google Sheet
+  // Sync Sheet-owned catalogue metadata while preserving DB-owned runtime
+  // stock. Products absent from a fully successful import are deactivated.
+  let imported = 0
   if (products.length > 0) {
-    await replaceAllProducts(products)
-    console.log(`Replaced all products with ${products.length} from sheet`)
+    const result = await replaceAllProducts(products)
+    imported = result.inserted
+    errors += result.errors
+    console.log(`Upserted ${result.inserted} products from sheet (${result.errors} errors)`)
   }
 
   const duration = Date.now() - startTime
-  console.log(`Sync completed in ${duration}ms: ${products.length} imported, ${skipped} skipped, ${errors} errors`)
+  console.log(`Sync completed in ${duration}ms: ${imported} imported, ${skipped} skipped, ${errors} errors`)
 
   return {
-    imported: products.length,
+    imported,
     skipped,
     errors,
     duration,

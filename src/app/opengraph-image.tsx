@@ -35,7 +35,7 @@ export default async function OpengraphImage() {
           eonni
           <span
             style={{
-              display: 'inline-block',
+              display: 'flex',
               width: 28,
               height: 28,
               background: '#0A0F1F',

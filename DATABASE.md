@@ -21,14 +21,14 @@ const usePostgres = !!process.env.POSTGRES_URL   // true on Vercel
 ## 🔑 The golden rule: who owns each table
 | Ownership | Tables | Rule |
 |-----------|--------|------|
-| **Google Sheet owns it** | `products` | Rebuilt from the Sheet on every sync (`replaceAllProducts` = DELETE all + re-insert). **Never** edit `products` directly expecting persistence — the next `/api/sync-sheet` overwrites it. Change products in the Sheet (`Загальний`), then sync. |
+| **Shared ownership** | `products` | Google Sheet owns catalogue metadata; Postgres owns runtime `stock_quantity` after initial import. Sync upserts by SKU → barcode → normalized name, preserves existing stock, and deactivates removed rows. Change catalogue content in `Загальний`; change live stock through the admin/stock operations. |
 | **Real runtime data** | `orders`, `order_items`, `users`, `user_sessions`, `wishlist`, `cart_items`, `reviews`, `app_oauth_tokens` | Customer/operational data that exists **only** in Postgres. **Never** truncate, "reset", or bulk-delete. Treat as production data. |
 
 ---
 
 ## Schema
 
-### `products`  (managed by `src/lib/productStore.ts`; rebuilt from the Sheet)
+### `products`  (managed by `src/lib/productStore.ts`; metadata synced from the Sheet)
 Core: `id` (TEXT PK, slug from name), `name`, `brand`, `category`, `subcategory`, `supplier`, `sku`,
 `barcode`, `tags`.
 Pricing/stock: `cost_price`, `sale_price`, `original_price`, `discount_amount`, `stock_quantity`, `weight_grams`.
@@ -81,10 +81,8 @@ oauthStore), called at the start of read/write operations.
 4. `sheetSync.ts` mapping (if it comes from the Sheet) + the Sheet header itself
 
 > 🚨 **INSERT count rule:** the INSERT column list and the VALUES list must have the **exact same number
-> of items in the same order**. `replaceAllProducts` runs `DELETE FROM products` first; if every INSERT
-> then fails (e.g. a column/value count mismatch), the catalog is **wiped**. Count both lists before you
-> deploy + sync. Per-row errors are caught and reported in the sync response (`errors` field), so check
-> `errors: 0` after triggering.
+> of items in the same order**. A mismatch makes the affected upserts fail; removed products are only
+> deactivated after a fully successful import. Check `errors: 0` after triggering.
 
 ---
 
@@ -103,7 +101,7 @@ The live APIs are also good read-only sources:
 - `GET /api/product/<id>` — single product, **uncached** (force-dynamic) = source of truth
 
 ## Refreshing product data from the Sheet
-`/api/sync-sheet` does the full rebuild. Trigger manually with an admin cookie (see DEPLOY.md for the
+`/api/sync-sheet` upserts catalogue metadata and preserves runtime stock. Trigger manually with an admin cookie (see DEPLOY.md for the
 exact one-liner that mints it from `ADMIN_SECRET`). Response: `{ ok, imported, skipped, errors }` —
 expect `errors: 0` and `imported` ≈ named rows in the Sheet. Daily cron runs it at 06:00 (`vercel.json`).
 

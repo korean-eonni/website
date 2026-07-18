@@ -137,10 +137,59 @@ async function ensurePostgresSchema() {
 
 // No seed data - all products come from Google Sheets
 
+type ProductIdentity = {
+  id: string
+  name: string
+  sku: string | null
+  barcode: string | null
+}
+
+function normalizeIdentity(value: string | null | undefined): string {
+  return (value ?? '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase('uk-UA')
+}
+
+function resolveExistingProductId(
+  product: ProductRecord,
+  existing: ProductIdentity[],
+  claimedIds: Set<string>
+): string | null {
+  const findAvailable = (
+    field: 'sku' | 'barcode' | 'name',
+    value: string | null | undefined
+  ) => {
+    const normalized = normalizeIdentity(value)
+    if (!normalized) return null
+    return (
+      existing.find(
+        (candidate) =>
+          !claimedIds.has(candidate.id) &&
+          normalizeIdentity(candidate[field]) === normalized
+      ) ?? null
+    )
+  }
+
+  // SKU and barcode are stable business identifiers. Exact normalized name
+  // is the safe fallback for legacy rows that do not have either.
+  const matched =
+    findAvailable('sku', product.sku) ??
+    findAvailable('barcode', product.barcode) ??
+    findAvailable('name', product.name)
+
+  return matched?.id ?? null
+}
+
 /**
- * Replace ALL products in the database with the provided list.
- * This deletes all existing products and inserts the new ones.
- * Used for full sync from Google Sheets.
+ * Synchronize catalogue metadata from Google Sheets without replacing runtime
+ * inventory. PostgreSQL/SQLite stock is authoritative after a product's first
+ * import because checkout and admin stock operations update it directly.
+ *
+ * Existing rows keep `stock_quantity`; new rows use the initial Sheet value.
+ * Rows removed from the Sheet are deactivated, never deleted, so order history
+ * and foreign product references remain intact.
  */
 export async function replaceAllProducts(products: ProductRecord[]) {
   const now = new Date().toISOString()
@@ -148,16 +197,19 @@ export async function replaceAllProducts(products: ProductRecord[]) {
 
   if (usePostgres) {
     await ensurePostgresSchema()
-    
-    // Delete all existing products
-    const deleteResult = await sql`DELETE FROM products`
-    console.log(`[replaceAllProducts] Deleted existing products`)
-    
-    // Insert all new products with error handling
+
     let inserted = 0
     let errors = 0
-    
+    const importedIds = new Set<string>()
+    const claimedExistingIds = new Set<string>()
+    const existing = await sql<ProductIdentity>`
+      SELECT id, name, sku, barcode FROM products
+    `
+
     for (const p of products) {
+      const matchedId = resolveExistingProductId(p, existing.rows, claimedExistingIds)
+      const id = matchedId || p.id || randomUUID()
+      if (matchedId) claimedExistingIds.add(matchedId)
       try {
         await sql`
           INSERT INTO products (
@@ -172,7 +224,7 @@ export async function replaceAllProducts(products: ProductRecord[]) {
             usage_instructions, clinical_proof, solves_problems, key_ingredients, fit_skin, compatibility,
             is_active, is_new, is_exclusive, coming_soon, created_at, updated_at
           ) VALUES (
-            ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
+            ${id}, ${p.name}, ${p.image_url}, ${p.image_path},
             ${p.image_url_2}, ${p.image_url_3}, ${p.image_url_4}, ${p.image_url_5}, ${p.image_url_6},
             ${p.image_url_7}, ${p.image_url_8}, ${p.image_url_9}, ${p.image_url_10}, ${p.image_url_11}, ${p.image_url_12},
             ${p.short_description}, ${p.long_description}, ${p.supplier},
@@ -184,22 +236,83 @@ export async function replaceAllProducts(products: ProductRecord[]) {
             ${p.usage_instructions}, ${p.clinical_proof}, ${p.solves_problems}, ${p.key_ingredients}, ${p.fit_skin}, ${p.compatibility},
             ${p.is_active}, ${p.is_new}, ${p.is_exclusive}, ${p.coming_soon ?? 0}, ${p.created_at || now}, ${now}
           )
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            image_url = EXCLUDED.image_url,
+            image_path = EXCLUDED.image_path,
+            image_url_2 = EXCLUDED.image_url_2,
+            image_url_3 = EXCLUDED.image_url_3,
+            image_url_4 = EXCLUDED.image_url_4,
+            image_url_5 = EXCLUDED.image_url_5,
+            image_url_6 = EXCLUDED.image_url_6,
+            image_url_7 = EXCLUDED.image_url_7,
+            image_url_8 = EXCLUDED.image_url_8,
+            image_url_9 = EXCLUDED.image_url_9,
+            image_url_10 = EXCLUDED.image_url_10,
+            image_url_11 = EXCLUDED.image_url_11,
+            image_url_12 = EXCLUDED.image_url_12,
+            short_description = EXCLUDED.short_description,
+            long_description = EXCLUDED.long_description,
+            supplier = EXCLUDED.supplier,
+            cost_price = EXCLUDED.cost_price,
+            sale_price = EXCLUDED.sale_price,
+            original_price = EXCLUDED.original_price,
+            discount_amount = EXCLUDED.discount_amount,
+            category = EXCLUDED.category,
+            subcategory = EXCLUDED.subcategory,
+            weight_grams = EXCLUDED.weight_grams,
+            tags = EXCLUDED.tags,
+            sku = EXCLUDED.sku,
+            barcode = EXCLUDED.barcode,
+            brand = EXCLUDED.brand,
+            volume_options = EXCLUDED.volume_options,
+            rating = EXCLUDED.rating,
+            review_count = EXCLUDED.review_count,
+            age_group = EXCLUDED.age_group,
+            ingredients = EXCLUDED.ingredients,
+            skin_type = EXCLUDED.skin_type,
+            series = EXCLUDED.series,
+            classification = EXCLUDED.classification,
+            usage_instructions = EXCLUDED.usage_instructions,
+            clinical_proof = EXCLUDED.clinical_proof,
+            solves_problems = EXCLUDED.solves_problems,
+            key_ingredients = EXCLUDED.key_ingredients,
+            fit_skin = EXCLUDED.fit_skin,
+            compatibility = EXCLUDED.compatibility,
+            is_active = EXCLUDED.is_active,
+            is_new = EXCLUDED.is_new,
+            is_exclusive = EXCLUDED.is_exclusive,
+            coming_soon = EXCLUDED.coming_soon,
+            updated_at = EXCLUDED.updated_at
         `
+        importedIds.add(id)
         inserted++
       } catch (err: any) {
         errors++
-        console.error(`[replaceAllProducts] Error inserting "${p.name}" (${p.id}): ${err.message}`)
+        console.error(`[replaceAllProducts] Error upserting "${p.name}" (${id}): ${err.message}`)
       }
     }
-    
-    console.log(`[replaceAllProducts] Completed: ${inserted} inserted, ${errors} errors`)
+
+    // Only deactivate missing products after a fully successful import. A
+    // transient Sheet/API error must never hide valid catalogue inventory.
+    if (errors === 0) {
+      for (const row of existing.rows) {
+        if (!importedIds.has(row.id)) {
+          await sql`
+            UPDATE products
+            SET is_active = 0, updated_at = ${now}
+            WHERE id = ${row.id}
+          `
+        }
+      }
+    }
+
+    console.log(`[replaceAllProducts] Completed: ${inserted} upserted, ${errors} errors`)
     return { inserted, errors }
   }
 
   // Local SQLite fallback
   const db = getDb()
-  db.prepare('DELETE FROM products').run()
-  
   const stmt = db.prepare(`
     INSERT INTO products (
       id, name, image_url, image_path, short_description, long_description,
@@ -212,16 +325,60 @@ export async function replaceAllProducts(products: ProductRecord[]) {
       @stock_quantity, @category, @subcategory, @weight_grams, @tags, @sku, @barcode,
       @brand, @is_active, @is_new, @is_exclusive, @created_at, @updated_at
     )
+    ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      image_url = excluded.image_url,
+      image_path = excluded.image_path,
+      short_description = excluded.short_description,
+      long_description = excluded.long_description,
+      supplier = excluded.supplier,
+      cost_price = excluded.cost_price,
+      sale_price = excluded.sale_price,
+      original_price = excluded.original_price,
+      discount_amount = excluded.discount_amount,
+      category = excluded.category,
+      subcategory = excluded.subcategory,
+      weight_grams = excluded.weight_grams,
+      tags = excluded.tags,
+      sku = excluded.sku,
+      barcode = excluded.barcode,
+      brand = excluded.brand,
+      is_active = excluded.is_active,
+      is_new = excluded.is_new,
+      is_exclusive = excluded.is_exclusive,
+      updated_at = excluded.updated_at
   `)
+  const syncLocalProducts = db.transaction((items: ProductRecord[]) => {
+    const existing = db.prepare(
+      'SELECT id, name, sku, barcode FROM products'
+    ).all() as ProductIdentity[]
+    const existingIds = existing.map((row) => row.id)
+    const importedIds = new Set<string>()
+    const claimedExistingIds = new Set<string>()
 
-  for (const product of products) {
-    stmt.run({
-      ...product,
-      id: product.id || randomUUID(),
-      created_at: product.created_at || now,
-      updated_at: now,
-    })
-  }
+    for (const product of items) {
+      const matchedId = resolveExistingProductId(product, existing, claimedExistingIds)
+      const id = matchedId || product.id || randomUUID()
+      if (matchedId) claimedExistingIds.add(matchedId)
+      stmt.run({
+        ...product,
+        id,
+        created_at: product.created_at || now,
+        updated_at: now,
+      })
+      importedIds.add(id)
+    }
+
+    const deactivate = db.prepare(
+      'UPDATE products SET is_active = 0, updated_at = ? WHERE id = ?'
+    )
+    for (const id of existingIds) {
+      if (!importedIds.has(id)) deactivate.run(now, id)
+    }
+  })
+
+  syncLocalProducts(products)
+  return { inserted: products.length, errors: 0 }
 }
 
 export async function listProducts(where?: string) {
@@ -604,6 +761,43 @@ export async function tryDecrementStock(productId: string, qty: number): Promise
     'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ?'
   ).run(next, new Date().toISOString(), productId)
   return next
+}
+
+/**
+ * Atomically return a previously reserved quantity to stock. This deliberately
+ * lives separately from `tryDecrementStock` so decrement can keep rejecting
+ * non-positive quantities and callers cannot accidentally treat a negative
+ * reservation as a rollback.
+ *
+ * Returns the restored stock, or `null` if the product no longer exists.
+ */
+export async function restoreStock(productId: string, qty: number): Promise<number | null> {
+  if (qty <= 0) return null
+  const now = new Date().toISOString()
+
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    const result = await sql`
+      UPDATE products
+      SET stock_quantity = COALESCE(stock_quantity, 0) + ${qty}, updated_at = ${now}
+      WHERE id = ${productId}
+      RETURNING stock_quantity
+    `
+    if (result.rows.length === 0) return null
+    return result.rows[0].stock_quantity as number
+  }
+
+  const db = getDb()
+  const row = db.prepare(
+    `
+      UPDATE products
+      SET stock_quantity = COALESCE(stock_quantity, 0) + ?, updated_at = ?
+      WHERE id = ?
+      RETURNING stock_quantity
+    `
+  ).get(qty, now, productId) as { stock_quantity: number } | undefined
+
+  return row?.stock_quantity ?? null
 }
 
 export async function deleteProduct(id: string) {

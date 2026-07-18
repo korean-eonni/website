@@ -20,17 +20,17 @@ async function loginAction(formData: FormData) {
   if (checkAdminPassword(password)) {
     cookies().set(ADMIN_COOKIE, makeAdminToken(), ADMIN_COOKIE_OPTIONS)
   }
-  redirect('/admin')
+  redirect('/admin/products')
 }
 
 async function updateProductAction(formData: FormData) {
   'use server'
   if (!isAuthed()) {
-    redirect('/admin')
+    redirect('/admin/products')
   }
 
   const id = String(formData.get('id') || '')
-  if (!id) redirect('/admin')
+  if (!id) redirect('/admin/products')
 
   const toNumber = (value: FormDataEntryValue | null) => {
     if (!value) return null
@@ -112,7 +112,7 @@ async function updateProductAction(formData: FormData) {
 
   await updateProduct(updates, includeImage)
 
-  redirect('/admin')
+  redirect('/admin/products')
 }
 
 export default async function AdminEditPage({ params }: { params: { id: string } }) {
@@ -149,7 +149,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
 
   const product = (await getProduct(params.id)) as ProductRow
   if (!product) {
-    redirect('/admin')
+    redirect('/admin/products')
   }
 
   return (
@@ -157,7 +157,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
       <div className="max-w-[900px] mx-auto">
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-bebas uppercase text-black">Редагувати товар</h1>
-          <a href="/admin" className="text-black underline">
+          <a href="/admin/products" className="text-black underline">
             Назад
           </a>
         </div>

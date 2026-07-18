@@ -18,8 +18,9 @@ import { getOrderById } from '@/lib/userStore'
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}))
   const orderId = typeof body?.orderId === 'string' ? body.orderId : ''
-  if (!orderId) {
-    return NextResponse.json({ error: 'order-id-required' }, { status: 400 })
+  const accessToken = typeof body?.accessToken === 'string' ? body.accessToken : ''
+  if (!orderId || accessToken !== orderId) {
+    return NextResponse.json({ error: 'order-access-denied' }, { status: 401 })
   }
 
   const order = await getOrderById(orderId)
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       orderId,
       amount,
       description: `Замовлення Eonni #${orderId.slice(0, 8)}`,
-      successUrl: `${baseUrl}/orders/${orderId}/success`,
+      successUrl: `${baseUrl}/orders/${orderId}/success?token=${encodeURIComponent(orderId)}`,
       errorUrl: `${baseUrl}/checkout?order=${orderId}&payment=failed`,
       // Sent so Platon signs the callback with this exact email (the callback
       // handler re-verifies against the order's email — they must match).

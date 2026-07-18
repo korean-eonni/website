@@ -40,7 +40,9 @@ export default function OrderSuccessPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`/api/orders/${orderId}`)
+        const accessToken = new URLSearchParams(window.location.search).get('token')
+        const tokenQuery = accessToken ? `?token=${encodeURIComponent(accessToken)}` : ''
+        const res = await fetch(`/api/orders/${orderId}${tokenQuery}`)
         if (res.ok) {
           const data = await res.json()
           setOrder(data.order)
@@ -200,4 +202,3 @@ export default function OrderSuccessPage() {
     </main>
   )
 }
-

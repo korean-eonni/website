@@ -22,14 +22,15 @@ blog, and an admin panel. Owner: ФОП Людвічук Катерина Мик
 ## Tech stack
 - **Next.js** (App Router, React, TypeScript) + **Tailwind CSS**
 - **Vercel** hosting (CLI deploys — see DEPLOY.md) + **Vercel Postgres** (prod DB) + **Vercel Blob** (images)
-- **Google Sheets** = source of truth for products; **Google Drive** = product photos (admin OAuth)
+- **Google Sheets** = source of truth for product catalogue metadata; **Postgres** = source of truth
+  for runtime stock; **Google Drive** = product photos (admin OAuth)
 - **Platon** card-payment gateway (the `liqpay` code is legacy/unused)
 - Local dev fallback DB: **SQLite** (`data/shop.db`, products only)
 
 ## The big picture — how data flows
 ```
             ┌─────────────────┐   /api/sync-sheet (daily cron 06:00 + manual)
- Google     │  Sheet           │   full replace: DELETE all + re-insert
+ Google     │  Sheet           │   metadata upsert; preserve existing DB stock
  Sheet  ───▶│  tab "Загальний" │ ─────────────────────────────────────────▶  Postgres
  (products) └─────────────────┘                                              `products` table
                                                                                     │
@@ -39,9 +40,10 @@ blog, and an admin panel. Owner: ФОП Людвічук Катерина Мик
  Customers (orders, accounts, reviews, cart) ── write directly ──▶ Postgres   ──▶  React pages
                                                 (NOT in the Sheet)
 ```
-**Key consequence:** products are **owned by the Sheet** — anything you write to the `products` table
-directly is wiped on the next sync. Orders / users / reviews / cart are **real runtime data** that lives
-only in Postgres — never truncate or "reset" those. (Details + safety rules in DATABASE.md.)
+**Key consequence:** catalogue fields are **owned by the Sheet**, while runtime `stock_quantity` is
+owned by Postgres after initial import. Sync matches existing products by SKU, barcode, then normalized
+name, preserves their stock, and deactivates missing Sheet rows. Orders / users / reviews / cart are
+runtime data that lives only in Postgres — never truncate or "reset" those. (Details in DATABASE.md.)
 
 ## Repo map (what lives where)
 ```

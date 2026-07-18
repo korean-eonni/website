@@ -7,9 +7,13 @@ import Script from 'next/script'
  * creating a project at https://clarity.microsoft.com.
  */
 export default function MicrosoftClarity() {
-  const projectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID
+  const projectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim()
 
-  if (!projectId) return null
+  // Clarity project IDs are simple URL-safe identifiers. Reject anything else
+  // so a malformed environment value can never break or inject this script.
+  if (!projectId || !/^[A-Za-z0-9_-]+$/.test(projectId)) return null
+
+  const serializedProjectId = JSON.stringify(projectId)
 
   return (
     <Script
@@ -21,7 +25,7 @@ export default function MicrosoftClarity() {
   c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
   t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
   y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "${projectId}");
+})(window, document, "clarity", "script", ${serializedProjectId});
         `.trim(),
       }}
     />

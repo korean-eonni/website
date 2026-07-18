@@ -308,7 +308,9 @@ export async function isInWishlist(userId: string, productId: string): Promise<b
 export async function createOrder(order: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<Order> {
   await ensureUserSchema()
   const now = new Date().toISOString()
-  const id = 'ORD-' + Date.now().toString(36).toUpperCase() + '-' + randomUUID().slice(0, 4).toUpperCase()
+  // The ID also acts as a capability token for guest receipt/detail links.
+  // Keep the full UUID entropy; short suffixes make customer PII guessable.
+  const id = `ORD-${Date.now().toString(36).toUpperCase()}-${randomUUID().toUpperCase()}`
 
   await sql`
     INSERT INTO orders (
@@ -338,6 +340,16 @@ export async function addOrderItem(item: Omit<OrderItem, 'id' | 'created_at'>): 
   `
 
   return { ...item, id, created_at: now }
+}
+
+/**
+ * Remove an order that could not be fully persisted. Order items are deleted
+ * first because some environments may add a foreign key to this schema.
+ */
+export async function deleteIncompleteOrder(orderId: string): Promise<void> {
+  await ensureUserSchema()
+  await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
+  await sql`DELETE FROM orders WHERE id = ${orderId}`
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
@@ -385,11 +397,74 @@ export async function getOrdersByEmail(email: string): Promise<Order[]> {
 export async function updateOrderStatus(id: string, status: Order['status'], trackingNumber?: string): Promise<void> {
   await ensureUserSchema()
   const now = new Date().toISOString()
-  
-  if (trackingNumber) {
-    await sql`UPDATE orders SET status = ${status}, tracking_number = ${trackingNumber}, updated_at = ${now} WHERE id = ${id}`
-  } else {
-    await sql`UPDATE orders SET status = ${status}, updated_at = ${now} WHERE id = ${id}`
+
+  const client = await sql.connect()
+  try {
+    await client.sql`BEGIN`
+    const { rows: orderRows } = await client.sql<{ status: Order['status'] }>`
+      SELECT status FROM orders WHERE id = ${id} FOR UPDATE
+    `
+    const previousStatus = orderRows[0]?.status
+    if (!previousStatus) {
+      await client.sql`ROLLBACK`
+      return
+    }
+
+    if (previousStatus !== status && (previousStatus === 'cancelled' || status === 'cancelled')) {
+      const { rows: itemRows } = await client.sql<{
+        product_id: string
+        quantity: number | string
+      }>`
+        SELECT product_id, SUM(quantity) AS quantity
+        FROM order_items
+        WHERE order_id = ${id}
+        GROUP BY product_id
+      `
+
+      for (const item of itemRows) {
+        const quantity = Number(item.quantity)
+        const stockResult =
+          status === 'cancelled'
+            ? await client.sql`
+                UPDATE products
+                SET stock_quantity = COALESCE(stock_quantity, 0) + ${quantity},
+                    updated_at = ${now}
+                WHERE id = ${item.product_id}
+              `
+            : await client.sql`
+                UPDATE products
+                SET stock_quantity = stock_quantity - ${quantity},
+                    updated_at = ${now}
+                WHERE id = ${item.product_id} AND stock_quantity >= ${quantity}
+              `
+
+        if ((stockResult.rowCount ?? 0) !== 1) {
+          throw new Error(
+            status === 'cancelled'
+              ? `Cannot restore missing product ${item.product_id}`
+              : `Insufficient stock to reopen order ${id}`
+          )
+        }
+      }
+    }
+
+    if (trackingNumber) {
+      await client.sql`
+        UPDATE orders
+        SET status = ${status}, tracking_number = ${trackingNumber}, updated_at = ${now}
+        WHERE id = ${id}
+      `
+    } else {
+      await client.sql`
+        UPDATE orders SET status = ${status}, updated_at = ${now} WHERE id = ${id}
+      `
+    }
+    await client.sql`COMMIT`
+  } catch (error) {
+    await client.sql`ROLLBACK`.catch(() => undefined)
+    throw error
+  } finally {
+    client.release()
   }
 }
 
@@ -462,8 +537,7 @@ export async function getCartItems(sessionId: string, userId?: string): Promise<
 }
 
 export async function addToCart(sessionId: string, productId: string, quantity: number = 1, userId?: string): Promise<CartItem> {
-  // Note: Schema is ensured once per cold start via schemaInitialized flag
-  // Skip ensureUserSchema() here for performance - it runs on first request anyway
+  await ensureUserSchema()
   const now = new Date().toISOString()
   const id = randomUUID()
   
@@ -484,20 +558,50 @@ export async function addToCart(sessionId: string, productId: string, quantity: 
   return { id, session_id: sessionId, user_id: userId || null, product_id: productId, quantity, created_at: now, updated_at: now }
 }
 
-export async function updateCartItemQuantity(itemId: string, quantity: number): Promise<void> {
+export async function updateCartItemQuantity(
+  itemId: string,
+  quantity: number,
+  sessionId: string,
+  userId?: string
+): Promise<boolean> {
   await ensureUserSchema()
   const now = new Date().toISOString()
-  
-  if (quantity <= 0) {
-    await sql`DELETE FROM cart_items WHERE id = ${itemId}`
-  } else {
-    await sql`UPDATE cart_items SET quantity = ${quantity}, updated_at = ${now} WHERE id = ${itemId}`
-  }
+
+  const result = userId
+    ? quantity <= 0
+      ? await sql`DELETE FROM cart_items WHERE id = ${itemId} AND user_id = ${userId}`
+      : await sql`
+          UPDATE cart_items
+          SET quantity = ${quantity}, updated_at = ${now}
+          WHERE id = ${itemId} AND user_id = ${userId}
+        `
+    : quantity <= 0
+      ? await sql`
+          DELETE FROM cart_items
+          WHERE id = ${itemId} AND session_id = ${sessionId} AND user_id IS NULL
+        `
+      : await sql`
+          UPDATE cart_items
+          SET quantity = ${quantity}, updated_at = ${now}
+          WHERE id = ${itemId} AND session_id = ${sessionId} AND user_id IS NULL
+        `
+
+  return (result.rowCount ?? 0) > 0
 }
 
-export async function removeFromCart(itemId: string): Promise<void> {
+export async function removeFromCart(
+  itemId: string,
+  sessionId: string,
+  userId?: string
+): Promise<boolean> {
   await ensureUserSchema()
-  await sql`DELETE FROM cart_items WHERE id = ${itemId}`
+  const result = userId
+    ? await sql`DELETE FROM cart_items WHERE id = ${itemId} AND user_id = ${userId}`
+    : await sql`
+        DELETE FROM cart_items
+        WHERE id = ${itemId} AND session_id = ${sessionId} AND user_id IS NULL
+      `
+  return (result.rowCount ?? 0) > 0
 }
 
 export async function clearCart(sessionId: string, userId?: string): Promise<void> {
@@ -539,4 +643,3 @@ export async function mergeGuestCartToUser(sessionId: string, userId: string): P
     }
   }
 }
-

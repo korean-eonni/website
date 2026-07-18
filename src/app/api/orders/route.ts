@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createOrder, addOrderItem, getSessionByToken, clearCart } from '@/lib/userStore'
-import { getProduct, tryDecrementStock } from '@/lib/productStore'
+import {
+  createOrder,
+  addOrderItem,
+  deleteIncompleteOrder,
+  getSessionByToken,
+  clearCart,
+  type Order,
+  type OrderItem,
+} from '@/lib/userStore'
+import { getProduct, restoreStock, tryDecrementStock } from '@/lib/productStore'
+import { sendOrderCreatedEmail } from '@/lib/emailDelivery'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +18,27 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_RE = /^\+?\d[\d\s\-()]{8,17}$/
 
 type CartLine = { productId?: string; quantity?: number }
+type StockReservation = { productId: string; quantity: number }
+
+async function restoreReservations(reserved: StockReservation[]): Promise<void> {
+  // Reverse order mirrors the reservation sequence and makes failures easier
+  // to reason about in logs. Keep attempting even if one product disappeared.
+  for (const reservation of [...reserved].reverse()) {
+    try {
+      const restored = await restoreStock(reservation.productId, reservation.quantity)
+      if (restored === null) {
+        console.error(
+          `[orders] Could not restore stock for missing product ${reservation.productId}`
+        )
+      }
+    } catch (error) {
+      console.error(
+        `[orders] Failed to restore ${reservation.quantity} unit(s) for ${reservation.productId}:`,
+        error
+      )
+    }
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,14 +57,37 @@ export async function POST(request: Request) {
       items,
     } = data
 
-    if (!firstName || !lastName || !email || !phone) {
+    const cleanFirstName = String(firstName || '').trim().slice(0, 100)
+    const cleanLastName = String(lastName || '').trim().slice(0, 100)
+    const cleanEmail = String(email || '').trim().toLowerCase().slice(0, 320)
+    const cleanPhone = String(phone || '').trim().slice(0, 30)
+    const cleanShippingMethod = String(shippingMethod || '') as Order['shipping_method']
+    const cleanPaymentMethod = String(paymentMethod || '') as Order['payment_method']
+    const cleanShippingCity = String(shippingCity || '').trim().slice(0, 200) || null
+    const cleanShippingWarehouse = String(shippingWarehouse || '').trim().slice(0, 300) || null
+    const cleanShippingAddress = String(shippingAddress || '').trim().slice(0, 500) || null
+
+    if (!cleanFirstName || !cleanLastName || !cleanEmail || !cleanPhone) {
       return NextResponse.json({ error: 'Заповніть всі обов\'язкові поля' }, { status: 400 })
     }
-    if (!EMAIL_RE.test(String(email))) {
+    if (!EMAIL_RE.test(cleanEmail)) {
       return NextResponse.json({ error: 'Некоректний email' }, { status: 400 })
     }
-    if (!PHONE_RE.test(String(phone))) {
+    if (!PHONE_RE.test(cleanPhone)) {
       return NextResponse.json({ error: 'Некоректний номер телефону' }, { status: 400 })
+    }
+    if (!['nova_poshta', 'ukrposhta'].includes(cleanShippingMethod)) {
+      return NextResponse.json({ error: 'Некоректний спосіб доставки' }, { status: 400 })
+    }
+    if (!['platon', 'card', 'cash_on_delivery'].includes(cleanPaymentMethod)) {
+      return NextResponse.json({ error: 'Некоректний спосіб оплати' }, { status: 400 })
+    }
+    if (
+      (cleanShippingMethod === 'nova_poshta' &&
+        (!cleanShippingCity || (!cleanShippingWarehouse && !cleanShippingAddress))) ||
+      (cleanShippingMethod === 'ukrposhta' && !cleanShippingAddress)
+    ) {
+      return NextResponse.json({ error: 'Заповніть адресу доставки' }, { status: 400 })
     }
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Кошик порожній' }, { status: 400 })
@@ -94,60 +147,83 @@ export async function POST(request: Request) {
     }
 
     // Reserve stock atomically. If we fail half-way, roll back what we took.
-    const reserved: Array<{ productId: string; quantity: number }> = []
-    for (const line of lines) {
-      const remaining = await tryDecrementStock(line.productId, line.quantity)
-      if (remaining === null) {
-        // Roll back — give back anything we already reserved.
-        for (const r of reserved) {
-          await tryDecrementStock(r.productId, -r.quantity).catch(() => {})
+    const reserved: StockReservation[] = []
+    try {
+      for (const line of lines) {
+        const remaining = await tryDecrementStock(line.productId, line.quantity)
+        if (remaining === null) {
+          await restoreReservations(reserved)
+          return NextResponse.json(
+            { error: `Недостатньо на складі: ${line.productName}` },
+            { status: 409 }
+          )
         }
-        return NextResponse.json(
-          { error: `Недостатньо на складі: ${line.productName}` },
-          { status: 409 }
-        )
+        reserved.push({ productId: line.productId, quantity: line.quantity })
       }
-      reserved.push({ productId: line.productId, quantity: line.quantity })
+    } catch (error) {
+      await restoreReservations(reserved)
+      throw error
     }
 
-    // Identify user (if any).
-    const cookieStore = await cookies()
-    const token = cookieStore.get('session_token')?.value
+    let cookieStore: Awaited<ReturnType<typeof cookies>>
     let userId: string | null = null
-    if (token) {
-      const session = await getSessionByToken(token)
-      if (session) userId = session.user_id
+    let order: Awaited<ReturnType<typeof createOrder>> | null = null
+    const createdItems: OrderItem[] = []
+    try {
+      // Identify user (if any) inside the protected persistence block. Any
+      // failure after reservation and before a complete order restores stock.
+      cookieStore = await cookies()
+      const token = cookieStore.get('session_token')?.value
+      if (token) {
+        const session = await getSessionByToken(token)
+        if (session) userId = session.user_id
+      }
+
+      order = await createOrder({
+        user_id: userId,
+        guest_email: userId ? null : cleanEmail,
+        guest_phone: userId ? null : cleanPhone,
+        status: 'pending',
+        total_amount: totalAmount,
+        shipping_method: cleanShippingMethod,
+        shipping_city: cleanShippingCity,
+        shipping_warehouse: cleanShippingWarehouse,
+        shipping_address: cleanShippingAddress,
+        payment_method: cleanPaymentMethod,
+        payment_status: 'pending',
+        first_name: cleanFirstName,
+        last_name: cleanLastName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        notes: `${String(notes ?? '').trim().slice(0, 2000)}${promoNote}` || null,
+        tracking_number: null,
+      })
+
+      for (const line of lines) {
+        createdItems.push(await addOrderItem({
+          order_id: order.id,
+          product_id: line.productId,
+          product_name: line.productName,
+          product_image: line.productImage,
+          quantity: line.quantity,
+          price: line.price,
+        }))
+      }
+    } catch (error) {
+      await restoreReservations(reserved)
+      if (order) {
+        try {
+          await deleteIncompleteOrder(order.id)
+        } catch (cleanupError) {
+          console.error(`[orders] Failed to delete incomplete order ${order.id}:`, cleanupError)
+        }
+      }
+      throw error
     }
 
-    const order = await createOrder({
-      user_id: userId,
-      guest_email: userId ? null : email,
-      guest_phone: userId ? null : phone,
-      status: 'pending',
-      total_amount: totalAmount,
-      shipping_method: shippingMethod,
-      shipping_city: shippingCity,
-      shipping_warehouse: shippingWarehouse,
-      shipping_address: shippingAddress,
-      payment_method: paymentMethod,
-      payment_status: 'pending',
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      email,
-      notes: `${notes ?? ''}${promoNote}`,
-      tracking_number: null,
-    })
-
-    for (const line of lines) {
-      await addOrderItem({
-        order_id: order.id,
-        product_id: line.productId,
-        product_name: line.productName,
-        product_image: line.productImage,
-        quantity: line.quantity,
-        price: line.price,
-      })
+    if (!order) {
+      await restoreReservations(reserved)
+      throw new Error('Order persistence completed without an order record')
     }
 
     // Clear cart on success.
@@ -156,10 +232,12 @@ export async function POST(request: Request) {
       await clearCart(sessionId, userId || undefined)
     }
 
-    // Notification hook for later: this is the single place every order passes
-    // through, so wire Telegram / Viber / WhatsApp / Gmail bots here when ready
-    // (send `order` + `lines` to the bot endpoint). Keep it best-effort so a
-    // notification failure never breaks a successfully placed order.
+    // Best-effort: the delivery service records sent/failed state and never
+    // turns an already persisted order into a checkout error.
+    const emailResult = await sendOrderCreatedEmail(order, createdItems)
+    if (!emailResult.ok) {
+      console.warn(`[orders] Confirmation email not sent for ${order.id}: ${emailResult.error}`)
+    }
 
     return NextResponse.json({
       success: true,

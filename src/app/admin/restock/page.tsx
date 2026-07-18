@@ -28,7 +28,12 @@ export default async function AdminRestockPage() {
     )
   }
 
-  const requests = await getRestockRequests(500)
+  const requests = process.env.POSTGRES_URL
+    ? await getRestockRequests(500).catch((error) => {
+        console.error('[admin/restock] requests unavailable:', error)
+        return []
+      })
+    : []
 
   // Group by product so it's easy to see demand per item.
   const byProduct = new Map<string, { name: string; contacts: { contact: string; created_at: string }[] }>()

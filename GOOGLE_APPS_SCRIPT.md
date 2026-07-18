@@ -10,8 +10,10 @@ This script does two things:
 2. Go to **Extensions** → **Apps Script**
 3. Delete any existing code and paste the ENTIRE script below
 4. Save the script (Ctrl+S or Cmd+S)
-5. Run `onOpen()` once manually to create the menu
-6. Set up triggers (see below)
+5. In Apps Script, open **Project Settings** → **Script Properties** and add
+   `CRON_SECRET` with exactly the same value as the Vercel environment variable
+6. Run `onOpen()` once manually to create the menu
+7. Set up triggers (see below)
 
 ## The Complete Script
 
@@ -22,7 +24,7 @@ This script does two things:
 const CONFIG = {
   SHEET_NAME: 'Загальний',
   PHOTO_FOLDER_ID: '1l0OnOXF3O8W1mGzg0vNz_aY50IH3rrXc',
-  WEBSITE_SYNC_URL: 'https://www.eonni.com.ua/api/sync-sheet',
+  WEBSITE_SYNC_URL: 'https://eonni.com.ua/api/sync-sheet',
   HEADER_ROWS: 1,
   NAME_COL: 1,        // Column A
   OUT_START_COL: 24,  // Column X (where photos start) — UPDATED 2026-05-06: was 20 (T) before description split into 6 sections
@@ -125,13 +127,19 @@ function syncProductPhotoLinks() {
 // ============================================
 function syncToWebsite() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const cronSecret = PropertiesService.getScriptProperties().getProperty('CRON_SECRET');
+
+  if (!cronSecret) {
+    throw new Error('Missing CRON_SECRET in Apps Script Project Settings → Script Properties');
+  }
   
   try {
     const response = UrlFetchApp.fetch(CONFIG.WEBSITE_SYNC_URL, {
       method: 'GET',
       muteHttpExceptions: true,
       headers: {
-        'User-Agent': 'GoogleAppsScript-EonniSync'
+        'User-Agent': 'GoogleAppsScript-EonniSync',
+        'Authorization': 'Bearer ' + cronSecret
       }
     });
     
@@ -223,12 +231,14 @@ Make sure your photo folder is either:
 ### Troubleshooting
 - **Photos not appearing:** Check that file names match product names exactly
 - **Sync errors:** Check Apps Script logs (View → Logs)
+- **401 Unauthorized:** Check that the Apps Script `CRON_SECRET` Script Property exactly matches Vercel
 - **Permission errors:** Re-authorize the script when prompted
 
 ## Current Configuration
 - **Sheet:** Загальний
 - **Photo Folder ID:** 1l0OnOXF3O8W1mGzg0vNz_aY50IH3rrXc
-- **Website URL:** https://www.eonni.com.ua/api/sync-sheet
+- **Website URL:** https://eonni.com.ua/api/sync-sheet
+- **Authentication:** `Authorization: Bearer <CRON_SECRET>` from Apps Script Script Properties
 - **Photo Columns:** X through AI (12 photos per product) — was T-AE before 2026-05-06 column expansion
 
 ## Column Layout (44 cols)

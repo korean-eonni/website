@@ -96,13 +96,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { productId, quantity = 1 } = await request.json()
+    const cleanProductId = String(productId || '').trim()
+    const cleanQuantity = Number(quantity)
 
-    if (!productId) {
-      return NextResponse.json({ error: 'Product ID required' }, { status: 400 })
+    if (
+      !cleanProductId ||
+      !Number.isInteger(cleanQuantity) ||
+      cleanQuantity < 1 ||
+      cleanQuantity > 99
+    ) {
+      return NextResponse.json({ error: 'Invalid product or quantity' }, { status: 400 })
     }
 
     const { sessionId, userId } = await getSessionId()
-    await addToCart(sessionId, productId, quantity, userId)
+    await addToCart(sessionId, cleanProductId, cleanQuantity, userId)
 
     const cart = await getFullCart(sessionId, userId)
     return NextResponse.json({ success: true, ...cart })
@@ -115,14 +122,30 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { itemId, quantity } = await request.json()
+    const cleanItemId = String(itemId || '').trim()
+    const cleanQuantity = Number(quantity)
 
-    if (!itemId) {
-      return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
+    if (
+      !cleanItemId ||
+      !Number.isInteger(cleanQuantity) ||
+      cleanQuantity < 0 ||
+      cleanQuantity > 99
+    ) {
+      return NextResponse.json({ error: 'Invalid item or quantity' }, { status: 400 })
     }
 
-    await updateCartItemQuantity(itemId, quantity)
+    const { sessionId, userId } = await getSessionId()
+    const updated = await updateCartItemQuantity(
+      cleanItemId,
+      cleanQuantity,
+      sessionId,
+      userId
+    )
+    if (!updated) {
+      return NextResponse.json({ error: 'Cart item not found' }, { status: 404 })
+    }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, ...(await getFullCart(sessionId, userId)) })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update cart'
     return NextResponse.json({ error: message }, { status: 500 })
@@ -132,17 +155,20 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { itemId, clearAll } = await request.json()
+    const { sessionId, userId } = await getSessionId()
 
     if (clearAll) {
-      const { sessionId, userId } = await getSessionId()
       await clearCart(sessionId, userId)
     } else if (itemId) {
-      await removeFromCart(itemId)
+      const removed = await removeFromCart(String(itemId), sessionId, userId)
+      if (!removed) {
+        return NextResponse.json({ error: 'Cart item not found' }, { status: 404 })
+      }
     } else {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, ...(await getFullCart(sessionId, userId)) })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to remove from cart'
     return NextResponse.json({ error: message }, { status: 500 })

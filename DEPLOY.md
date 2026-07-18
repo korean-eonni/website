@@ -75,10 +75,10 @@ Product fields (name, price, images, and the product-page section tabs: Спос
 from the **Google Sheet**, tab **`Загальний`** (`GOOGLE_SHEETS_ID`). `sheetSync.ts` maps columns by
 **exact Ukrainian header name** → DB columns.
 
-A daily cron (`vercel.json` → `0 6 * * *`) calls **`/api/sync-sheet`**, which does a **full replace**
-(`replaceAllProducts`: DELETE all + re-insert from the sheet). To apply sheet edits immediately (or
-after changing sync/schema code), trigger it manually. It needs auth — mint an admin-session cookie
-from `ADMIN_SECRET`:
+A daily cron (`vercel.json` → `0 6 * * *`) calls **`/api/sync-sheet`**, which upserts catalogue
+metadata while preserving the runtime `stock_quantity` already stored in Postgres. Missing Sheet rows
+are deactivated only after an error-free import. To apply Sheet edits immediately (or after changing
+sync/schema code), trigger it manually. It needs auth — mint an admin-session cookie from `ADMIN_SECRET`:
 ```bash
 vercel env pull .env.local --environment=production --yes
 TOKEN=$(node -e 'const fs=require("fs"),c=require("crypto");let s=fs.readFileSync(".env.local","utf8").match(/^ADMIN_SECRET=(.*)$/m)[1].trim().replace(/^"|"$/g,"");const t=Date.now().toString(36);process.stdout.write(t+"."+c.createHmac("sha256",s).update(t).digest("hex"))')
@@ -90,12 +90,12 @@ rm -f .env.local
 
 > 🚨 **If you change the DB schema or the `replaceAllProducts` INSERT**, the INSERT **column list and
 > VALUES list must have the exact same count and order**, and add the column in `ensurePostgresSchema`
-> (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`). A systematic mismatch makes every row fail → the DELETE
-> still ran → **the catalog is wiped**. Count both lists before triggering a sync.
+> (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`). Count both lists before triggering a sync and require
+> `errors: 0`; deactivation is intentionally skipped when any upsert fails.
 
-To **remove** a product: delete its row from the sheet, then re-sync (deleting only from the DB won't
-stick — the next sync re-adds it from the sheet). `is_active` is forced to `1` on sync, so you can't
-hide a product just by toggling an "active" flag in the sheet — remove the row.
+To **remove** a product: delete its row from the Sheet, then re-sync. The database row is retained for
+order history but becomes inactive. Catalogue fields come from the Sheet; live stock changes through
+checkout/admin operations and is not reset by later syncs.
 
 (`CRON_SECRET` also authorizes via `Authorization: Bearer $CRON_SECRET`, but it's a Vercel *system*
 var and is NOT returned by `vercel env pull`. Use the admin-cookie method above.)

@@ -248,10 +248,8 @@ export default function CheckoutPage() {
   const validateStep1 = () => {
     if (!firstName.trim()) return 'Введіть ім\'я'
     if (!lastName.trim()) return 'Введіть прізвище'
-    // Email is OPTIONAL — only validate the shape if the user typed something.
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      return 'Введіть коректний email'
-    }
+    if (!email.trim()) return 'Введіть email для квитанції та статусу замовлення'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return 'Введіть коректний email'
     // Ukrainian phone: +380 + 9 subscriber digits = 12 digits total.
     const digits = phone.replace(/\D/g, '')
     if (digits.length < 12) return 'Введіть повний номер телефону'
@@ -349,7 +347,7 @@ export default function CheckoutPage() {
         const payRes = await fetch('/api/platon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId }),
+          body: JSON.stringify({ orderId, accessToken: orderId }),
         })
         if (!payRes.ok) {
           setRedirecting(false)
@@ -374,7 +372,7 @@ export default function CheckoutPage() {
 
       // Offline methods (cash / bank transfer): clear cart and show success.
       await clearCart()
-      router.push(`/orders/${orderId}/success`)
+      router.push(`/orders/${orderId}/success?token=${encodeURIComponent(orderId)}`)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -477,7 +475,7 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="mt-4">
-                      <label className="block text-[14px] text-[#666] mb-2">Email <span className="text-[#999]">(необов'язково)</span></label>
+                      <label className="block text-[14px] text-[#666] mb-2">Email для квитанції *</label>
                       <input
                         type="email"
                         value={email}

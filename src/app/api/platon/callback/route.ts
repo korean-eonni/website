@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyPlatonCallback } from '@/lib/platon'
-import { getOrderById, updatePaymentStatus } from '@/lib/userStore'
+import { getOrderById, getOrderItems, updatePaymentStatus } from '@/lib/userStore'
+import { sendPaymentReceiptEmail } from '@/lib/emailDelivery'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,8 +50,14 @@ export async function POST(request: Request) {
   }
 
   // Only act while still pending; never downgrade an already-final status.
-  if (order.payment_status === 'pending' && body.status === 'SALE') {
-    await updatePaymentStatus(orderId, 'paid')
+  if (body.status === 'SALE') {
+    if (order.payment_status === 'pending') {
+      await updatePaymentStatus(orderId, 'paid')
+    }
+
+    // Callback retries are expected. The email service uses a deterministic
+    // idempotency key, so a valid repeated SALE cannot send duplicate receipts.
+    await sendPaymentReceiptEmail(order, await getOrderItems(order.id))
   }
 
   return new NextResponse('OK', { status: 200 })

@@ -88,7 +88,7 @@ export default async function ProductOgImage({ params }: { params: { id: string 
             eonni
             <span
               style={{
-                display: 'inline-block',
+                display: 'flex',
                 width: 14,
                 height: 14,
                 background: '#0A0F1F',

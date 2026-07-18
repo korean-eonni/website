@@ -47,9 +47,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 3) Guest order — only the link with the UUID counts as proof.
-    // (Orders are created with random UUIDs, so knowing the id is effectively a
-    // capability token. We still don't expose it via lookup endpoints.)
+    // 3) Guest order — require the unguessable token included in the checkout
+    // success URL and email. Do not expose guest PII from a bare order URL.
+    const requestUrl = new URL(request.url)
+    if (requestUrl.searchParams.get('token') !== order.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     const items = await getOrderItems(orderId)
     return NextResponse.json({ order, items })
   } catch (error) {

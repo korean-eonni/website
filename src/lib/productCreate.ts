@@ -25,7 +25,9 @@ import {
 } from '@/lib/oauthStore'
 
 const SHEET_NAME = 'Загальний'
-const TOTAL_COLUMNS = 43
+// A:AR in the live sheet. Keep these indexes aligned with the real header row:
+// stock is L, descriptions start at N, photos are Y:AH, and classification is AR.
+const TOTAL_COLUMNS = 44
 
 export type NewProductInput = {
   name: string
@@ -39,6 +41,7 @@ export type NewProductInput = {
   sale_price?: number | null
   original_price?: number | null
   discount_amount?: number | null
+  stock_quantity?: number | null
   tags?: string | null
   short_description?: string | null
   long_description?: string | null
@@ -242,31 +245,33 @@ export async function appendProductToSheet(input: NewProductInput): Promise<void
   row[8] = num(input.sale_price)
   row[9] = num(input.original_price)
   row[10] = num(input.discount_amount)
-  row[11] = text(input.tags)
-  row[12] = text(input.short_description)
-  row[13] = text(input.long_description)
-  row[14] = text(input.usage_instructions)
-  row[15] = text(input.clinical_proof)
-  row[16] = text(input.solves_problems)
-  row[17] = text(input.key_ingredients)
-  row[18] = text(input.fit_skin)
-  row[19] = text(input.compatibility)
-  row[20] = yesNo(input.is_active ?? true)
-  row[21] = yesNo(input.is_new)
-  row[22] = yesNo(input.is_exclusive)
-  for (let i = 0; i < 10; i++) row[23 + i] = photo(i)
-  row[35] = text(input.volume_options)
-  row[36] = num(input.rating)
-  row[37] = num(input.review_count)
-  row[38] = text(input.age_group)
-  row[39] = text(input.ingredients)
-  row[40] = text(input.skin_type)
-  row[41] = text(input.series)
-  row[42] = text(input.classification)
+  row[11] = num(input.stock_quantity)
+  row[12] = text(input.tags)
+  row[13] = text(input.short_description)
+  row[14] = text(input.long_description)
+  row[15] = text(input.usage_instructions)
+  row[16] = text(input.clinical_proof)
+  row[17] = text(input.solves_problems)
+  row[18] = text(input.key_ingredients)
+  row[19] = text(input.fit_skin)
+  row[20] = text(input.compatibility)
+  row[21] = yesNo(input.is_active ?? true)
+  row[22] = yesNo(input.is_new)
+  row[23] = yesNo(input.is_exclusive)
+  for (let i = 0; i < 10; i++) row[24 + i] = photo(i)
+  // AI:AJ are intentionally reserved for optional photos 11–12.
+  row[36] = text(input.volume_options)
+  row[37] = num(input.rating)
+  row[38] = num(input.review_count)
+  row[39] = text(input.age_group)
+  row[40] = text(input.ingredients)
+  row[41] = text(input.skin_type)
+  row[42] = text(input.series)
+  row[43] = text(input.classification)
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${SHEET_NAME}!A:AQ`,
+    range: `${SHEET_NAME}!A:AR`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values: [row] },
