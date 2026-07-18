@@ -47,3 +47,9 @@
 - **Error:** `npm cache clean --force` не може видалити `_cacache/index-v5`.
 - **Cause:** інший npm-процес одночасно записує у спільний user cache.
 - **Fix:** дочекатися завершення інших npm-процесів і повторити cache cleanup.
+
+## Stock sync зупиняє дублікати товарів без SKU
+
+- **Error:** `Duplicate product name "..." in Google Sheet`, pending stock rows не синхронізуються.
+- **Cause:** кілька legacy-рядків мають однакову назву і порожній SKU, тому звичайний name fallback неоднозначний.
+- **Fix:** для legacy ID виду `<name-slug>-<source-index>` використовувати рядок `source-index + 2`, але лише якщо він досі входить до точного набору дублікатів; інакше залишати подію failed.

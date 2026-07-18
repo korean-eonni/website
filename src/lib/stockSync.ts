@@ -228,6 +228,13 @@ function buildSheetLookup(rows: unknown[][]): SheetLookup {
   return { stockColumn, rowsBySku, rowsByName }
 }
 
+function legacySheetRow(productId: string): number | null {
+  const match = productId.match(/-(\d+)$/)
+  if (!match) return null
+  const sourceIndex = Number(match[1])
+  return Number.isSafeInteger(sourceIndex) && sourceIndex >= 0 ? sourceIndex + 2 : null
+}
+
 function resolveSheetRow(item: QueueProductRow, lookup: SheetLookup): number {
   const sku = normalizeIdentity(item.sku)
   if (sku) {
@@ -246,6 +253,12 @@ function resolveSheetRow(item: QueueProductRow, lookup: SheetLookup): number {
   const nameRows = lookup.rowsByName.get(name) ?? []
   if (nameRows.length === 1) return nameRows[0]
   if (nameRows.length > 1) {
+    // Legacy products without SKU were created by sheetSync as
+    // `<name-slug>-<zero-based-source-index>`. Use that origin only when it
+    // still points at one of the exact duplicate-name rows. This is
+    // deterministic and cannot silently target an unrelated product.
+    const legacyRow = legacySheetRow(item.product_id)
+    if (legacyRow !== null && nameRows.includes(legacyRow)) return legacyRow
     throw new Error(`Duplicate product name "${item.name}" in Google Sheet`)
   }
 
