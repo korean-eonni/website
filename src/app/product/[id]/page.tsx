@@ -1525,8 +1525,8 @@ export default function ProductPage() {
           count: reviewsData.reviewCount || 0,
         })
       }
-    } catch (err) {
-      console.error('Failed to fetch reviews:', err)
+    } catch {
+      // Reviews are supplementary and must not block the product page.
     }
   }
 
@@ -1561,8 +1561,8 @@ export default function ProductPage() {
             const similarData = await similarResponse.json()
             setSimilarProducts(Array.isArray(similarData) ? similarData : similarData.products || [])
           }
-        } catch (secondaryError) {
-          console.error('Failed to fetch product recommendations:', secondaryError)
+        } catch {
+          // Recommendations are supplementary and must not block the product page.
         }
       } catch (err) {
         setError('Товар не знайдено')
