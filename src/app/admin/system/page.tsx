@@ -1,5 +1,6 @@
 import { isAuthed } from '@/lib/adminAuth'
 import { getSystemStatus } from '@/lib/adminData'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,8 @@ function date(value: string | null) {
 export default async function AdminSystemPage() {
   if (!isAuthed()) return null
   const status = await getSystemStatus()
+  const gmailConnected =
+    status.integrations.find((integration) => integration.name === 'Email')?.configured ?? false
 
   return (
     <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
@@ -25,6 +28,25 @@ export default async function AdminSystemPage() {
           Vercel має бути підключений.
         </div>
       )}
+
+      <section className="mb-6 rounded-2xl border border-[#6046A3]/20 bg-[#F5F3FF] p-5">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-semibold">Пошта клієнтам</h2>
+            <p className="mt-1 text-sm text-black/55">
+              {gmailConnected
+                ? 'Gmail підключено. Підтвердження, квитанції та повідомлення з ТТН надсилаються автоматично.'
+                : 'Підключіть службовий Gmail, щоб автоматично надсилати клієнтам усі транзакційні листи.'}
+            </p>
+          </div>
+          <Link
+            href="/api/admin/gmail/oauth/start"
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-[#6046A3] px-5 text-sm font-semibold text-white hover:bg-[#4D3882]"
+          >
+            {gmailConnected ? 'Перепідключити Gmail' : 'Підключити Gmail'}
+          </Link>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-black/10 bg-white p-5">

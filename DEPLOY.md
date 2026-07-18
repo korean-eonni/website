@@ -133,7 +133,12 @@ Or just fix forward and re-deploy — atomic builds keep this low-risk.
 **Env vars** (set in Vercel; pull with `vercel env pull .env.local --environment=production`):
 `POSTGRES_URL`, `ADMIN_SECRET`, `ADMIN_PASSWORD`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`,
 `GOOGLE_SERVICE_ACCOUNT_KEY`, `GOOGLE_SHEETS_ID`, `BLOB_READ_WRITE_TOKEN`,
-`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`. `.env*.local` is gitignored — never commit it.
+`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `NOVA_POSHTA_API_KEY`,
+`NOVA_POSHTA_SENDER_REF`, `NOVA_POSHTA_SENDER_CONTACT_REF`, `NOVA_POSHTA_SENDER_CITY_REF`,
+`NOVA_POSHTA_SENDER_WAREHOUSE_REF`, `NOVA_POSHTA_SENDER_PHONE`,
+`NOVA_POSHTA_SENDER_ADDRESS_TYPE`, `PLATON_KEY`, `PLATON_PASSWORD`. Gmail sending is authorized once
+from `/admin/system` and its refresh token is stored in `app_oauth_tokens`; no mailbox password is
+stored in Vercel. `.env*.local` is gitignored — never commit it.
 
 ---
 ### One-paragraph TL;DR

@@ -9,7 +9,8 @@
  */
 import { sql } from '@vercel/postgres'
 
-const PROVIDER = 'google_drive'
+export type GoogleOAuthProvider = 'google_drive' | 'gmail'
+const DRIVE_PROVIDER: GoogleOAuthProvider = 'google_drive'
 
 async function ensureSchema() {
   await sql`
@@ -34,13 +35,16 @@ export type OAuthTokenRow = {
   scope: string | null
 }
 
-export async function saveGoogleRefreshToken(input: {
+export async function saveGoogleOAuthToken(
+  provider: GoogleOAuthProvider,
+  input: {
   refresh_token: string
   access_token?: string | null
   access_token_expires_at?: Date | null
   account_email?: string | null
   scope?: string | null
-}): Promise<void> {
+  }
+): Promise<void> {
   await ensureSchema()
   const expires = input.access_token_expires_at
     ? input.access_token_expires_at.toISOString()
@@ -51,7 +55,7 @@ export async function saveGoogleRefreshToken(input: {
       account_email, scope, updated_at
     )
     VALUES (
-      ${PROVIDER}, ${input.refresh_token}, ${input.access_token ?? null},
+      ${provider}, ${input.refresh_token}, ${input.access_token ?? null},
       ${expires}, ${input.account_email ?? null}, ${input.scope ?? null}, NOW()
     )
     ON CONFLICT (provider) DO UPDATE SET
@@ -64,7 +68,8 @@ export async function saveGoogleRefreshToken(input: {
   `
 }
 
-export async function updateGoogleAccessToken(
+export async function updateGoogleOAuthAccessToken(
+  provider: GoogleOAuthProvider,
   access_token: string,
   expires_at: Date
 ): Promise<void> {
@@ -74,17 +79,19 @@ export async function updateGoogleAccessToken(
     SET access_token = ${access_token},
         access_token_expires_at = ${expires_at.toISOString()},
         updated_at = NOW()
-    WHERE provider = ${PROVIDER}
+    WHERE provider = ${provider}
   `
 }
 
-export async function getGoogleTokens(): Promise<OAuthTokenRow | null> {
+export async function getGoogleOAuthTokens(
+  provider: GoogleOAuthProvider
+): Promise<OAuthTokenRow | null> {
   await ensureSchema()
   const result = await sql`
     SELECT refresh_token, access_token, access_token_expires_at,
            account_email, scope
     FROM app_oauth_tokens
-    WHERE provider = ${PROVIDER}
+    WHERE provider = ${provider}
   `
   if (result.rows.length === 0) return null
   const row = result.rows[0]
@@ -99,7 +106,30 @@ export async function getGoogleTokens(): Promise<OAuthTokenRow | null> {
   }
 }
 
-export async function clearGoogleTokens(): Promise<void> {
+export async function clearGoogleOAuthTokens(
+  provider: GoogleOAuthProvider
+): Promise<void> {
   await ensureSchema()
-  await sql`DELETE FROM app_oauth_tokens WHERE provider = ${PROVIDER}`
+  await sql`DELETE FROM app_oauth_tokens WHERE provider = ${provider}`
+}
+
+export async function saveGoogleRefreshToken(
+  input: Parameters<typeof saveGoogleOAuthToken>[1]
+): Promise<void> {
+  return saveGoogleOAuthToken(DRIVE_PROVIDER, input)
+}
+
+export async function updateGoogleAccessToken(
+  accessToken: string,
+  expiresAt: Date
+): Promise<void> {
+  return updateGoogleOAuthAccessToken(DRIVE_PROVIDER, accessToken, expiresAt)
+}
+
+export async function getGoogleTokens(): Promise<OAuthTokenRow | null> {
+  return getGoogleOAuthTokens(DRIVE_PROVIDER)
+}
+
+export async function clearGoogleTokens(): Promise<void> {
+  return clearGoogleOAuthTokens(DRIVE_PROVIDER)
 }

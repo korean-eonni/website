@@ -34,6 +34,14 @@ type OrderItem = {
   price: number
 }
 
+type Shipment = {
+  trackingNumber: string | null
+  status: string | null
+  scheduledDeliveryDate: string | null
+  actualDeliveryDate: string | null
+  trackingCompleted: boolean
+}
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: 'Очікує підтвердження', color: '#B45309', bg: '#FEF3C7' },
   confirmed: { label: 'Підтверджено', color: '#1D4ED8', bg: '#E2F9FF' },
@@ -78,6 +86,7 @@ export default function OrderDetailPage() {
   const orderId = params.id as string
   const [order, setOrder] = useState<Order | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
+  const [shipment, setShipment] = useState<Shipment | null>(null)
   const [loading, setLoading] = useState(true)
   const [unauthorized, setUnauthorized] = useState(false)
   const [me, setMe] = useState<{
@@ -93,7 +102,10 @@ export default function OrderDetailPage() {
       try {
         const accessToken = new URLSearchParams(window.location.search).get('token')
         const tokenQuery = accessToken ? `?token=${encodeURIComponent(accessToken)}` : ''
-        const res = await fetch(`/api/orders/${orderId}${tokenQuery}`)
+        const res = await fetch(`/api/orders/${orderId}${tokenQuery}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        })
         if (res.status === 401) {
           setUnauthorized(true)
           return
@@ -102,6 +114,7 @@ export default function OrderDetailPage() {
           const data = await res.json()
           setOrder(data.order)
           setItems(data.items || [])
+          setShipment(data.shipment || null)
         }
       } catch (error) {
         console.error('Failed to fetch order:', error)
@@ -254,11 +267,33 @@ export default function OrderDetailPage() {
                       {SHIPPING_LABELS[order.shipping_method] || order.shipping_method}
                     </p>
                     {shipLine && <p className="text-[14px] text-[#444] mt-1">{shipLine}</p>}
-                    {order.tracking_number && (
-                      <p className="text-[14px] mt-2">
+                    {(shipment?.trackingNumber || order.tracking_number) && (
+                      <div className="mt-2 text-[14px]">
                         <span className="text-[#666]">ТТН: </span>
-                        <span className="text-[#6046A3] font-medium">{order.tracking_number}</span>
-                      </p>
+                        <a
+                          href={`https://novaposhta.ua/tracking/?cargo_number=${
+                            shipment?.trackingNumber || order.tracking_number
+                          }`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-[#6046A3] hover:underline"
+                        >
+                          {shipment?.trackingNumber || order.tracking_number}
+                        </a>
+                        {shipment?.status && (
+                          <p className="mt-2 text-[13px] text-[#444]">{shipment.status}</p>
+                        )}
+                        {shipment?.scheduledDeliveryDate && !shipment.trackingCompleted && (
+                          <p className="mt-1 text-[12px] text-[#777]">
+                            Планова доставка: {shipment.scheduledDeliveryDate}
+                          </p>
+                        )}
+                        {shipment?.actualDeliveryDate && (
+                          <p className="mt-1 text-[12px] text-[#059669]">
+                            Доставлено: {shipment.actualDeliveryDate}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div>

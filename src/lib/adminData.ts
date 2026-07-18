@@ -522,6 +522,7 @@ export async function getSystemStatus(): Promise<SystemStatus> {
     'email_deliveries',
     'app_oauth_tokens',
     'stock_sync_queue',
+    'nova_poshta_shipments',
   ]
   const databaseConfigured = Boolean(process.env.POSTGRES_URL)
   if (!databaseConfigured) {
@@ -535,13 +536,18 @@ export async function getSystemStatus(): Promise<SystemStatus> {
   }
 
   const result = await safeRead(async () => {
-    const [tablesResult, catalogResult] = await Promise.all([
+    const [tablesResult, catalogResult, gmailResult] = await Promise.all([
       sql<{ table_name: string }>`
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public'
       `,
       sql<{ updated_at: string | null }>`SELECT MAX(updated_at) AS updated_at FROM products`,
+      sql<{ connected: boolean }>`
+        SELECT EXISTS(
+          SELECT 1 FROM app_oauth_tokens WHERE provider = 'gmail'
+        ) AS connected
+      `,
     ])
     const existing = new Set(tablesResult.rows.map((row) => row.table_name))
     const countResults = await Promise.all([
@@ -552,6 +558,7 @@ export async function getSystemStatus(): Promise<SystemStatus> {
     ])
     return {
       tables: expectedTables.map((name) => ({ name, present: existing.has(name) })),
+      integrations: integrationStatus(Boolean(gmailResult.rows[0]?.connected)),
       catalogUpdatedAt: catalogResult.rows[0]?.updated_at || null,
       counts: [
         { label: 'Товари', value: countResults[0].data },
@@ -562,6 +569,7 @@ export async function getSystemStatus(): Promise<SystemStatus> {
     }
   }, {
     tables: expectedTables.map((name) => ({ name, present: false })),
+    integrations: integrationStatus(),
     catalogUpdatedAt: null,
     counts: [],
   })
@@ -569,13 +577,13 @@ export async function getSystemStatus(): Promise<SystemStatus> {
   return {
     databaseConfigured,
     tables: result.data.tables,
-    integrations: integrationStatus(),
+    integrations: result.data.integrations,
     catalogUpdatedAt: result.data.catalogUpdatedAt,
     counts: result.data.counts,
   }
 }
 
-function integrationStatus(): SystemStatus['integrations'] {
+function integrationStatus(gmailConnected = false): SystemStatus['integrations'] {
   return [
     {
       name: 'Postgres',
@@ -602,13 +610,17 @@ function integrationStatus(): SystemStatus['integrations'] {
     },
     {
       name: 'Email',
-      configured: Boolean(process.env.RESEND_API_KEY || process.env.SMTP_HOST),
-      detail: 'Квитанції та сервісні повідомлення',
+      configured: gmailConnected,
+      detail: 'Gmail OAuth: підтвердження, квитанції та ТТН',
     },
     {
       name: 'Nova Poshta',
-      configured: Boolean(process.env.NOVA_POSHTA_API_KEY),
-      detail: 'Відділення й доставка',
+      configured: Boolean(
+        process.env.NOVA_POSHTA_API_KEY &&
+          process.env.NOVA_POSHTA_SENDER_REF &&
+          process.env.NOVA_POSHTA_SENDER_CONTACT_REF
+      ),
+      detail: 'Автоматичні ТТН та трекінг руху відправлень',
     },
   ]
 }

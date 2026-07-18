@@ -11,14 +11,6 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua')
   .trim()
   .replace(/\/$/, '')
 
-/**
- * GET /api/admin/oauth/start
- *
- * Redirects the admin to Google's OAuth consent screen. We ask only for
- * `drive.file` (per-file access — minimum scope that still lets us upload to
- * the shared folder and set anyone-with-link permissions). `prompt=consent` +
- * `access_type=offline` guarantee a refresh token even on re-auth.
- */
 export async function GET(request: Request) {
   if (!isAuthedRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -32,21 +24,21 @@ export async function GET(request: Request) {
     )
   }
 
-  const redirectUri = `${SITE_URL}/api/admin/oauth/callback`
-  const oauthState = createGoogleOAuthState('drive')
-  const scope = [
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/userinfo.email',
-  ].join(' ')
-
+  const oauthState = createGoogleOAuthState('gmail')
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
   url.searchParams.set('client_id', clientId)
-  url.searchParams.set('redirect_uri', redirectUri)
+  url.searchParams.set('redirect_uri', `${SITE_URL}/api/admin/oauth/callback`)
   url.searchParams.set('response_type', 'code')
-  url.searchParams.set('scope', scope)
+  url.searchParams.set(
+    'scope',
+    [
+      'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ].join(' ')
+  )
   url.searchParams.set('access_type', 'offline')
-  url.searchParams.set('prompt', 'consent')
-  url.searchParams.set('include_granted_scopes', 'true')
+  url.searchParams.set('prompt', 'consent select_account')
+  url.searchParams.set('include_granted_scopes', 'false')
   url.searchParams.set('state', oauthState.state)
 
   const response = NextResponse.redirect(url.toString())

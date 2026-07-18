@@ -14,7 +14,12 @@ import {
   getEmailDeliveriesForOrder,
   sendOrderCreatedEmail,
   sendPaymentReceiptEmail,
+  sendShipmentCreatedEmail,
 } from '@/lib/emailDelivery'
+import { deleteCancelledAdminOrder } from '@/lib/adminOrderDelete'
+import ConfirmableForm from '@/components/admin/ConfirmableForm'
+import { getNovaPoshtaShipment } from '@/lib/novaPoshta'
+import { createOrderShipment } from '@/lib/shipmentAutomation'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +52,15 @@ async function updatePaymentAction(formData: FormData) {
     await updatePaymentStatus(orderId, paymentStatus)
     if (paymentStatus === 'paid') {
       const order = await getOrderById(orderId)
-      if (order) await sendPaymentReceiptEmail(order, await getOrderItems(orderId))
+      if (order) {
+        const items = await getOrderItems(orderId)
+        await sendPaymentReceiptEmail(order, items)
+        if (order.shipping_method === 'nova_poshta') {
+          await createOrderShipment({ orderId }).catch((error) => {
+            console.warn(`[admin/orders] Nova Poshta shipment deferred for ${orderId}:`, error)
+          })
+        }
+      }
     }
   }
   redirect(`/admin/orders/${orderId}`)
@@ -65,9 +78,41 @@ async function retryEmailAction(formData: FormData) {
       await sendPaymentReceiptEmail(order, items)
     } else if (kind === 'order_created') {
       await sendOrderCreatedEmail(order, items)
+    } else if (kind === 'shipment_created' && order.tracking_number) {
+      await sendShipmentCreatedEmail(order, items)
     }
   }
   redirect(`/admin/orders/${orderId}`)
+}
+
+async function createShipmentAction(formData: FormData) {
+  'use server'
+  if (!isAuthed()) redirect('/admin')
+  const orderId = String(formData.get('orderId') || '')
+  if (!orderId) redirect('/admin/orders')
+  let outcome = 'error'
+  try {
+    await createOrderShipment({ orderId })
+    outcome = 'created'
+  } catch (error) {
+    console.error(`[admin/orders] failed to create Nova Poshta shipment ${orderId}:`, error)
+  }
+  redirect(`/admin/orders/${orderId}?shipment=${outcome}`)
+}
+
+async function deleteOrderAction(formData: FormData) {
+  'use server'
+  if (!isAuthed()) redirect('/admin')
+  const orderId = String(formData.get('orderId') || '')
+  if (!orderId) redirect('/admin/orders?delete=not_found')
+
+  let result: 'deleted' | 'not_found' | 'not_cancelled' | 'error' = 'error'
+  try {
+    result = await deleteCancelledAdminOrder(orderId)
+  } catch (error) {
+    console.error(`[admin/orders] failed to delete ${orderId}:`, error)
+  }
+  redirect(`/admin/orders?delete=${result}`)
 }
 
 function money(value: number) {
@@ -76,9 +121,10 @@ function money(value: number) {
 
 export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
   if (!isAuthed()) return null
-  const [{ order, items }, emailDeliveries] = await Promise.all([
+  const [{ order, items }, emailDeliveries, shipment] = await Promise.all([
     getAdminOrderDetail(params.id),
     getEmailDeliveriesForOrder(params.id),
+    getNovaPoshtaShipment(params.id),
   ])
   if (!order) {
     return (
@@ -143,6 +189,48 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
         </div>
 
         <aside className="space-y-6">
+          {order.shipping_method === 'nova_poshta' && (
+            <section className="rounded-2xl border border-red-100 bg-white p-5">
+              <h2 className="font-semibold">Нова пошта</h2>
+              {shipment?.trackingNumber ? (
+                <div className="mt-3 space-y-2 text-sm">
+                  <p>
+                    ТТН:{' '}
+                    <a
+                      href={`https://novaposhta.ua/tracking/?cargo_number=${shipment.trackingNumber}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono font-semibold text-[#6046A3] hover:underline"
+                    >
+                      {shipment.trackingNumber}
+                    </a>
+                  </p>
+                  <p className="text-black/60">{shipment.status || 'Експрес-накладну створено'}</p>
+                  {shipment.scheduledDeliveryDate && (
+                    <p className="text-xs text-black/45">
+                      Планова доставка: {shipment.scheduledDeliveryDate}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <p className="text-sm text-black/55">
+                    {shipment?.lastError || 'ТТН ще не створено.'}
+                  </p>
+                  {(order.payment_status === 'paid' ||
+                    order.payment_method === 'cash_on_delivery') && (
+                    <form action={createShipmentAction}>
+                      <input type="hidden" name="orderId" value={order.id} />
+                      <button className="mt-3 h-10 w-full rounded-xl bg-[#ED1C24] text-xs font-semibold text-white hover:bg-[#c9181f]">
+                        Створити ТТН автоматично
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+
           <form action={updateStatusAction} className="rounded-2xl border border-black/10 bg-white p-5">
             <h2 className="font-semibold">Виконання</h2>
             <input type="hidden" name="orderId" value={order.id} />
@@ -174,7 +262,13 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               {emailDeliveries.map((delivery) => (
                 <div key={delivery.id} className="rounded-xl bg-[#F5F4F8] px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-3">
-                    <span>{delivery.kind === 'payment_receipt' ? 'Квитанція про оплату' : 'Підтвердження замовлення'}</span>
+                    <span>
+                      {delivery.kind === 'payment_receipt'
+                        ? 'Квитанція про оплату'
+                        : delivery.kind === 'shipment_created'
+                          ? 'ТТН та відстеження'
+                          : 'Підтвердження замовлення'}
+                    </span>
                     <span className={delivery.status === 'sent' ? 'text-emerald-700' : delivery.status === 'failed' ? 'text-red-700' : 'text-amber-700'}>
                       {delivery.status}
                     </span>
@@ -201,7 +295,47 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                   </button>
                 </form>
               )}
+              {order.tracking_number && (
+                <form action={retryEmailAction}>
+                  <input type="hidden" name="orderId" value={order.id} />
+                  <input type="hidden" name="kind" value="shipment_created" />
+                  <button className="h-10 w-full rounded-xl border border-red-200 text-xs font-semibold text-red-700 hover:bg-red-50">
+                    Надіслати ТТН
+                  </button>
+                </form>
+              )}
             </div>
+          </section>
+
+          <section className="rounded-2xl border border-red-200 bg-red-50 p-5">
+            <h2 className="font-semibold text-red-900">Видалення замовлення</h2>
+            <p className="mt-2 text-sm leading-6 text-red-800/80">
+              Hard delete доступний лише для статусу «Скасовано». Повернення залишків виконується
+              під час переходу в цей статус; саме видалення склад повторно не змінює. Журнал
+              надісланих email залишається для аудиту.
+            </p>
+            {order.status === 'cancelled' ? (
+              <ConfirmableForm
+                action={deleteOrderAction}
+                title="Остаточно видалити замовлення?"
+                description="Замовлення та всі його позиції буде видалено без можливості відновлення. Залишки не зміняться повторно."
+                confirmLabel="Так, видалити"
+                cancelLabel="Не видаляти"
+                className="mt-4"
+              >
+                <input type="hidden" name="orderId" value={order.id} />
+                <button
+                  type="submit"
+                  className="h-11 w-full rounded-xl bg-red-700 text-sm font-semibold text-white transition hover:bg-red-800"
+                >
+                  Видалити замовлення
+                </button>
+              </ConfirmableForm>
+            ) : (
+              <p className="mt-4 rounded-xl border border-red-200 bg-white/70 px-4 py-3 text-xs text-red-800">
+                Спочатку оберіть статус «Скасовано» у блоці виконання та збережіть його.
+              </p>
+            )}
           </section>
         </aside>
       </div>

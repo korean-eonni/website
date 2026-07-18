@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { isAuthedRequest } from '@/lib/adminAuth'
-import { saveGoogleRefreshToken } from '@/lib/oauthStore'
+import {
+  saveGoogleOAuthToken,
+  type GoogleOAuthProvider,
+} from '@/lib/oauthStore'
+import {
+  googleOAuthCookieName,
+  verifyGoogleOAuthState,
+} from '@/lib/googleOAuthState'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,9 +32,18 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
   const error = url.searchParams.get('error')
+  const state = url.searchParams.get('state')
+  const cookieStore = await cookies()
+  const purpose = verifyGoogleOAuthState(
+    state,
+    cookieStore.get(googleOAuthCookieName())?.value
+  )
 
   if (error) {
     return NextResponse.redirect(`${SITE_URL}/admin?oauth=error&reason=${encodeURIComponent(error)}`)
+  }
+  if (!purpose) {
+    return NextResponse.redirect(`${SITE_URL}/admin?oauth=error&reason=invalid-state`)
   }
   if (!code) {
     return NextResponse.redirect(`${SITE_URL}/admin?oauth=error&reason=missing-code`)
@@ -95,7 +112,9 @@ export async function GET(request: Request) {
       /* email is optional — fine if it fails */
     }
 
-    await saveGoogleRefreshToken({
+    const provider: GoogleOAuthProvider =
+      purpose === 'gmail' ? 'gmail' : 'google_drive'
+    await saveGoogleOAuthToken(provider, {
       refresh_token,
       access_token,
       access_token_expires_at: new Date(Date.now() + (expires_in - 60) * 1000),
@@ -103,7 +122,13 @@ export async function GET(request: Request) {
       scope,
     })
 
-    return NextResponse.redirect(`${SITE_URL}/admin?oauth=ok`)
+    const destination =
+      purpose === 'gmail'
+        ? `${SITE_URL}/admin/system?gmail=connected`
+        : `${SITE_URL}/admin?oauth=ok`
+    const response = NextResponse.redirect(destination)
+    response.cookies.delete(googleOAuthCookieName())
+    return response
   } catch (err) {
     console.error('[oauth/callback] unexpected:', err)
     return NextResponse.redirect(`${SITE_URL}/admin?oauth=error&reason=unexpected`)

@@ -304,7 +304,10 @@ export default function CheckoutPage() {
         phone,
         shippingMethod,
         shippingCity: selectedCity?.Description || null,
+        shippingCityRef: selectedCity?.Ref || null,
         shippingWarehouse: selectedWarehouse?.Description || null,
+        shippingWarehouseRef: selectedWarehouse?.Ref || null,
+        shippingDeliveryType: shippingMethod === 'nova_poshta' ? npDeliveryType : null,
         shippingAddress:
           shippingMethod === 'nova_poshta' && npDeliveryType === 'courier'
             ? `${selectedStreet}, буд. ${houseNumber}${apartment.trim() ? `, кв. ${apartment.trim()}` : ''}`

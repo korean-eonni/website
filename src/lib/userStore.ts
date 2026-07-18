@@ -38,7 +38,11 @@ export type Order = {
   total_amount: number
   shipping_method: 'nova_poshta' | 'ukrposhta'
   shipping_city: string | null
+  shipping_city_ref: string | null
   shipping_warehouse: string | null
+  shipping_warehouse_ref: string | null
+  shipping_delivery_type: 'branch' | 'postomat' | 'courier' | null
+  shipment_weight_kg: number | null
   shipping_address: string | null
   payment_method: 'platon' | 'card' | 'cash_on_delivery'
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
@@ -167,6 +171,12 @@ async function ensureUserSchema() {
         updated_at TEXT NOT NULL
       );
     `,
+  ])
+  await Promise.all([
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city_ref TEXT`,
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_warehouse_ref TEXT`,
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_delivery_type TEXT`,
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_weight_kg DOUBLE PRECISION`,
   ])
   
   schemaInitialized = true
@@ -316,12 +326,14 @@ export async function createOrder(order: Omit<Order, 'id' | 'created_at' | 'upda
   await sql`
     INSERT INTO orders (
       id, user_id, guest_email, guest_phone, status, total_amount,
-      shipping_method, shipping_city, shipping_warehouse, shipping_address,
+      shipping_method, shipping_city, shipping_city_ref, shipping_warehouse,
+      shipping_warehouse_ref, shipping_delivery_type, shipment_weight_kg, shipping_address,
       payment_method, payment_status, first_name, last_name, phone, email,
       notes, tracking_number, created_at, updated_at
     ) VALUES (
       ${id}, ${order.user_id}, ${order.guest_email}, ${order.guest_phone}, ${order.status}, ${order.total_amount},
-      ${order.shipping_method}, ${order.shipping_city}, ${order.shipping_warehouse}, ${order.shipping_address},
+      ${order.shipping_method}, ${order.shipping_city}, ${order.shipping_city_ref}, ${order.shipping_warehouse},
+      ${order.shipping_warehouse_ref}, ${order.shipping_delivery_type}, ${order.shipment_weight_kg}, ${order.shipping_address},
       ${order.payment_method}, ${order.payment_status}, ${order.first_name}, ${order.last_name}, ${order.phone}, ${order.email},
       ${order.notes}, ${order.tracking_number}, ${now}, ${now}
     )

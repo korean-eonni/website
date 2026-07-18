@@ -12,6 +12,8 @@ import {
 import { getProduct, restoreStock, tryDecrementStock } from '@/lib/productStore'
 import { sendOrderCreatedEmail } from '@/lib/emailDelivery'
 import { processStockSyncQueue } from '@/lib/stockSync'
+import { NovaPoshtaError } from '@/lib/novaPoshta'
+import { createOrderShipment } from '@/lib/shipmentAutomation'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,7 +53,10 @@ export async function POST(request: Request) {
       phone,
       shippingMethod,
       shippingCity,
+      shippingCityRef,
       shippingWarehouse,
+      shippingWarehouseRef,
+      shippingDeliveryType,
       shippingAddress,
       paymentMethod,
       notes,
@@ -65,7 +70,14 @@ export async function POST(request: Request) {
     const cleanShippingMethod = String(shippingMethod || '') as Order['shipping_method']
     const cleanPaymentMethod = String(paymentMethod || '') as Order['payment_method']
     const cleanShippingCity = String(shippingCity || '').trim().slice(0, 200) || null
+    const cleanShippingCityRef = String(shippingCityRef || '').trim().slice(0, 64) || null
     const cleanShippingWarehouse = String(shippingWarehouse || '').trim().slice(0, 300) || null
+    const cleanShippingWarehouseRef =
+      String(shippingWarehouseRef || '').trim().slice(0, 64) || null
+    const cleanShippingDeliveryType =
+      ['branch', 'postomat', 'courier'].includes(String(shippingDeliveryType || ''))
+        ? String(shippingDeliveryType) as NonNullable<Order['shipping_delivery_type']>
+        : null
     const cleanShippingAddress = String(shippingAddress || '').trim().slice(0, 500) || null
 
     if (!cleanFirstName || !cleanLastName || !cleanEmail || !cleanPhone) {
@@ -90,6 +102,16 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json({ error: 'Заповніть адресу доставки' }, { status: 400 })
     }
+    if (
+      cleanShippingMethod === 'nova_poshta' &&
+      cleanShippingDeliveryType !== 'courier' &&
+      (!cleanShippingCityRef || !cleanShippingWarehouseRef)
+    ) {
+      return NextResponse.json(
+        { error: 'Оберіть населений пункт і відділення зі списку Нової пошти' },
+        { status: 400 }
+      )
+    }
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Кошик порожній' }, { status: 400 })
     }
@@ -103,6 +125,7 @@ export async function POST(request: Request) {
       productName: string
       productImage: string | null
       price: number
+      weightGrams: number
     }
     const lines: ServerLine[] = []
     let totalAmount = 0
@@ -133,9 +156,20 @@ export async function POST(request: Request) {
         productName: product.name,
         productImage: product.image_url ?? product.image_path ?? null,
         price,
+        weightGrams: Math.max(0, Number(product.weight_grams) || 0),
       })
       totalAmount += price * quantity
     }
+    const shipmentWeightKg = Math.min(
+      30,
+      Math.max(
+        0.5,
+        lines.reduce(
+          (sum, line) => sum + (line.weightGrams / 1000) * line.quantity,
+          0
+        )
+      )
+    )
 
     // Skin-test bundle promo: 10% off the whole order. Validated server-side
     // (fixed rule), so a tampered client can't invent arbitrary discounts.
@@ -188,7 +222,11 @@ export async function POST(request: Request) {
         total_amount: totalAmount,
         shipping_method: cleanShippingMethod,
         shipping_city: cleanShippingCity,
+        shipping_city_ref: cleanShippingCityRef,
         shipping_warehouse: cleanShippingWarehouse,
+        shipping_warehouse_ref: cleanShippingWarehouseRef,
+        shipping_delivery_type: cleanShippingDeliveryType,
+        shipment_weight_kg: shipmentWeightKg,
         shipping_address: cleanShippingAddress,
         payment_method: cleanPaymentMethod,
         payment_status: 'pending',
@@ -253,6 +291,21 @@ export async function POST(request: Request) {
     const emailResult = await sendOrderCreatedEmail(order, createdItems)
     if (!emailResult.ok) {
       console.warn(`[orders] Confirmation email not sent for ${order.id}: ${emailResult.error}`)
+    }
+
+    if (
+      order.shipping_method === 'nova_poshta' &&
+      order.payment_method === 'cash_on_delivery' &&
+      order.shipping_city_ref &&
+      order.shipping_warehouse_ref
+    ) {
+      try {
+        await createOrderShipment({ orderId: order.id })
+      } catch (error) {
+        const message =
+          error instanceof NovaPoshtaError ? `${error.code}: ${error.message}` : String(error)
+        console.warn(`[orders] Nova Poshta shipment deferred for ${order.id}: ${message}`)
+      }
     }
 
     return NextResponse.json({

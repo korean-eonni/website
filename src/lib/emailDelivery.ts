@@ -1,8 +1,12 @@
 import { createHash } from 'crypto'
 import { sql } from '@vercel/postgres'
 import type { Order, OrderItem } from './userStore'
+import { sendGmailMessage } from './gmailDelivery'
 
-export type EmailDeliveryKind = 'order_created' | 'payment_receipt'
+export type EmailDeliveryKind =
+  | 'order_created'
+  | 'payment_receipt'
+  | 'shipment_created'
 export type EmailDeliveryStatus = 'queued' | 'sent' | 'failed'
 
 export type EmailDelivery = {
@@ -12,7 +16,7 @@ export type EmailDelivery = {
   kind: EmailDeliveryKind
   recipient: string
   status: EmailDeliveryStatus
-  provider: 'resend'
+  provider: 'gmail' | 'resend'
   provider_message_id: string | null
   error_message: string | null
   attempts: number
@@ -29,6 +33,7 @@ export type EmailDeliveryAnalytics = {
   failed: number
   order_created: number
   payment_receipt: number
+  shipment_created: number
 }
 
 export type EmailSendResult =
@@ -39,12 +44,6 @@ type EmailContent = {
   subject: string
   html: string
   text: string
-}
-
-type ResendResponse = {
-  id?: string
-  message?: string
-  name?: string
 }
 
 const usePostgres = !!process.env.POSTGRES_URL
@@ -131,6 +130,7 @@ export async function getEmailDeliveryAnalytics(): Promise<EmailDeliveryAnalytic
     failed: 0,
     order_created: 0,
     payment_receipt: 0,
+    shipment_created: 0,
   }
   if (!usePostgres) return empty
 
@@ -142,6 +142,7 @@ export async function getEmailDeliveryAnalytics(): Promise<EmailDeliveryAnalytic
     failed: string | number
     order_created: string | number
     payment_receipt: string | number
+    shipment_created: string | number
   }>`
     SELECT
       COUNT(*) AS total,
@@ -149,7 +150,8 @@ export async function getEmailDeliveryAnalytics(): Promise<EmailDeliveryAnalytic
       COUNT(*) FILTER (WHERE status = 'sent') AS sent,
       COUNT(*) FILTER (WHERE status = 'failed') AS failed,
       COUNT(*) FILTER (WHERE kind = 'order_created') AS order_created,
-      COUNT(*) FILTER (WHERE kind = 'payment_receipt') AS payment_receipt
+      COUNT(*) FILTER (WHERE kind = 'payment_receipt') AS payment_receipt,
+      COUNT(*) FILTER (WHERE kind = 'shipment_created') AS shipment_created
     FROM email_deliveries
   `
   const row = rows[0]
@@ -162,6 +164,7 @@ export async function getEmailDeliveryAnalytics(): Promise<EmailDeliveryAnalytic
     failed: parseCount(row.failed),
     order_created: parseCount(row.order_created),
     payment_receipt: parseCount(row.payment_receipt),
+    shipment_created: parseCount(row.shipment_created),
   }
 }
 
@@ -240,15 +243,22 @@ function buildOrderEmail(
   items: OrderItem[]
 ): EmailContent {
   const isPaymentReceipt = kind === 'payment_receipt'
+  const isShipmentCreated = kind === 'shipment_created'
   const title = isPaymentReceipt
     ? `Оплату замовлення ${order.id} підтверджено`
-    : `Замовлення ${order.id} прийнято`
+    : isShipmentCreated
+      ? `Замовлення ${order.id} передано Новій пошті`
+      : `Замовлення ${order.id} прийнято`
   const lead = isPaymentReceipt
     ? 'Дякуємо! Ми успішно отримали вашу оплату та готуємо замовлення.'
-    : 'Дякуємо за замовлення! Ми отримали його та зв’яжемося з вами, якщо знадобиться уточнення.'
+    : isShipmentCreated
+      ? `Експрес-накладну створено. ТТН: ${order.tracking_number || 'уточнюється'}.`
+      : 'Дякуємо за замовлення! Ми отримали його та зв’яжемося з вами, якщо знадобиться уточнення.'
   const subject = isPaymentReceipt
     ? `Eonni — квитанція про оплату ${order.id}`
-    : `Eonni — підтвердження замовлення ${order.id}`
+    : isShipmentCreated
+      ? `Eonni — ТТН для замовлення ${order.id}`
+      : `Eonni — підтвердження замовлення ${order.id}`
   const itemSubtotal = items.reduce(
     (sum, item) => sum + Number(item.price) * Number(item.quantity),
     0
@@ -285,6 +295,9 @@ function buildOrderEmail(
   const address = deliveryAddress(order) || 'Буде уточнено менеджером'
   const customerName = `${order.first_name} ${order.last_name}`.trim()
   const viewUrl = orderUrl(order)
+  const trackingUrl = order.tracking_number
+    ? `https://novaposhta.ua/tracking/?cargo_number=${encodeURIComponent(order.tracking_number)}`
+    : null
 
   const html = `<!doctype html>
 <html lang="uk">
@@ -347,6 +360,10 @@ function buildOrderEmail(
                 <a href="${escapeHtml(viewUrl)}" style="display:inline-block;background:#6046a3;color:#ffffff;text-decoration:none;border-radius:999px;padding:13px 24px;font-weight:700;">
                   Переглянути замовлення
                 </a>
+                ${trackingUrl ? `
+                <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;margin-left:8px;background:#ed1c24;color:#ffffff;text-decoration:none;border-radius:999px;padding:13px 24px;font-weight:700;">
+                  Відстежити посилку
+                </a>` : ''}
 
                 <p style="font-size:13px;line-height:1.55;margin:28px 0 0;color:#777;">
                   ${isPaymentReceipt ? 'Цей лист підтверджує отримання оплати за замовлення. ' : ''}
@@ -385,6 +402,7 @@ ${address}
 Отримувач: ${customerName}, ${order.phone}
 
 Переглянути замовлення: ${viewUrl}
+${trackingUrl ? `Відстежити посилку: ${trackingUrl}` : ''}
 
 Підтримка: ${SUPPORT_EMAIL}, ${SUPPORT_PHONE}`
 
@@ -461,7 +479,7 @@ async function sendTransactionalEmail(
         provider_message_id, error_message, attempts, last_attempt_at,
         sent_at, created_at, updated_at
       ) VALUES (
-        ${id}, ${key}, ${order.id}, ${kind}, ${recipient}, 'queued', 'resend',
+        ${id}, ${key}, ${order.id}, ${kind}, ${recipient}, 'queued', 'gmail',
         NULL, NULL, 0, NULL, NULL, ${now}, ${now}
       )
       ON CONFLICT (idempotency_key) DO NOTHING
@@ -481,6 +499,7 @@ async function sendTransactionalEmail(
       UPDATE email_deliveries
       SET
         status = 'queued',
+        provider = 'gmail',
         attempts = attempts + 1,
         last_attempt_at = ${attemptedAt},
         error_message = NULL,
@@ -505,46 +524,19 @@ async function sendTransactionalEmail(
     claimedId = claimed.id
     claimedAt = attemptedAt
 
-    const apiKey = process.env.RESEND_API_KEY?.trim()
-    const from = process.env.EMAIL_FROM?.trim()
-    if (!apiKey || !from) {
-      const message = [
-        !apiKey ? 'RESEND_API_KEY is missing' : '',
-        !from ? 'EMAIL_FROM is missing' : '',
-      ].filter(Boolean).join('; ')
-      const failed = await recordFailure(claimed.id, message, attemptedAt)
-      return { ok: false, delivery: failed, error: message }
-    }
-
     const content = buildOrderEmail(kind, order, items)
-    const notificationEmail = cleanEmail(process.env.ORDER_NOTIFICATION_EMAIL || '')
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Idempotency-Key': key,
-      },
-      body: JSON.stringify({
-        from,
-        to: [recipient],
-        ...(notificationEmail && notificationEmail !== recipient
-          ? { bcc: [notificationEmail] }
-          : {}),
-        reply_to: SUPPORT_EMAIL,
+    let providerMessageId: string
+    try {
+      const sent = await sendGmailMessage({
+        to: recipient,
+        replyTo: SUPPORT_EMAIL,
         subject: content.subject,
         html: content.html,
         text: content.text,
-        tags: [
-          { name: 'kind', value: kind },
-          { name: 'order_id', value: order.id.replace(/[^a-zA-Z0-9_-]/g, '_') },
-        ],
-      }),
-      signal: AbortSignal.timeout(10_000),
-    })
-    const payload = await response.json().catch(() => ({})) as ResendResponse
-    if (!response.ok || !payload.id) {
-      const message = payload.message || payload.name || `Resend HTTP ${response.status}`
+      })
+      providerMessageId = sent.id
+    } catch (error) {
+      const message = errorMessage(error)
       const failed = await recordFailure(claimed.id, message, attemptedAt)
       return { ok: false, delivery: failed, error: message }
     }
@@ -554,7 +546,8 @@ async function sendTransactionalEmail(
       UPDATE email_deliveries
       SET
         status = 'sent',
-        provider_message_id = ${payload.id},
+        provider = 'gmail',
+        provider_message_id = ${providerMessageId},
         error_message = NULL,
         sent_at = ${sentAt},
         updated_at = ${sentAt}
@@ -598,4 +591,11 @@ export async function sendPaymentReceiptEmail(
     { ...order, payment_status: 'paid' },
     items
   )
+}
+
+export async function sendShipmentCreatedEmail(
+  order: Order,
+  items: OrderItem[]
+): Promise<EmailSendResult> {
+  return sendTransactionalEmail('shipment_created', order, items)
 }

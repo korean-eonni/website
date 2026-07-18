@@ -22,7 +22,7 @@ const usePostgres = !!process.env.POSTGRES_URL   // true on Vercel
 | Ownership | Tables | Rule |
 |-----------|--------|------|
 | **Shared ownership** | `products` | Google Sheet owns catalogue metadata; Postgres owns runtime `stock_quantity` after initial import. Sync upserts by SKU → barcode → normalized name, preserves existing stock, and deactivates removed rows. Every runtime stock mutation is mirrored back to `Загальний` through `stock_sync_queue`. Change catalogue content in the Sheet; change live stock through checkout/admin stock operations. |
-| **Real runtime data** | `orders`, `order_items`, `users`, `user_sessions`, `wishlist`, `cart_items`, `reviews`, `app_oauth_tokens`, `stock_sync_queue` | Customer/operational data that exists **only** in Postgres. **Never** truncate, "reset", or bulk-delete. Treat as production data. |
+| **Real runtime data** | `orders`, `order_items`, `users`, `user_sessions`, `wishlist`, `cart_items`, `reviews`, `app_oauth_tokens`, `stock_sync_queue`, `email_deliveries`, `nova_poshta_shipments` | Customer/operational data that exists **only** in Postgres. **Never** truncate, "reset", or bulk-delete. Treat as production data. |
 
 ---
 
@@ -45,8 +45,9 @@ Extras: `volume_options`, `rating`, `review_count`, `is_active` (forced to 1 on 
 
 ### `orders` / `order_items`  (`userStore.ts`)
 `orders`: id, user_id (nullable → guest), guest_email, guest_phone, status (`pending`…),
-total_amount, shipping_method/city/warehouse/address, payment_method, payment_status,
-first_name, last_name, phone, email, notes, tracking_number, created_at, updated_at.
+total_amount, shipping_method/city/warehouse/address, `shipping_city_ref`,
+`shipping_warehouse_ref`, `shipping_delivery_type`, `shipment_weight_kg`, payment_method,
+payment_status, first_name, last_name, phone, email, notes, tracking_number, created_at, updated_at.
 `order_items`: id, order_id, product_id, product_name, product_image, quantity, price, created_at.
 
 ### `users` / `user_sessions` / `wishlist` / `cart_items`  (`userStore.ts`)
@@ -61,7 +62,13 @@ created_at. New reviews are unapproved until an admin approves them.
 
 ### `app_oauth_tokens`  (`oauthStore.ts`)
 provider (PK), refresh_token, access_token, access_token_expires_at, account_email, scope, timestamps.
-Holds the admin's Google OAuth token so the server can upload product photos to Drive.
+Separate `google_drive` and `gmail` rows let the server upload product photos and send customer
+transactional email without sharing or overwriting refresh tokens.
+
+### `email_deliveries` / `nova_poshta_shipments`
+`email_deliveries` is the idempotent audit/outbox for order confirmation, payment receipt and TTN
+messages. `nova_poshta_shipments` stores one durable InternetDocument per order plus the latest
+Nova Poshta tracking status, planned/actual delivery dates and retry state.
 
 ### `stock_sync_queue`  (`stockSync.ts`)
 Durable, coalesced Postgres → Google Sheet outbox keyed by `product_id`. Each new stock mutation

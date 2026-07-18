@@ -80,6 +80,36 @@ function md5Upper(input: string): string {
   return crypto.createHash('md5').update(input.toUpperCase(), 'utf8').digest('hex')
 }
 
+function constantTimeHexEqual(local: string, provided: string): boolean {
+  if (!/^[a-f0-9]{32}$/i.test(local) || !/^[a-f0-9]{32}$/i.test(provided)) {
+    return false
+  }
+  return crypto.timingSafeEqual(
+    Buffer.from(local.toLowerCase(), 'hex'),
+    Buffer.from(provided.toLowerCase(), 'hex')
+  )
+}
+
+function cardCallbackSign(
+  email: string,
+  password: string,
+  order: string,
+  cardMask: string
+): string {
+  const cardPart = cardMask.slice(0, 6) + cardMask.slice(-4)
+  return md5Upper(strrev(email) + password + order + strrev(cardPart))
+}
+
+export type PlatonCallbackSignatureVariant =
+  | 'card'
+  | 'number'
+  | 'installment'
+
+export type PlatonCallbackSignatureResult = {
+  valid: boolean
+  variant: PlatonCallbackSignatureVariant | null
+}
+
 /**
  * Verify a Platon Callback signature. The Callback is the ONLY trustworthy
  * confirmation of payment (the browser redirect is not). On a failed payment
@@ -87,42 +117,252 @@ function md5Upper(input: string): string {
  *
  * Card / Apple Pay / Google Pay:
  *   sign = md5(strtoupper( strrev(email) . pass . order . strrev(card6 . card4) ))
- * "Оплата частинами" (callback carries `number` instead of `card`):
+ * Privat24 may carry the mask in `number` instead of `card`, with the same
+ * card-style formula.
+ * "Оплата частинами":
  *   sign = md5(strtoupper( pass . order ))
  *
  * `expectedEmail` MUST be the email we sent in the create-payment request (Platon
  * signs with that exact value), i.e. the order's email — '' if none was sent.
- * `card` comes from the callback itself (we can't know the real PAN in advance).
+ * The mask comes from the callback itself (we never receive or store the PAN).
+ *
+ * Platon's current public docs use `number` for both Privat24 and some installment
+ * flows. Because both documented formulas require the merchant password, safely
+ * try each applicable formula instead of guessing the payment method from the
+ * field name.
  */
+export function verifyPlatonCallbackSignature(
+  body: Record<string, string>,
+  password: string,
+  expectedEmail: string
+): PlatonCallbackSignatureResult {
+  const order = (body.order ?? '').trim()
+  const provided = (body.sign ?? '').trim()
+  if (!order || !password || !provided) {
+    return { valid: false, variant: null }
+  }
+
+  const candidates: Array<{
+    variant: PlatonCallbackSignatureVariant
+    sign: string
+  }> = []
+  const card = (body.card ?? '').trim()
+  const number = (body.number ?? '').trim()
+
+  if (card) {
+    candidates.push({
+      variant: 'card',
+      sign: cardCallbackSign(expectedEmail, password, order, card),
+    })
+  }
+  if (number) {
+    candidates.push({
+      variant: 'number',
+      sign: cardCallbackSign(expectedEmail, password, order, number),
+    })
+  }
+  if (card || number) {
+    candidates.push({
+      variant: 'installment',
+      sign: md5Upper(password + order),
+    })
+  }
+
+  for (const candidate of candidates) {
+    if (constantTimeHexEqual(candidate.sign, provided)) {
+      return { valid: true, variant: candidate.variant }
+    }
+  }
+  return { valid: false, variant: null }
+}
+
 export function verifyPlatonCallback(
   body: Record<string, string>,
   password: string,
   expectedEmail: string
 ): boolean {
-  const order = body.order ?? ''
-  const provided = (body.sign ?? '').toLowerCase()
-  if (!provided) return false
+  return verifyPlatonCallbackSignature(body, password, expectedEmail).valid
+}
 
-  // "Оплата частинами" callbacks carry a masked `number` (phone) instead of `card`.
-  const isInstallment = typeof body.number === 'string' && body.number.length > 0
+export type PlatonPaymentOutcome = 'paid' | 'not_paid' | 'unknown'
 
-  let local: string
-  if (isInstallment) {
-    local = md5Upper(password + order)
-  } else {
-    const card = body.card ?? ''
-    const cardPart = card ? card.slice(0, 6) + card.slice(-4) : ''
-    local = md5Upper(strrev(expectedEmail) + password + order + strrev(cardPart))
+const PAID_TRANSACTION_STATUSES = new Set(['SALE', 'SETTLED'])
+const NOT_PAID_TRANSACTION_STATUSES = new Set([
+  'DECLINED',
+  'FAILED',
+  'FAIL',
+  'ERROR',
+  'CANCELLED',
+  'CANCELED',
+  'REFUND',
+  'REFUNDED',
+  'REVERSED',
+  'REVERSAL',
+])
+
+/**
+ * Interpret both official Platon success representations:
+ * - asynchronous Callback: status=SALE
+ * - GET_TRANS_STATUS_BY_ORDER: result=SUCCESS + status=SETTLED
+ *
+ * `result=SUCCESS` alone only says that an API request succeeded; it must never
+ * be treated as proof that money was settled.
+ */
+export function getPlatonPaymentOutcome(
+  value: { status?: string; result?: string }
+): PlatonPaymentOutcome {
+  const status = (value.status ?? '').trim().toUpperCase()
+  const result = (value.result ?? '').trim().toUpperCase()
+
+  if (result && result !== 'SUCCESS') return 'not_paid'
+  if (PAID_TRANSACTION_STATUSES.has(status)) return 'paid'
+  if (NOT_PAID_TRANSACTION_STATUSES.has(status)) return 'not_paid'
+  return 'unknown'
+}
+
+function moneyToMinorUnits(value: string | number): number | null {
+  const normalized = String(value).trim()
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null
+  const [whole, fraction = ''] = normalized.split('.')
+  const minor = Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
+  return Number.isSafeInteger(minor) ? minor : null
+}
+
+export type PlatonPaymentValidation =
+  | { valid: true; amountMinor: number }
+  | {
+      valid: false
+      reason:
+        | 'not-paid'
+        | 'order-mismatch'
+        | 'amount-missing'
+        | 'amount-invalid'
+        | 'amount-mismatch'
+        | 'currency-mismatch'
+    }
+
+/**
+ * Validate the business fields not covered by Platon's legacy callback sign.
+ * The documented signature does not include amount, currency, or status.
+ */
+export function validatePlatonCallbackPayment(
+  body: Record<string, string>,
+  expected: { orderId: string; amount: number; currency?: string }
+): PlatonPaymentValidation {
+  if (getPlatonPaymentOutcome(body) !== 'paid') {
+    return { valid: false, reason: 'not-paid' }
+  }
+  if ((body.order ?? '').trim() !== expected.orderId) {
+    return { valid: false, reason: 'order-mismatch' }
+  }
+  if (!body.amount?.trim()) {
+    return { valid: false, reason: 'amount-missing' }
   }
 
-  // Constant-time-ish compare (both are fixed-length lowercase md5 hex).
-  if (local.length !== provided.length) return false
-  let diff = 0
-  for (let i = 0; i < local.length; i++) diff |= local.charCodeAt(i) ^ provided.charCodeAt(i)
-  return diff === 0
+  const callbackAmount = moneyToMinorUnits(body.amount)
+  const expectedAmount = moneyToMinorUnits(expected.amount.toFixed(2))
+  if (callbackAmount === null || expectedAmount === null) {
+    return { valid: false, reason: 'amount-invalid' }
+  }
+  if (callbackAmount !== expectedAmount) {
+    return { valid: false, reason: 'amount-mismatch' }
+  }
+
+  const currency = (body.currency ?? '').trim().toUpperCase()
+  if (currency !== (expected.currency ?? 'UAH').trim().toUpperCase()) {
+    return { valid: false, reason: 'currency-mismatch' }
+  }
+  return { valid: true, amountMinor: callbackAmount }
 }
 
 export const PLATON_STATUS_ENDPOINT = 'https://secure.platononline.com/post-unq/'
+
+export type PlatonStatusCheck = {
+  result: 'success' | 'error' | 'unknown'
+  outcome: PlatonPaymentOutcome
+  status: string | null
+  orderId: string | null
+  amount: string | null
+  transactionId: string | null
+  error: string | null
+}
+
+function stringField(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+export function parsePlatonStatusResponse(value: unknown): PlatonStatusCheck {
+  if (!value || typeof value !== 'object') {
+    return {
+      result: 'unknown',
+      outcome: 'unknown',
+      status: null,
+      orderId: null,
+      amount: null,
+      transactionId: null,
+      error: 'invalid-response',
+    }
+  }
+
+  const body = value as Record<string, unknown>
+  const resultValue = stringField(body.result)?.toUpperCase() ?? ''
+  const firstOrder =
+    Array.isArray(body.orders) && body.orders[0] && typeof body.orders[0] === 'object'
+      ? body.orders[0] as Record<string, unknown>
+      : null
+  const transaction = firstOrder ?? body
+  const status = stringField(transaction.status)?.toUpperCase() ?? null
+  const result =
+    resultValue === 'SUCCESS'
+      ? 'success'
+      : resultValue === 'ERROR'
+        ? 'error'
+        : 'unknown'
+
+  return {
+    result,
+    outcome: getPlatonPaymentOutcome({
+      result: resultValue || undefined,
+      status: status || undefined,
+    }),
+    status,
+    orderId:
+      stringField(transaction.order_id) ??
+      stringField(transaction.order) ??
+      null,
+    amount: stringField(transaction.amount),
+    transactionId:
+      stringField(transaction.trans_id) ??
+      stringField(transaction.id) ??
+      null,
+    error: stringField(body.error_message),
+  }
+}
+
+export function validatePlatonStatusPayment(
+  status: PlatonStatusCheck,
+  expected: { orderId: string; amount: number }
+): PlatonPaymentValidation {
+  if (status.result !== 'success' || status.outcome !== 'paid') {
+    return { valid: false, reason: 'not-paid' }
+  }
+  if (status.orderId !== expected.orderId) {
+    return { valid: false, reason: 'order-mismatch' }
+  }
+  if (!status.amount) {
+    return { valid: false, reason: 'amount-missing' }
+  }
+
+  const statusAmount = moneyToMinorUnits(status.amount)
+  const expectedAmount = moneyToMinorUnits(expected.amount.toFixed(2))
+  if (statusAmount === null || expectedAmount === null) {
+    return { valid: false, reason: 'amount-invalid' }
+  }
+  if (statusAmount !== expectedAmount) {
+    return { valid: false, reason: 'amount-mismatch' }
+  }
+  return { valid: true, amountMinor: statusAmount }
+}
 
 /**
  * Server-to-server transaction status check (reconciliation fallback when a
@@ -134,7 +374,19 @@ export async function checkPlatonStatus(
   orderId: string,
   key: string,
   password: string
-): Promise<unknown | null> {
+): Promise<PlatonStatusCheck> {
+  if (!orderId.trim() || !key.trim() || !password) {
+    return {
+      result: 'error',
+      outcome: 'unknown',
+      status: null,
+      orderId: null,
+      amount: null,
+      transactionId: null,
+      error: 'missing-configuration',
+    }
+  }
+
   const hash = md5Upper(password + orderId)
   const params = new URLSearchParams({
     action: 'GET_TRANS_STATUS_BY_ORDER',
@@ -147,9 +399,30 @@ export async function checkPlatonStatus(
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
+      signal: AbortSignal.timeout(15_000),
     })
-    return await res.json().catch(() => null)
-  } catch {
-    return null
+    const response = await res.json().catch(() => null)
+    if (!res.ok) {
+      return {
+        result: 'error',
+        outcome: 'unknown',
+        status: null,
+        orderId: null,
+        amount: null,
+        transactionId: null,
+        error: `http-${res.status}`,
+      }
+    }
+    return parsePlatonStatusResponse(response)
+  } catch (error) {
+    return {
+      result: 'error',
+      outcome: 'unknown',
+      status: null,
+      orderId: null,
+      amount: null,
+      transactionId: null,
+      error: error instanceof Error ? error.name : 'network-error',
+    }
   }
 }

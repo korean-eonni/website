@@ -70,7 +70,7 @@ function date(value: string) {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams?: { q?: string; status?: string; payment?: string }
+  searchParams?: { q?: string; status?: string; payment?: string; delete?: string }
 }) {
   if (!isAuthed()) return null
   const orders = await getAdminOrders()
@@ -94,6 +94,23 @@ export default async function AdminOrdersPage({
         <h1 className="mt-2 text-3xl font-semibold">Замовлення</h1>
         <p className="mt-1 text-sm text-black/50">{orders.length} усього · {orders.filter((order) => order.status === 'pending').length} нових</p>
       </div>
+
+      {searchParams?.delete === 'deleted' && (
+        <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
+          Замовлення та його позиції остаточно видалено. Журнал уже надісланих email збережено.
+        </div>
+      )}
+      {searchParams?.delete === 'not_cancelled' && (
+        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+          Замовлення не видалено: спочатку змініть його статус на «Скасовано», щоб залишки
+          повернулися на склад рівно один раз.
+        </div>
+      )}
+      {(searchParams?.delete === 'not_found' || searchParams?.delete === 'error') && (
+        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+          Замовлення не вдалося видалити. Воно вже відсутнє або сталася помилка бази даних.
+        </div>
+      )}
 
       <form className="mb-5 grid gap-3 rounded-2xl border border-black/10 bg-white p-4 lg:grid-cols-[1fr_190px_190px_auto]">
         <input name="q" defaultValue={searchParams?.q} placeholder="№ замовлення, клієнт, email або телефон" className="h-11 rounded-xl border border-black/15 px-4 text-sm outline-none focus:border-[#6046A3]" />
