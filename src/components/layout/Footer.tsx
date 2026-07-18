@@ -1,6 +1,11 @@
-import Link from 'next/link'
+import type { ComponentProps } from 'react'
+import NextLink from 'next/link'
 import Image from 'next/image'
 import Magnetic from '@/components/ui/Magnetic'
+
+function Link(props: ComponentProps<typeof NextLink>) {
+  return <NextLink {...props} prefetch={false} />
+}
 
 const catalogLinks = [
   { label: 'Весь асортимент', href: '/catalog' },
@@ -41,7 +46,7 @@ export default function Footer() {
   return (
     <footer
       className="bg-center bg-cover"
-      style={{ backgroundImage: "url('/promo-gradient.png')" }}
+      style={{ backgroundImage: "url('/promo-gradient-v1.webp')" }}
     >
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px] py-12 sm:py-16">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
@@ -49,7 +54,7 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="inline-block">
               <span className="block overflow-hidden" style={{ width: 180, height: 60 }}>
-                <Image src="/logo.svg" alt="Eonni" width={180} height={82} priority className="block" />
+                <Image src="/logo.svg" alt="Eonni" width={180} height={82} className="block" />
               </span>
             </Link>
             

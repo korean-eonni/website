@@ -20,7 +20,10 @@ async function handle(request: NextRequest) {
   }
 
   try {
-    const limit = Number(request.nextUrl.searchParams.get('limit') ?? 100)
+    const requestedLimit = Number(request.nextUrl.searchParams.get('limit') ?? 25)
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(25, Math.max(1, Math.floor(requestedLimit)))
+      : 25
     return NextResponse.json({
       ok: true,
       ...(await syncNovaPoshtaTracking({ limit })),

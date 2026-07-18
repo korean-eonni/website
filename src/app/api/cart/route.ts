@@ -1,23 +1,31 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { addToCart, updateCartItemQuantity, removeFromCart, clearCart, getSessionByToken } from '@/lib/userStore'
 import { randomUUID } from 'crypto'
-import { sql } from '@vercel/postgres'
 
 export const dynamic = 'force-dynamic'
 
-async function getSessionId(): Promise<{ sessionId: string; userId?: string }> {
+async function getSessionId(): Promise<{
+  sessionId: string
+  userId?: string
+  isNewGuestSession: boolean
+}> {
   const cookieStore = await cookies()
   
   const authToken = cookieStore.get('session_token')?.value
   if (authToken) {
+    const { getSessionByToken } = await import('@/lib/userStore')
     const session = await getSessionByToken(authToken)
     if (session) {
-      return { sessionId: session.id, userId: session.user_id }
+      return {
+        sessionId: session.id,
+        userId: session.user_id,
+        isNewGuestSession: false,
+      }
     }
   }
   
   let sessionId = cookieStore.get('cart_session')?.value
+  const isNewGuestSession = !sessionId
   if (!sessionId) {
     sessionId = randomUUID()
     cookieStore.set('cart_session', sessionId, {
@@ -29,10 +37,11 @@ async function getSessionId(): Promise<{ sessionId: string; userId?: string }> {
     })
   }
   
-  return { sessionId }
+  return { sessionId, isNewGuestSession }
 }
 
 async function getFullCart(sessionId: string, userId?: string) {
+  const { sql } = await import('@vercel/postgres')
   const result = userId
     ? await sql`
         SELECT ci.id, ci.product_id, ci.quantity,
@@ -84,7 +93,10 @@ async function getFullCart(sessionId: string, userId?: string) {
 
 export async function GET() {
   try {
-    const { sessionId, userId } = await getSessionId()
+    const { sessionId, userId, isNewGuestSession } = await getSessionId()
+    if (isNewGuestSession && !userId) {
+      return NextResponse.json({ items: [], subtotal: 0, itemCount: 0 })
+    }
     const cart = await getFullCart(sessionId, userId)
     return NextResponse.json(cart)
   } catch (error: unknown) {
@@ -96,7 +108,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { productId, quantity = 1 } = await request.json()
-    const cleanProductId = String(productId || '').trim()
+    const rawProductId = String(productId || '').trim()
+    let cleanProductId = rawProductId
+    try {
+      cleanProductId = decodeURIComponent(rawProductId)
+    } catch {
+      return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 })
+    }
     const cleanQuantity = Number(quantity)
 
     if (
@@ -106,6 +124,15 @@ export async function POST(request: Request) {
       cleanQuantity > 99
     ) {
       return NextResponse.json({ error: 'Invalid product or quantity' }, { status: 400 })
+    }
+
+    const [{ getProduct }, { addToCart }] = await Promise.all([
+      import('@/lib/productStore'),
+      import('@/lib/userStore'),
+    ])
+    const product = await getProduct(cleanProductId)
+    if (!product || product.is_active !== 1) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
     const { sessionId, userId } = await getSessionId()
@@ -135,6 +162,7 @@ export async function PATCH(request: Request) {
     }
 
     const { sessionId, userId } = await getSessionId()
+    const { updateCartItemQuantity } = await import('@/lib/userStore')
     const updated = await updateCartItemQuantity(
       cleanItemId,
       cleanQuantity,
@@ -156,6 +184,7 @@ export async function DELETE(request: Request) {
   try {
     const { itemId, clearAll } = await request.json()
     const { sessionId, userId } = await getSessionId()
+    const { clearCart, removeFromCart } = await import('@/lib/userStore')
 
     if (clearAll) {
       await clearCart(sessionId, userId)

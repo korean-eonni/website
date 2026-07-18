@@ -26,9 +26,29 @@ export type CreateReviewInput = {
 
 const usePostgres = !!process.env.POSTGRES_URL
 
+let reviewsSchemaPromise: Promise<void> | null = null
+
 async function ensureReviewsSchema() {
   if (!usePostgres) return
-  
+
+  if (!reviewsSchemaPromise) {
+    reviewsSchemaPromise = initializeReviewsSchema().catch((error) => {
+      reviewsSchemaPromise = null
+      throw error
+    })
+  }
+
+  await reviewsSchemaPromise
+}
+
+async function initializeReviewsSchema() {
+  try {
+    await sql`SELECT id FROM reviews LIMIT 0`
+    return
+  } catch (error) {
+    if ((error as { code?: string } | null)?.code !== '42P01') throw error
+  }
+
   await sql`
     CREATE TABLE IF NOT EXISTS reviews (
       id TEXT PRIMARY KEY,
@@ -183,4 +203,3 @@ export async function getProductRating(productId: string): Promise<{ average: nu
     count: parseInt(result.rows[0].count, 10) || 0,
   }
 }
-

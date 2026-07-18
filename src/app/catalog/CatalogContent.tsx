@@ -260,7 +260,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
   }
 
   return (
-    <Link href={`/product/${product.id}`} className="group block h-full">
+    <Link href={`/product/${product.id}`} prefetch={false} className="group block h-full">
       <div className="product-card relative w-full h-full flex flex-col rounded-[16px] sm:rounded-[20px] overflow-hidden p-[5px] sm:p-[6px]" onMouseEnter={startCycling} onMouseLeave={stopCycling}>
         <div className="relative aspect-square rounded-[12px] sm:rounded-[15px] overflow-hidden bg-white z-[1]">
           <Image
@@ -268,7 +268,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
             alt={product.name}
             fill
             className="product-image object-contain p-3 transition-opacity duration-300"
-            sizes="(min-width: 1280px) 288px, (min-width: 640px) 280px, 100vw"
+            sizes="(min-width: 1280px) 288px, (min-width: 640px) 280px, 50vw"
             loading="lazy"
             placeholder="blur"
             blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjg4IiBoZWlnaHQ9IjI4OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjhGN0ZCIi8+PC9zdmc+"
@@ -822,11 +822,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
   const hasMoreProducts = displayCount < filteredProducts.length
   
   const loadMoreProducts = useCallback(() => {
-    setLoadingMore(true)
-    setTimeout(() => {
-      setDisplayCount(prev => prev + PRODUCTS_PER_PAGE)
-      setLoadingMore(false)
-    }, 300)
+    setDisplayCount(prev => prev + PRODUCTS_PER_PAGE)
   }, [])
   
   const activeFilters = useMemo(() => {

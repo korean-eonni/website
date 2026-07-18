@@ -16,6 +16,28 @@ const nextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  async headers() {
+    return [
+      {
+        source: '/fonts/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:asset(hero-image-v1.webp|promo-gradient-v1.webp)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ]
+  },
 };
 
 export default nextConfig;

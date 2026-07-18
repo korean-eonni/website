@@ -17,7 +17,7 @@ interface HeroSlide {
 const slides: HeroSlide[] = [
   {
     id: 1,
-    image: '/hero-image.png',
+    image: '/hero-image-v1.webp',
     title: 'SKIN PROFILE',
     subtitle:
       'Який в тебе тип шкіри? Пройди тест та отримай свій ідеальний догляд зі знижкою 10%.',
@@ -31,7 +31,7 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   return (
-    <section className="relative h-full w-full overflow-hidden" style={{ backgroundImage: "url('/promo-gradient.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <section className="relative h-full w-full overflow-hidden" style={{ backgroundImage: "url('/promo-gradient-v1.webp')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -47,7 +47,8 @@ export default function Hero() {
               fill
               className="object-cover"
               priority
-              quality={95}
+              quality={82}
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-black/5" />
           </div>

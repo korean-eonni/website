@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { listProducts } from '@/lib/productStore'
+import { listProductTaxonomy } from '@/lib/productStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +34,7 @@ function bucketOf(raw: string | null | undefined): string | null {
 
 export async function GET() {
   try {
-    const products = await listProducts('is_active = 1')
+    const products = await listProductTaxonomy()
 
     // bucket label → (subcategory → count)
     const counts = new Map<string, Map<string, number>>()

@@ -25,6 +25,10 @@ export async function GET(request: Request) {
       reviews,
       rating: rating.average,
       reviewCount: rating.count,
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
     })
   } catch (error: any) {
     console.error('Error fetching reviews:', error)
@@ -93,4 +97,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

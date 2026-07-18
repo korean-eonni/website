@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { listProducts } from '@/lib/productStore'
+import { listPublicProducts } from '@/lib/productStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,17 +22,7 @@ export async function GET(request: Request) {
     const rawLimit = parseInt(url.searchParams.get('limit') || '', 10)
     const limit = Number.isFinite(rawLimit) ? Math.min(60, Math.max(1, rawLimit)) : null
 
-    let products = await listProducts('is_active = 1')
-    if (category) {
-      const catLower = category.toLowerCase()
-      products = products.filter((p) => (p.category ?? '').toLowerCase() === catLower)
-    }
-    if (exclude) {
-      products = products.filter((p) => p.id !== exclude)
-    }
-    if (limit) {
-      products = products.slice(0, limit)
-    }
+    const products = await listPublicProducts({ category, exclude, limit })
 
     return NextResponse.json(products, {
       headers: {

@@ -66,7 +66,7 @@ export default function SubscribeSection() {
   return (
     <section
       className="relative bg-center bg-cover overflow-hidden"
-      style={{ backgroundImage: "url('/promo-gradient.png')" }}
+      style={{ backgroundImage: "url('/promo-gradient-v1.webp')" }}
     >
       <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-center justify-center text-center py-14 sm:py-16">

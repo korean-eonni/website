@@ -56,7 +56,7 @@ export default function BrandsPage() {
                 // exactly) so the catalog can pre-check the right filter checkbox.
                 href={`/catalog?brand=${encodeURIComponent(brand.name)}`}
                 className="group relative rounded-[16px] sm:rounded-[20px] border border-white/60 p-3 sm:p-6 shadow-[0_10px_30px_rgba(96,70,163,0.10)] hover:shadow-[0_18px_44px_rgba(96,70,163,0.22)] hover:-translate-y-1 transition-[transform,box-shadow] duration-300 block overflow-hidden bg-center bg-cover"
-                style={{ backgroundImage: "url('/promo-gradient.png')" }}
+                style={{ backgroundImage: "url('/promo-gradient-v1.webp')" }}
               >
                 {/* Soft white veil over the gradient — keeps cards readable while letting
                     the site palette (pink/cream/cyan/lavender) flow through them. */}

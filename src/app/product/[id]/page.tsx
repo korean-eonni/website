@@ -60,6 +60,11 @@ type SimilarProduct = {
   image_url: string | null
   image_path: string | null
   is_new: number
+  subcategory: string | null
+  brand: string | null
+  tags: string | null
+  skin_type: string | null
+  coming_soon?: number | null
 }
 
 // ============ STAR RATING ============
@@ -246,7 +251,7 @@ function Breadcrumbs({
   subcategory: string | null 
 }) {
   return (
-    <nav className="flex items-center gap-2 text-[21px] leading-[27px] mb-8 flex-wrap">
+    <nav className="flex items-center gap-2 text-[16px] sm:text-[18px] leading-[24px] mb-6 flex-wrap">
       <Link 
         href="/" 
         className="font-semibold text-black hover:text-[#7C83C9] transition-colors"
@@ -1231,28 +1236,16 @@ function recommendTwo(
   return picks
 }
 
-function FrequentlyBoughtTogether({ current }: { current: Product }) {
-  const [recs, setRecs] = useState<{ item: FbtItem; reason: string }[]>([])
+function FrequentlyBoughtTogether({
+  current,
+  pool,
+}: {
+  current: Product
+  pool: SimilarProduct[]
+}) {
+  const recs = recommendTwo(current, pool)
   const [addingId, setAddingId] = useState<string | null>(null)
   const { addToCart } = useCart()
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch(
-          `/api/products?category=${encodeURIComponent(current.category || '')}&limit=60&exclude=${encodeURIComponent(current.id)}`
-        )
-        if (!res.ok) return
-        const data = await res.json()
-        const pool: FbtItem[] = Array.isArray(data) ? data : data.products || []
-        if (!cancelled) setRecs(recommendTwo(current, pool))
-      } catch {
-        /* ignore */
-      }
-    })()
-    return () => { cancelled = true }
-  }, [current])
 
   if (recs.length === 0) return null
 
@@ -1478,7 +1471,13 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
 export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
-  const productId = params.id as string
+  const rawProductId = params.id as string
+  let productId = rawProductId
+  try {
+    productId = decodeURIComponent(rawProductId)
+  } catch {
+    // The API will return a clean not-found state for a malformed route.
+  }
   const { addToCart } = useCart()
   
   const [product, setProduct] = useState<Product | null>(null)
@@ -1490,6 +1489,30 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedVolume, setSelectedVolume] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState(false)
+  const [addedToCart, setAddedToCart] = useState(false)
+  const [cartError, setCartError] = useState<string | null>(null)
+
+  const handleAddToCart = async (goToCheckout = false) => {
+    setAddingToCart(true)
+    setAddedToCart(false)
+    setCartError(null)
+    const added = await addToCart(productId, quantity)
+
+    if (!added) {
+      setCartError('Не вдалося додати товар. Спробуйте ще раз.')
+      setAddingToCart(false)
+      return
+    }
+
+    setAddingToCart(false)
+    if (goToCheckout) {
+      router.push('/checkout')
+      return
+    }
+
+    setAddedToCart(true)
+    setTimeout(() => setAddedToCart(false), 1000)
+  }
 
   const fetchReviews = async (id: string) => {
     try {
@@ -1524,15 +1547,23 @@ export default function ProductPage() {
           }
         }
 
-        // Fetch similar products (same category)
-        const similarResponse = await fetch(`/api/products?category=${encodeURIComponent(data.category || '')}&limit=6`)
-        if (similarResponse.ok) {
-          const similarData = await similarResponse.json()
-          setSimilarProducts(similarData.products || [])
+        // Above-the-fold content is ready as soon as the product arrives.
+        // Reviews and one shared recommendation pool load in parallel.
+        setLoading(false)
+        try {
+          const [similarResponse] = await Promise.all([
+            fetch(
+              `/api/products?category=${encodeURIComponent(data.category || '')}&limit=60&exclude=${encodeURIComponent(productId)}`
+            ),
+            fetchReviews(productId),
+          ])
+          if (similarResponse.ok) {
+            const similarData = await similarResponse.json()
+            setSimilarProducts(Array.isArray(similarData) ? similarData : similarData.products || [])
+          }
+        } catch (secondaryError) {
+          console.error('Failed to fetch product recommendations:', secondaryError)
         }
-
-        // Fetch reviews
-        await fetchReviews(productId)
       } catch (err) {
         setError('Товар не знайдено')
       } finally {
@@ -1596,11 +1627,11 @@ export default function ProductPage() {
   return (
     <main className="min-h-screen bg-[#E2F9FF]">
       {/* Product Hero Section */}
-      <section className="py-8 sm:py-12">
+      <section className="py-6 sm:py-10">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <Breadcrumbs category={product.category} subcategory={product.subcategory} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-10 xl:gap-14">
             {/* Left: Image Gallery */}
             <div>
               <ImageGallery images={images} productName={product.name} />
@@ -1608,7 +1639,7 @@ export default function ProductPage() {
 
             {/* Right: Product Info */}
             <div className="flex flex-col">
-              <h1 className="font-gilroy text-[28px] sm:text-[32px] lg:text-[36px] leading-[1.2] font-semibold text-black mb-4">
+              <h1 className="font-gilroy text-[28px] sm:text-[30px] lg:text-[30px] xl:text-[34px] leading-[1.18] font-semibold text-black mb-4">
                 {product.name}
               </h1>
 
@@ -1670,32 +1701,32 @@ export default function ProductPage() {
 
               <div className="flex flex-col gap-3 mt-auto">
                 <button 
-                  onClick={async () => {
-                    setAddingToCart(true)
-                    await addToCart(productId, quantity)
-                    setTimeout(() => setAddingToCart(false), 1000)
-                  }}
+                  onClick={() => handleAddToCart()}
                   disabled={addingToCart}
                   className={`w-full max-w-[605px] h-[50px] font-semibold text-[16px] uppercase tracking-wide transition-all ${
-                    addingToCart 
+                    addedToCart
                       ? 'bg-[#6046A3] text-white' 
                       : 'bg-[#BCC2F4] text-black hover:bg-[#A8AFEB]'
                   }`}
                 >
-                  {addingToCart ? '✓ Додано в кошик' : 'Додати в кошик'}
+                  {addingToCart
+                    ? 'Додаємо...'
+                    : addedToCart
+                      ? '✓ Додано в кошик'
+                      : 'Додати в кошик'}
                 </button>
                 <button 
-                  onClick={async () => {
-                    setAddingToCart(true)
-                    await addToCart(productId, quantity)
-                    setAddingToCart(false)
-                    router.push('/checkout')
-                  }}
+                  onClick={() => handleAddToCart(true)}
                   disabled={addingToCart}
                   className="w-full max-w-[605px] h-[50px] bg-[#E2F9FF] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
                 >
                   Купити в один клік
                 </button>
+                {cartError && (
+                  <p role="alert" className="text-[14px] font-medium text-[#B42318]">
+                    {cartError}
+                  </p>
+                )}
                 <WishlistButton productId={productId} variant="full" className="w-full max-w-[605px]" />
               </div>
             </div>
@@ -1711,7 +1742,7 @@ export default function ProductPage() {
       </section>
 
       {/* Frequently bought together (2 complementary picks) */}
-      <FrequentlyBoughtTogether current={product} />
+      <FrequentlyBoughtTogether current={product} pool={similarProducts} />
 
       {/* FAQ Section */}
       <FAQSection product={product} />

@@ -81,13 +81,37 @@ const usePostgres = !!process.env.POSTGRES_URL
 
 // Schema initialization flag - only run once per cold start
 let schemaInitialized = false
+let schemaInitializationPromise: Promise<void> | null = null
 
 async function ensureUserSchema() {
   if (!usePostgres) return
   if (schemaInitialized) return
-  
+
+  if (!schemaInitializationPromise) {
+    schemaInitializationPromise = (async () => {
+      try {
+        await sql`
+          SELECT
+            u.id, s.id, w.id, o.id, o.shipping_city_ref,
+            o.shipping_warehouse_ref, o.shipping_delivery_type,
+            o.shipment_weight_kg, oi.id, ci.id
+          FROM users u
+          LEFT JOIN user_sessions s ON false
+          LEFT JOIN wishlist w ON false
+          LEFT JOIN orders o ON false
+          LEFT JOIN order_items oi ON false
+          LEFT JOIN cart_items ci ON false
+          LIMIT 0
+        `
+        schemaInitialized = true
+        return
+      } catch (error) {
+        const code = (error as { code?: string } | null)?.code
+        if (code !== '42P01' && code !== '42703') throw error
+      }
+
   // Run all CREATE TABLE statements in parallel for faster initialization
-  await Promise.all([
+      await Promise.all([
     // Users table
     sql`
       CREATE TABLE IF NOT EXISTS users (
@@ -171,15 +195,22 @@ async function ensureUserSchema() {
         updated_at TEXT NOT NULL
       );
     `,
-  ])
-  await Promise.all([
-    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city_ref TEXT`,
-    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_warehouse_ref TEXT`,
-    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_delivery_type TEXT`,
-    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_weight_kg DOUBLE PRECISION`,
-  ])
-  
-  schemaInitialized = true
+      ])
+      await Promise.all([
+        sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city_ref TEXT`,
+        sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_warehouse_ref TEXT`,
+        sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_delivery_type TEXT`,
+        sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_weight_kg DOUBLE PRECISION`,
+      ])
+
+      schemaInitialized = true
+    })().catch((error) => {
+      schemaInitializationPromise = null
+      throw error
+    })
+  }
+
+  await schemaInitializationPromise
 }
 
 // User functions

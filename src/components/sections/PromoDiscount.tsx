@@ -5,7 +5,7 @@ export default function PromoDiscount() {
     <section className="bg-[#E2F9FF]">
       <div
         className="w-full bg-center bg-cover"
-        style={{ backgroundImage: "url('/promo-gradient.png')" }}
+        style={{ backgroundImage: "url('/promo-gradient-v1.webp')" }}
       >
         <div className="min-h-[520px] sm:h-[724px] flex items-center justify-center text-center px-6 py-16">
           <div className="max-w-[800px]">

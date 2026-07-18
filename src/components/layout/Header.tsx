@@ -1,14 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type ComponentProps } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+import NextLink from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Logo from '@/components/ui/Logo'
 import CartDropdown from '@/components/cart/CartDropdown'
 import Magnetic from '@/components/ui/Magnetic'
 import { brands } from '@/data/brands'
+
+function Link(props: ComponentProps<typeof NextLink>) {
+  return <NextLink {...props} prefetch={false} />
+}
 
 const PAPER = 'rgba(255, 252, 245, 0.85)'
 const PAPER_BORDER = 'rgba(0, 0, 0, 0.06)'
@@ -158,10 +162,7 @@ export default function Header() {
     closeTimer.current = setTimeout(() => setOpenDropdown(null), HOVER_CLOSE_DELAY)
   }
 
-  // Continuous, scroll-position-driven morph. We poll scrollY every frame via
-  // rAF instead of the 'scroll' event because Lenis's interpolated scrolling
-  // doesn't always fire native scroll events reliably — but window.scrollY is
-  // always current. Cheap (one read per frame) and bullet-proof.
+  // Scroll-position-driven morph, scheduled only when native scroll changes.
   useEffect(() => {
     const headerEl = headerRef.current
     const innerEl = innerRef.current
@@ -172,7 +173,8 @@ export default function Header() {
     let raf = 0
     let lastSY = -1
 
-    const tick = () => {
+    const update = () => {
+      raf = 0
       const sy = window.scrollY
       if (sy !== lastSY) {
         lastSY = sy
@@ -192,10 +194,20 @@ export default function Header() {
         promoEl.style.borderBottomLeftRadius = `${e * 24}px`
         promoEl.style.borderBottomRightRadius = `${e * 24}px`
       }
-      raf = requestAnimationFrame(tick)
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+
+    const scheduleUpdate = () => {
+      if (!raf) raf = requestAnimationFrame(update)
+    }
+
+    scheduleUpdate()
+    window.addEventListener('scroll', scheduleUpdate, { passive: true })
+    window.addEventListener('resize', scheduleUpdate)
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate)
+      window.removeEventListener('resize', scheduleUpdate)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [])
 
   useEffect(() => {
@@ -246,23 +258,26 @@ export default function Header() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/categories')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('categories fetch failed'))))
-      .then((data: Array<{ label: string; urlSlug: string; subcategories?: string[] }>) => {
-        if (cancelled || !Array.isArray(data) || data.length === 0) return
-        const tree: CatalogNode[] = data.map((c) => ({
-          label: c.label,
-          href: `/catalog?category=${c.urlSlug}`,
-          ...(c.subcategories && c.subcategories.length ? { subcategories: c.subcategories } : {}),
-        }))
-        tree.push(STOCK_SHORTCUT)
-        setCatalogTree(tree)
-      })
-      .catch(() => {
-        /* keep DEFAULT_CATALOG_TREE */
-      })
+    const timeoutId = window.setTimeout(() => {
+      fetch('/api/categories')
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error('categories fetch failed'))))
+        .then((data: Array<{ label: string; urlSlug: string; subcategories?: string[] }>) => {
+          if (cancelled || !Array.isArray(data) || data.length === 0) return
+          const tree: CatalogNode[] = data.map((c) => ({
+            label: c.label,
+            href: `/catalog?category=${c.urlSlug}`,
+            ...(c.subcategories && c.subcategories.length ? { subcategories: c.subcategories } : {}),
+          }))
+          tree.push(STOCK_SHORTCUT)
+          setCatalogTree(tree)
+        })
+        .catch(() => {
+          /* keep DEFAULT_CATALOG_TREE */
+        })
+    }, 500)
     return () => {
       cancelled = true
+      window.clearTimeout(timeoutId)
     }
   }, [])
 
@@ -331,7 +346,7 @@ export default function Header() {
           ref={innerRef}
           className="bg-center bg-cover mx-auto"
           style={{
-            backgroundImage: "url('/promo-gradient.png')",
+            backgroundImage: "url('/promo-gradient-v1.webp')",
             maxWidth: 1920,
           }}
         >
@@ -610,7 +625,7 @@ export default function Header() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: EXPO_OUT }}
             className="fixed inset-0 z-[55] lg:hidden bg-center bg-cover"
-            style={{ backgroundImage: "url('/promo-gradient.png')" }}
+            style={{ backgroundImage: "url('/promo-gradient-v1.webp')" }}
           >
             <div className="absolute top-0 left-0 right-0 px-4 sm:px-6 pt-5 flex items-center justify-end">
               <button

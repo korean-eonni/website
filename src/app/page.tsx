@@ -8,9 +8,9 @@ import ReviewsSection from '@/components/sections/ReviewsSection'
 import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
-import { listProducts } from '@/lib/productStore'
+import { listPublicProducts } from '@/lib/productStore'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 type ProductCard = {
   id: string
@@ -56,8 +56,10 @@ export default async function Home() {
     }
   }
 
-  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 12) as RawRow[]
-  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 12) as RawRow[]
+  const [newRows, exclusiveRows] = await Promise.all([
+    listPublicProducts({ newOnly: true, limit: 12 }),
+    listPublicProducts({ exclusiveOnly: true, limit: 12 }),
+  ]) as [RawRow[], RawRow[]]
 
   const newProducts = newRows.map(mapRow)
   const exclusiveProducts = exclusiveRows.map(mapRow)

@@ -60,6 +60,35 @@ export type ProductRecord = {
   updated_at: string
 }
 
+export type PublicProductRecord = Pick<
+  ProductRecord,
+  | 'id'
+  | 'name'
+  | 'short_description'
+  | 'sale_price'
+  | 'original_price'
+  | 'discount_amount'
+  | 'image_url'
+  | 'image_path'
+  | 'image_url_2'
+  | 'image_url_3'
+  | 'image_url_4'
+  | 'image_url_5'
+  | 'is_new'
+  | 'is_exclusive'
+  | 'category'
+  | 'subcategory'
+  | 'brand'
+  | 'tags'
+  | 'volume_options'
+  | 'stock_quantity'
+  | 'skin_type'
+  | 'ingredients'
+  | 'rating'
+> & {
+  coming_soon: number | null
+}
+
 const usePostgres = !!process.env.POSTGRES_URL
 
 async function enqueueStockSync(productId: string, reason: string): Promise<void> {
@@ -75,7 +104,51 @@ async function enqueueStockSync(productId: string, reason: string): Promise<void
   }
 }
 
+let postgresSchemaPromise: Promise<void> | null = null
+
+function isMissingProductSchema(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code
+  return code === '42P01' || code === '42703'
+}
+
 async function ensurePostgresSchema() {
+  if (!postgresSchemaPromise) {
+    postgresSchemaPromise = (async () => {
+      try {
+        // Production schema already exists. A single lightweight probe avoids
+        // running 30+ CREATE/ALTER round-trips before every catalogue read.
+        await sql`
+          SELECT
+            id, name, image_url, image_path, image_url_2, image_url_3,
+            image_url_4, image_url_5, image_url_6, image_url_7, image_url_8,
+            image_url_9, image_url_10, image_url_11, image_url_12,
+            short_description, long_description, supplier, cost_price,
+            sale_price, original_price, discount_amount, stock_quantity,
+            category, subcategory, weight_grams, tags, sku, barcode, brand,
+            volume_options, rating, review_count, age_group, ingredients,
+            skin_type, series, classification, usage_instructions,
+            clinical_proof, solves_problems, key_ingredients, fit_skin,
+            compatibility, is_active, is_new, is_exclusive, coming_soon,
+            created_at, updated_at
+          FROM products
+          LIMIT 0
+        `
+        return
+      } catch (error) {
+        if (!isMissingProductSchema(error)) throw error
+      }
+
+      await bootstrapPostgresSchema()
+    })().catch((error) => {
+      postgresSchemaPromise = null
+      throw error
+    })
+  }
+
+  await postgresSchemaPromise
+}
+
+async function bootstrapPostgresSchema() {
   await sql`
     CREATE TABLE IF NOT EXISTS products (
       id TEXT PRIMARY KEY,
@@ -415,6 +488,109 @@ export async function listProducts(where?: string) {
   `
   )
   return stmt.all() as ProductRecord[]
+}
+
+type PublicProductQuery = {
+  category?: string | null
+  exclude?: string | null
+  limit?: number | null
+  newOnly?: boolean
+  exclusiveOnly?: boolean
+}
+
+const PUBLIC_PRODUCT_COLUMNS = `
+  id, name, short_description, sale_price, original_price, discount_amount,
+  image_url, image_path, image_url_2, image_url_3, image_url_4, image_url_5,
+  is_new, is_exclusive, category, subcategory, brand, tags, volume_options,
+  stock_quantity, coming_soon, skin_type, ingredients, rating
+`
+
+/**
+ * Compact public catalogue projection. Filters and LIMIT are executed in SQL,
+ * so list endpoints never load rich product-page copy or hidden admin fields.
+ */
+export async function listPublicProducts(
+  options: PublicProductQuery = {}
+): Promise<PublicProductRecord[]> {
+  const limit =
+    typeof options.limit === 'number'
+      ? Math.min(200, Math.max(1, Math.trunc(options.limit)))
+      : null
+
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    const conditions = ['is_active = 1']
+    const values: unknown[] = []
+
+    if (options.category) {
+      values.push(options.category)
+      conditions.push(`LOWER(COALESCE(category, '')) = LOWER($${values.length})`)
+    }
+    if (options.exclude) {
+      values.push(options.exclude)
+      conditions.push(`id <> $${values.length}`)
+    }
+    if (options.newOnly) conditions.push('is_new = 1')
+    if (options.exclusiveOnly) conditions.push('is_exclusive = 1')
+
+    let query = `
+      SELECT ${PUBLIC_PRODUCT_COLUMNS}
+      FROM products
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY created_at DESC
+    `
+    if (limit) {
+      values.push(limit)
+      query += ` LIMIT $${values.length}`
+    }
+
+    const result = await sql.query(query, values)
+    return result.rows as PublicProductRecord[]
+  }
+
+  const conditions = ['is_active = 1']
+  const values: unknown[] = []
+  if (options.category) {
+    conditions.push(`LOWER(COALESCE(category, '')) = LOWER(?)`)
+    values.push(options.category)
+  }
+  if (options.exclude) {
+    conditions.push('id <> ?')
+    values.push(options.exclude)
+  }
+  if (options.newOnly) conditions.push('is_new = 1')
+  if (options.exclusiveOnly) conditions.push('is_exclusive = 1')
+
+  let query = `
+    SELECT ${PUBLIC_PRODUCT_COLUMNS}
+    FROM products
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY created_at DESC
+  `
+  if (limit) {
+    query += ' LIMIT ?'
+    values.push(limit)
+  }
+
+  return getDb().prepare(query).all(...values) as PublicProductRecord[]
+}
+
+export async function listProductTaxonomy(): Promise<
+  Array<{ category: string | null; subcategory: string | null }>
+> {
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    const result = await sql`
+      SELECT category, subcategory
+      FROM products
+      WHERE is_active = 1
+    `
+    return result.rows as Array<{ category: string | null; subcategory: string | null }>
+  }
+
+  return getDb()
+    .prepare('SELECT category, subcategory FROM products WHERE is_active = 1')
+    .all() as Array<{ category: string | null; subcategory: string | null }>
 }
 
 export async function upsertProducts(products: ProductRecord[]) {

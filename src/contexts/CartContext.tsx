@@ -23,7 +23,7 @@ type CartContextType = {
   itemCount: number
   subtotal: number
   loading: boolean
-  addToCart: (productId: string, quantity?: number) => Promise<void>
+  addToCart: (productId: string, quantity?: number) => Promise<boolean>
   updateQuantity: (itemId: string, quantity: number) => Promise<void>
   removeItem: (itemId: string) => Promise<void>
   clearCart: () => Promise<void>
@@ -59,25 +59,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [applyCartData])
 
   useEffect(() => {
-    refreshCart()
+    // Let the critical page/product request start first. The cart badge is
+    // restored a fraction later without competing for the initial DB slot.
+    const timeoutId = window.setTimeout(() => {
+      void refreshCart()
+    }, 250)
+    return () => window.clearTimeout(timeoutId)
   }, [refreshCart])
 
   const addToCart = useCallback(async (productId: string, quantity: number = 1) => {
-    setItemCount(prev => prev + quantity)
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity }),
+        cache: 'no-store',
+      })
+      const data = await res.json().catch(() => null)
 
-    fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, quantity }),
-    }).then(async (res) => {
-      if (res.ok) {
-        const data = await res.json()
-        applyCartData(data)
+      if (!res.ok || !data) {
+        await refreshCart()
+        return false
       }
-    }).catch(() => {
-      setItemCount(prev => prev - quantity)
-    })
-  }, [applyCartData])
+
+      applyCartData(data)
+      return Array.isArray(data.items) && data.items.some(
+        (item: CartItem) => item.product_id === productId
+      )
+    } catch {
+      await refreshCart()
+      return false
+    }
+  }, [applyCartData, refreshCart])
 
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (quantity < 1) {

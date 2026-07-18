@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import CatalogContent from './CatalogContent'
-import { listProducts } from '@/lib/productStore'
+import { listPublicProducts } from '@/lib/productStore'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Каталог корейської косметики',
@@ -77,7 +77,7 @@ type CatalogProduct = {
 export default async function CatalogPage() {
   let products: CatalogProduct[] = []
   try {
-    const rawProducts = await listProducts('is_active = 1')
+    const rawProducts = await listPublicProducts()
     products = rawProducts.map(p => ({
       id: p.id,
       name: p.name,

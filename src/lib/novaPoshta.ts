@@ -538,8 +538,36 @@ async function callNovaPoshta<T>(
   return envelope
 }
 
+let novaPoshtaSchemaPromise: Promise<void> | null = null
+
 async function ensureNovaPoshtaSchema(): Promise<void> {
   requirePostgres()
+  if (!novaPoshtaSchemaPromise) {
+    novaPoshtaSchemaPromise = initializeNovaPoshtaSchema().catch((error) => {
+      novaPoshtaSchemaPromise = null
+      throw error
+    })
+  }
+  await novaPoshtaSchemaPromise
+}
+
+async function initializeNovaPoshtaSchema(): Promise<void> {
+  try {
+    await sql`
+      SELECT
+        order_id, state, request_hash, document_ref, tracking_number,
+        status_code, status_text, scheduled_delivery_date,
+        actual_delivery_date, tracking_completed, attempts, last_error,
+        last_tracking_at, created_at, updated_at
+      FROM nova_poshta_shipments
+      LIMIT 0
+    `
+    return
+  } catch (error) {
+    const code = (error as { code?: string } | null)?.code
+    if (code !== '42P01' && code !== '42703') throw error
+  }
+
   await sql`
     CREATE TABLE IF NOT EXISTS nova_poshta_shipments (
       order_id TEXT PRIMARY KEY,
