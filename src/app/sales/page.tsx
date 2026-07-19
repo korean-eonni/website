@@ -9,7 +9,7 @@ import { brands as brandDirectory } from '@/data/brands'
 export const metadata: Metadata = {
   title: 'Знижки та акції на корейську косметику',
   description:
-    'Актуальні знижки та спеціальні пропозиції на корейську косметику в Eonni. Знижки до 30%, подарунки до замовлень, вигідні набори. Економте на улюблених брендах!',
+    'Актуальні пропозиції eonni: безкоштовна доставка від 1500 ₴, маска Medicube у подарунок за кожні 1000 ₴ і знижка 10% на повну рутину після тесту шкіри.',
   keywords: 'знижки корейська косметика, акції, розпродаж, вигідні набори, Eonni',
   alternates: { canonical: '/sales' },
   openGraph: {
@@ -33,40 +33,19 @@ const currentOffers = [
   },
   {
     title: 'Подарунок до замовлення',
-    description: 'Отримайте пробники преміум-косметики до кожного замовлення від 800₴.',
+    description: 'За кожні 1000₴ у замовленні додаємо маску Medicube у подарунок.',
     badge: 'Завжди',
     tone: '#FFE8F0',
     icon: '🎁',
-    conditions: 'Автоматично додається до замовлення',
+    conditions: 'Подарунок додаємо під час пакування',
   },
   {
-    title: 'Знижка на перше замовлення',
-    description: 'Новим клієнтам — знижка 10% на перше замовлення з промокодом HELLO10.',
+    title: 'Знижка після тесту шкіри',
+    description: 'Пройдіть тест, додайте рекомендовану повну рутину й отримайте знижку 10%.',
     badge: '-10%',
     tone: '#FFF8E9',
-    icon: '👋',
-    conditions: 'Промокод: HELLO10',
-  },
-  {
-    title: 'Вигідні набори',
-    description: 'Готові набори догляду зі знижкою до 20%. Ідеально для старту в K-beauty!',
-    badge: 'до -20%',
-    tone: '#E2F9FF',
     icon: '✨',
-    conditions: 'Дивіться розділ "Набори" в каталозі',
-  },
-]
-
-const upcomingOffers = [
-  {
-    title: 'Весняний розпродаж',
-    description: 'Знижки до 30% на весняну колекцію догляду',
-    date: 'Березень 2026',
-  },
-  {
-    title: 'День народження Eonni',
-    description: 'Святкові знижки та подарунки',
-    date: 'Квітень 2026',
+    conditions: 'Знижка активується автоматично для повної рутини',
   },
 ]
 
@@ -82,9 +61,9 @@ const savingTips = [
     icon: '📱',
   },
   {
-    title: 'Купуйте набори',
-    description: 'Готові набори завжди вигідніші, ніж окремі продукти.',
-    icon: '📦',
+    title: 'Пройдіть тест шкіри',
+    description: 'Додайте рекомендовану повну рутину та отримайте автоматичну знижку 10%.',
+    icon: '✨',
   },
   {
     title: 'Замовляйте від 1500₴',
@@ -168,59 +147,23 @@ export default function SalesPage() {
         </div>
       </section>
 
-      {/* Promo Code */}
+      {/* Skin-test discount */}
       <section className="py-16 sm:py-20">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="rounded-[32px] bg-black text-white p-10 sm:p-14 text-center">
-            <p className="text-[12px] uppercase tracking-[0.2em] text-white/60">Промокод для нових клієнтів</p>
-            <h2 className="mt-4 font-bebas uppercase text-[48px] sm:text-[64px]">HELLO10</h2>
+            <p className="text-[12px] uppercase tracking-[0.2em] text-white/60">Персональний догляд зі знижкою</p>
+            <h2 className="mt-4 font-bebas uppercase text-[48px] sm:text-[64px]">SKIN TEST −10%</h2>
             <p className="mt-4 font-gilroy text-[18px] text-white/80 max-w-[500px] mx-auto">
-              Введіть цей промокод при оформленні першого замовлення та отримайте знижку 10%
+              Пройдіть тест, додайте рекомендовану повну рутину — знижка застосовується автоматично
             </p>
             <Magnetic strength={12} className="mt-8 inline-block">
             <Link
-              href="/catalog"
+              href="/skin-test"
               className="inline-flex h-[50px] px-10 items-center justify-center rounded-[12px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[16px] font-semibold hover:bg-[#6046A3] hover:text-white transition-colors duration-300"
             >
-              Використати промокод
+              Пройти тест
             </Link>
             </Magnetic>
-          </div>
-        </div>
-      </section>
-
-      {/* Upcoming Offers */}
-      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
-          <div className="grid gap-10 lg:grid-cols-[1fr,1.2fr] items-center">
-            <div>
-              <p className="text-[12px] uppercase tracking-[0.2em] text-[#999999]">Скоро</p>
-              <h2 className="mt-3 font-bebas uppercase text-black text-[40px] leading-[44px] sm:text-[52px] sm:leading-[56px]">
-                Очікуйте незабаром
-              </h2>
-              <p className="mt-4 font-gilroy text-[16px] leading-[24px] text-[#666666]">
-                Підпишіться на розсилку або слідкуйте за нами в Instagram, щоб не пропустити найвигідніші пропозиції!
-              </p>
-            </div>
-            <div className="grid gap-4">
-              {upcomingOffers.map((offer) => (
-                <div
-                  key={offer.title}
-                  className="rounded-[20px] bg-[#E2F9FF] p-6 border border-[#E5E5E5] flex items-center gap-6"
-                >
-                  <div className="w-16 h-16 rounded-full bg-[#F6F1FF] flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl">📅</span>
-                  </div>
-                  <div className="flex-grow">
-                    <h3 className="font-bebas uppercase text-[24px] text-black">{offer.title}</h3>
-                    <p className="text-[14px] text-[#666666]">{offer.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[14px] font-semibold text-[#BCC2F4]">{offer.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -256,7 +199,7 @@ export default function SalesPage() {
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="text-center max-w-[600px] mx-auto mb-10">
             <h2 className="font-bebas uppercase text-black text-[36px] sm:text-[44px]">
-              Популярні бренди зі знижками
+              Популярні бренди
             </h2>
             <p className="mt-3 font-gilroy text-[16px] text-[#666666]">
               Слідкуйте за акціями на улюблені бренди

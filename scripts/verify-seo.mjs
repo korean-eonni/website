@@ -117,6 +117,48 @@ for (const [index, item] of items.entries()) {
 }
 expect(/PDRN Pink Collagen Glow/i.test(feed.body), 'merchant feed: target product missing')
 
+const sitemapUrls = [...sitemap.body.matchAll(/<loc>([^<]+)<\/loc>/g)]
+  .map((match) => match[1].replaceAll('&amp;', '&'))
+const crawledTitles = new Map()
+
+for (let index = 0; index < sitemapUrls.length; index += 12) {
+  const batch = sitemapUrls.slice(index, index + 12)
+  const pages = await Promise.all(
+    batch.map(async (canonicalUrl) => {
+      const url = new URL(canonicalUrl)
+      const path = `${url.pathname}${url.search}`
+      return { canonicalUrl, path, page: await get(path) }
+    })
+  )
+
+  for (const { canonicalUrl, path, page } of pages) {
+    const title = tagContent(page.body, 'title').replace(/\s+/g, ' ').trim()
+    const description =
+      page.body.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i)?.[1] ||
+      page.body.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1] ||
+      ''
+    const h1Count = [...page.body.matchAll(/<h1(?:\s|>)/gi)].length
+    const pageCanonical = canonical(page.body).replace(/\/$/, '')
+    const expectedCanonical = canonicalUrl.replace(/\/$/, '')
+
+    expect(title.length >= 10, `${path}: title is missing or too short`)
+    expect(title.length <= 90, `${path}: title is too long (${title.length})`)
+    expect(description.length >= 50, `${path}: meta description is missing or too short`)
+    expect(h1Count === 1, `${path}: expected exactly one H1, found ${h1Count}`)
+    expect(pageCanonical === expectedCanonical, `${path}: canonical mismatch (${pageCanonical})`)
+    expect(!/noindex/i.test(page.body), `${path}: sitemap URL is noindexed`)
+
+    if (title) {
+      const previousPath = crawledTitles.get(title)
+      if (previousPath && !path.startsWith('/product/')) {
+        failures.push(`${path}: duplicate title also used by ${previousPath}`)
+      } else {
+        crawledTitles.set(title, path)
+      }
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error(`SEO verification failed for ${baseUrl}:`)
   for (const failure of failures) console.error(`- ${failure}`)
@@ -124,5 +166,6 @@ if (failures.length > 0) {
 }
 
 console.log(`SEO verification passed for ${baseUrl}`)
+console.log(`Sitemap pages crawled: ${sitemapUrls.length}`)
 console.log(`Merchant feed items: ${items.length}`)
 console.log(`Target product title: ${productTitle}`)

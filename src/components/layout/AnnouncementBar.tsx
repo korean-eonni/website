@@ -3,8 +3,9 @@
 import Image from 'next/image'
 
 const announcements = [
-  '10% ЗНИЖКИ НА ПЕРШЕ ЗАМОВЛЕННЯ',
+  '10% НА ПОВНИЙ НАБІР ПІСЛЯ ТЕСТУ ШКІРИ',
   'ДО КОЖНОЇ 1000грн. МАСКА MEDICUBE В ПОДАРУНОК',
+  'БЕЗКОШТОВНА ДОСТАВКА ВІД 1500грн',
   'ОРИГІНАЛЬНА КОРЕЙСЬКА КОСМЕТИКА',
 ]
 
@@ -33,4 +34,3 @@ export default function AnnouncementBar() {
     </div>
   )
 }
-

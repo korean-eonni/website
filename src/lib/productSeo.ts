@@ -23,7 +23,21 @@ export function getProductPrimaryName(product: ProductRecord): string {
     .map((part) => part.trim())
     .filter(Boolean)
 
-  return parts.length >= 2 ? `${parts[0]} ${parts[1]}` : product.name.trim()
+  const brand = product.brand?.trim().toLocaleLowerCase('uk-UA')
+  if (
+    parts.length >= 2 &&
+    (!brand || parts[0].toLocaleLowerCase('uk-UA') === brand)
+  ) {
+    return `${parts[0]} ${parts[1]}`
+  }
+
+  const leadingName = (parts[0] || product.name)
+    .split(/[.!?]/, 1)[0]
+    .trim()
+  if (leadingName.length <= 70) return leadingName
+
+  const shortened = leadingName.slice(0, 70)
+  return shortened.slice(0, shortened.lastIndexOf(' ')).trim()
 }
 
 export function getProductCanonicalUrl(product: ProductRecord): string {

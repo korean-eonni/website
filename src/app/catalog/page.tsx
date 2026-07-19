@@ -122,6 +122,7 @@ export default async function CatalogPage() {
 
   return (
     <>
+      <h1 className="sr-only">Каталог корейської косметики</h1>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}

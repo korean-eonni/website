@@ -21,6 +21,5 @@ export const brands: Brand[] = [
   { name: 'CJ WELLCARE',                slug: 'cj-wellcare',  logo: '/brands/cj-wellcare.svg',  tone: '#EEF4FF' },
   { name: 'INNERLAB',                   slug: 'innerlab',     logo: '/brands/innerlab.svg',     tone: '#F4F4F4' },
   { name: 'ARDIEM',                     slug: 'ardiem',       logo: '/brands/ardiem.svg',       tone: '#FFF0F6' },
-  { name: 'BB LAB',                     slug: 'bb-lab',       logo: '/brands/bb-lab.png',       tone: '#EEF4FF' },
   { name: 'Skinfood',                   slug: 'skinfood',     logo: '/brands/skinfood.png',     tone: '#FFFBEA' },
 ]

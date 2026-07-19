@@ -965,9 +965,9 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
             <span className="text-[#999]">&gt;</span>
             <span className="text-black">{pageTitle}</span>
           </nav>
-          <h1 className="font-bebas text-[48px] sm:text-[64px] lg:text-[80px] leading-[1] text-black uppercase">
+          <h2 className="font-bebas text-[48px] sm:text-[64px] lg:text-[80px] leading-[1] text-black uppercase">
             {pageTitle}
-          </h1>
+          </h2>
         </div>
       </section>
       
