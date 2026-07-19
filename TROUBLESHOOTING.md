@@ -119,3 +119,9 @@
 - **Error:** `sitemap.ts` приймає масив `images`, але готовий `/sitemap.xml` не містить жодного `<image:image>`.
 - **Cause:** стандартний MetadataRoute serializer у поточній Next.js 14 збірці ігнорує image extension.
 - **Fix:** віддавати `/sitemap.xml` власним route handler з image namespace та валідними `<image:image><image:loc>` для всіх фото товару.
+
+## Локальний SEO verifier не бачить товари
+
+- **Error:** `merchant feed: only 0 items` і відсутні product metadata під час перевірки локального `next start`.
+- **Cause:** локальний процес без production env використовує порожню резервну SQLite-базу, тому не має каталогу з Postgres.
+- **Fix:** перевірити збірку локально, а повний `seo:verify` запускати проти production URL після деплою через `SEO_BASE_URL=https://eonni.com.ua`.

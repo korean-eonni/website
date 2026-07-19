@@ -29,10 +29,19 @@ function stripHtml(html: string | null | undefined): string {
 
 function feedId(product: ProductRecord): string {
   const source = (product.sku || product.id).trim()
-  if (source.length <= 50) return source
+  if (Buffer.byteLength(source, 'utf8') <= 50) return source
 
   const digest = createHash('sha256').update(source).digest('hex').slice(0, 10)
-  return `${source.slice(0, 39)}-${digest}`
+  const asciiPrefix =
+    source
+      .normalize('NFKD')
+      .replace(/[^\x00-\x7F]/g, '')
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/[-_.]{2,}/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 39) || 'eonni-product'
+
+  return `${asciiPrefix}-${digest}`
 }
 
 function availability(product: ProductRecord): 'in_stock' | 'out_of_stock' {

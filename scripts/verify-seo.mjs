@@ -156,6 +156,7 @@ for (const [index, item] of items.entries()) {
     )
   }
 
+  const id = feedValue(item, 'id')
   const title = feedValue(item, 'title')
   const description = feedValue(item, 'description')
   const link = feedValue(item, 'link')
@@ -165,6 +166,10 @@ for (const [index, item] of items.entries()) {
   const salePrice = feedValue(item, 'sale_price')
   const condition = feedValue(item, 'condition')
 
+  expect(
+    Buffer.byteLength(id, 'utf8') <= 50,
+    `merchant feed item ${index + 1}: id exceeds 50 UTF-8 bytes`
+  )
   expect(title.length <= 150, `merchant feed item ${index + 1}: title exceeds 150 characters`)
   expect(description.length <= 5000, `merchant feed item ${index + 1}: description exceeds 5000 characters`)
   expect(/^https:\/\//.test(link), `merchant feed item ${index + 1}: non-HTTPS link`)
