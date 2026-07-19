@@ -4,15 +4,18 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Умови ведення бізнесу | Eonni — Публічна оферта',
+  title: 'Публічна оферта та умови покупки',
   description:
     'Публічна оферта інтернет-магазину Eonni. Умови оформлення замовлення, оплати, доставки, повернення товару та відповідальність сторін.',
   keywords: 'публічна оферта, умови покупки, договір, правила магазину, Eonni',
+  alternates: { canonical: '/business-terms' },
   openGraph: {
-    title: 'Умови ведення бізнесу | Eonni',
+    title: 'Публічна оферта та умови покупки | eonni',
     description: 'Публічна оферта та умови співпраці з інтернет-магазином Eonni.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/business-terms',
+    siteName: 'eonni',
   },
 }
 

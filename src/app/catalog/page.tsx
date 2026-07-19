@@ -11,11 +11,13 @@ export const metadata: Metadata = {
     'Каталог оригінальної корейської косметики Eonni: догляд за обличчям, тілом, волоссям, БАДи та косметичні девайси. Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics, LACTOFIT та інші бренди K-beauty.',
   alternates: { canonical: '/catalog' },
   openGraph: {
-    title: 'Каталог корейської косметики | Eonni',
+    title: 'Каталог корейської косметики | eonni',
     description:
       'Оригінальна корейська косметика з доставкою по Україні. Догляд за обличчям, тілом, волоссям, БАДи K-beauty.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/catalog',
+    siteName: 'eonni',
   },
 }
 

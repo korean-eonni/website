@@ -4,6 +4,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { BLOG_POSTS, getBlogPublishedAt } from '@/lib/blogSeo'
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua')
+  .trim()
+  .replace(/\/$/, '')
 
 // Blog posts data with enhanced content structure
 const blogPosts: Record<string, {
@@ -357,9 +362,7 @@ type ContentBlock =
 
 // Generate static params for all blog posts
 export async function generateStaticParams() {
-  return Object.keys(blogPosts).map((slug) => ({
-    slug,
-  }))
+  return BLOG_POSTS.map(({ slug }) => ({ slug }))
 }
 
 // Generate metadata for each post
@@ -373,15 +376,19 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 
   return {
-    title: `${post.title} | Блог Eonni`,
+    title: post.title,
     description: post.description,
+    alternates: { canonical: `/blog/${params.slug}` },
     keywords: `K-beauty, корейська косметика, ${post.category.toLowerCase()}, догляд за шкірою`,
     openGraph: {
       title: post.title,
       description: post.description,
       type: 'article',
+      url: `/blog/${params.slug}`,
       locale: 'uk_UA',
-      publishedTime: post.date,
+      siteName: 'eonni',
+      images: [{ url: post.image, alt: post.title }],
+      publishedTime: getBlogPublishedAt(params.slug) || undefined,
       authors: [post.author],
     },
   }
@@ -689,8 +696,27 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
     notFound()
   }
 
+  const canonical = `${SITE_URL}/blog/${params.slug}`
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${canonical}#article`,
+    headline: post.title,
+    description: post.description,
+    image: [post.image],
+    datePublished: getBlogPublishedAt(params.slug),
+    dateModified: getBlogPublishedAt(params.slug),
+    author: { '@type': 'Person', name: post.author },
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    mainEntityOfPage: canonical,
+  }
+
   return (
     <main className="min-h-screen bg-[#E2F9FF]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden py-10 sm:py-14 lg:py-16">
         <FloatingIcons count={7} offset={2} />

@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Eonni — Корейська косметика',
-    short_name: 'Eonni',
+    name: 'eonni — корейська косметика',
+    short_name: 'eonni',
     description:
       'Оригінальна корейська косметика з доставкою по Україні',
     start_url: '/',
@@ -14,9 +14,9 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: 'portrait',
     icons: [
       {
-        src: '/logo.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
+        src: '/icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
         purpose: 'any',
       },
     ],

@@ -8,6 +8,7 @@ import Magnetic from '@/components/ui/Magnetic'
 interface HeroSlide {
   id: number
   image: string
+  eyebrow: string
   title: string
   subtitle: string
   buttonText: string
@@ -18,7 +19,8 @@ const slides: HeroSlide[] = [
   {
     id: 1,
     image: '/hero-image-v1.webp',
-    title: 'SKIN PROFILE',
+    eyebrow: 'SKIN PROFILE',
+    title: 'Корейська косметика для твоєї шкіри',
     subtitle:
       'Який в тебе тип шкіри? Пройди тест та отримай свій ідеальний догляд зі знижкою 10%.',
     buttonText: 'skin-test',
@@ -56,6 +58,9 @@ export default function Hero() {
           {/* Content */}
           <div className="relative h-full max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 flex items-center">
             <div className="max-w-[767px] text-white drop-shadow-md">
+              <p className="mb-3 text-[14px] font-semibold uppercase tracking-[0.22em] sm:text-[16px]">
+                {slide.eyebrow}
+              </p>
               <h1 className="text-[44px] leading-[48px] sm:text-[72px] sm:leading-[80px] lg:text-[100px] lg:leading-[100px] font-bebas uppercase tracking-[0]">
                 {slide.title}
               </h1>

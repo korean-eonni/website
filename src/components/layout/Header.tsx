@@ -30,17 +30,17 @@ const STOCK_SHORTCUT: CatalogNode = { label: 'Скоро в наявності',
 const DEFAULT_CATALOG_TREE: CatalogNode[] = [
   {
     label: 'Обличчя',
-    href: '/catalog?category=face',
+    href: '/category/face',
     subcategories: [
       'Сироватки', 'Креми', 'Маски', 'Пади', 'Тонери',
       'Очищення та демакіяж', 'Догляд за зоною навколо очей', 'Догляд за губами', 'SPF', 'Ексфоліація',
     ],
   },
-  { label: 'Волосся', href: '/catalog?category=hair' },
-  { label: 'Тіло', href: '/catalog?category=body' },
-  { label: 'Health & Care', href: '/catalog?category=health' },
-  { label: 'Косметичні девайси', href: '/catalog?category=devices', subcategories: ['Гель-провідник'] },
-  { label: 'Тестери та аксесуари', href: '/catalog?category=testers' },
+  { label: 'Волосся', href: '/category/hair' },
+  { label: 'Тіло', href: '/category/body' },
+  { label: 'Health & Care', href: '/category/health' },
+  { label: 'Косметичні девайси', href: '/category/devices', subcategories: ['Гель-провідник'] },
+  { label: 'Тестери та аксесуари', href: '/category/testers' },
   STOCK_SHORTCUT,
 ]
 
@@ -265,7 +265,7 @@ export default function Header() {
           if (cancelled || !Array.isArray(data) || data.length === 0) return
           const tree: CatalogNode[] = data.map((c) => ({
             label: c.label,
-            href: `/catalog?category=${c.urlSlug}`,
+            href: `/category/${c.urlSlug}`,
             ...(c.subcategories && c.subcategories.length ? { subcategories: c.subcategories } : {}),
           }))
           tree.push(STOCK_SHORTCUT)
@@ -306,7 +306,7 @@ export default function Header() {
   // `name` matches the sheet's "Бренд" column, so ?brand=… pre-checks the catalog filter.
   const brandLinks = brands.map((b) => ({
     label: b.name,
-    href: `/catalog?brand=${encodeURIComponent(b.name)}`,
+    href: `/brand/${b.slug}`,
   }))
 
   const navLinks = [
@@ -418,9 +418,8 @@ export default function Header() {
                     </div>
                   )}
 
-                  {/* Catalog dropdown — uses the tree (categories + subcategories) so each
-                      row has a "+" button that expands an inline accordion of subcat links.
-                      The category label itself is still clickable and goes to /catalog?category=… */}
+                  {/* Catalog dropdown — category labels lead to crawlable SEO landing pages,
+                      while subcategory links keep the interactive catalog filters. */}
                   {link.label === 'Каталог' && (
                     <div
                       className={`absolute left-1/2 top-full z-20 -translate-x-1/2 pt-3 transition-opacity duration-200 ${openDropdown === link.label ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
@@ -482,7 +481,7 @@ export default function Header() {
                                       {cat.subcategories!.map((sub) => (
                                         <Link
                                           key={sub}
-                                          href={`/catalog?category=${cat.href.split('=')[1]}&subcategory=${encodeURIComponent(sub)}`}
+                                          href={`/catalog?category=${cat.href.split('/').pop()}&subcategory=${encodeURIComponent(sub)}`}
                                           onClick={() => { setOpenDropdown(null); setExpandedCatalogCat(null) }}
                                           className="block px-2 py-1.5 text-[13.5px] text-black/75 hover:text-[#6046A3] hover:translate-x-1 transition-all duration-200"
                                         >

@@ -11,10 +11,12 @@ export const metadata: Metadata = {
     'Офіційні K-beauty бренди в Eonni: Medicube, Mediheal, Torriden, UNOVE, LACTOFIT, VT Cosmetics, VITAHALO, PROBIODERM, CJ WELLCARE, INNERLAB, ARDIEM. Оригінальна корейська косметика з доставкою по Україні.',
   alternates: { canonical: '/brands' },
   openGraph: {
-    title: 'Бренди корейської косметики | Eonni',
+    title: 'Бренди корейської косметики | eonni',
     description: 'Офіційні K-beauty бренди з доставкою по Україні.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/brands',
+    siteName: 'eonni',
   },
 }
 
@@ -52,9 +54,7 @@ export default function BrandsPage() {
             {brands.map((brand) => (
               <Link
                 key={brand.slug}
-                // Use the brand's display name (matches `brand` column in the sheet
-                // exactly) so the catalog can pre-check the right filter checkbox.
-                href={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                href={`/brand/${brand.slug}`}
                 className="group relative rounded-[16px] sm:rounded-[20px] border border-white/60 p-3 sm:p-6 shadow-[0_10px_30px_rgba(96,70,163,0.10)] hover:shadow-[0_18px_44px_rgba(96,70,163,0.22)] hover:-translate-y-1 transition-[transform,box-shadow] duration-300 block overflow-hidden bg-center bg-cover"
                 style={{ backgroundImage: "url('/promo-gradient-v1.webp')" }}
               >

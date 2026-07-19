@@ -4,17 +4,21 @@ import Magnetic from '@/components/ui/Magnetic'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import SalesNewsletter from './SalesNewsletter'
+import { brands as brandDirectory } from '@/data/brands'
 
 export const metadata: Metadata = {
-  title: 'Знижки та акції | Eonni — Вигідні пропозиції на корейську косметику',
+  title: 'Знижки та акції на корейську косметику',
   description:
     'Актуальні знижки та спеціальні пропозиції на корейську косметику в Eonni. Знижки до 30%, подарунки до замовлень, вигідні набори. Економте на улюблених брендах!',
   keywords: 'знижки корейська косметика, акції, розпродаж, вигідні набори, Eonni',
+  alternates: { canonical: '/sales' },
   openGraph: {
-    title: 'Знижки та акції | Eonni',
+    title: 'Знижки та акції | eonni',
     description: 'Актуальні знижки та спеціальні пропозиції на корейську косметику.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/sales',
+    siteName: 'eonni',
   },
 }
 
@@ -87,11 +91,6 @@ const savingTips = [
     description: 'Економте на доставці — вона безкоштовна від 1500₴.',
     icon: '💰',
   },
-]
-
-const brands = [
-  'COSRX', 'Anua', 'Beauty of Joseon', 'Torriden', 'Medicube', 
-  'Some By Mi', 'Isntree', 'Mixsoon', 'Round Lab', 'Skin1004'
 ]
 
 export default function SalesPage() {
@@ -264,13 +263,13 @@ export default function SalesPage() {
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
-            {brands.map((brand) => (
+            {brandDirectory.slice(0, 10).map((brand) => (
               <Link
-                key={brand}
-                href={`/catalog?brand=${encodeURIComponent(brand)}`}
+                key={brand.slug}
+                href={`/brand/${brand.slug}`}
                 className="px-6 py-3 rounded-full bg-[#E2F9FF] border border-[#E5E5E5] text-[15px] font-gilroy text-black hover:bg-[#BCC2F4] hover:border-[#BCC2F4] transition-colors"
               >
-                {brand}
+                {brand.name}
               </Link>
             ))}
           </div>

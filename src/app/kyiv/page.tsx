@@ -6,7 +6,7 @@ import FloatingIcons from '@/components/FloatingIcons'
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua').trim().replace(/\/$/, '')
 
 export const metadata: Metadata = {
-  title: 'Корейська косметика в Києві — магазин Eonni',
+  title: 'Корейська косметика в Києві',
   description:
     'Купити корейську косметику в Києві з доставкою в день замовлення. Магазин Eonni: оригінальна K-beauty від Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics. Доставка по всьому Києву та Україні Новою Поштою і кур\'єром.',
   keywords: [
@@ -21,11 +21,12 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: '/kyiv' },
   openGraph: {
-    title: 'Корейська косметика в Києві — Eonni',
+    title: 'Корейська косметика в Києві | eonni',
     description: 'Оригінальна K-beauty з доставкою по Києву та Новою Поштою по всій Україні.',
     type: 'website',
     locale: 'uk_UA',
     url: `${SITE_URL}/kyiv`,
+    siteName: 'eonni',
   },
 }
 

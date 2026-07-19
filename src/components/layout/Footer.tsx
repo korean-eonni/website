@@ -9,11 +9,11 @@ function Link(props: ComponentProps<typeof NextLink>) {
 
 const catalogLinks = [
   { label: 'Весь асортимент', href: '/catalog' },
-  { label: 'Обличчя', href: '/catalog?category=face' },
-  { label: 'Волосся', href: '/catalog?category=hair' },
-  { label: 'Тіло', href: '/catalog?category=body' },
-  { label: 'Health & Care', href: '/catalog?category=health' },
-  { label: 'Тестери та аксесуари', href: '/catalog?category=testers' },
+  { label: 'Обличчя', href: '/category/face' },
+  { label: 'Волосся', href: '/category/hair' },
+  { label: 'Тіло', href: '/category/body' },
+  { label: 'Health & Care', href: '/category/health' },
+  { label: 'Тестери та аксесуари', href: '/category/testers' },
   { label: 'Знижки', href: '/catalog?sale=true' },
 ]
 

@@ -4,15 +4,18 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Повернення та обмін | Eonni — Умови повернення косметики',
+  title: 'Повернення та обмін товарів',
   description:
     'Умови повернення та обміну товарів в Eonni. 14 днів на повернення, простий процес, швидке повернення коштів. Дізнайтесь про правила та процедуру.',
   keywords: 'повернення косметики, обмін товару, 14 днів повернення, Eonni',
+  alternates: { canonical: '/returns-exchange' },
   openGraph: {
-    title: 'Повернення та обмін | Eonni',
+    title: 'Повернення та обмін | eonni',
     description: '14 днів на повернення, простий процес, швидке повернення коштів.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/returns-exchange',
+    siteName: 'eonni',
   },
 }
 

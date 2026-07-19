@@ -6,10 +6,12 @@ export const metadata: Metadata = {
     'Блог Eonni про корейську косметику: огляди засобів, поради з догляду, тренди K-beauty, ритуали для шкіри. Корисні матеріали від експертів.',
   alternates: { canonical: '/blog' },
   openGraph: {
-    title: 'Блог про корейську косметику | Eonni',
+    title: 'Блог про корейську косметику | eonni',
     description: 'Огляди, поради та тренди K-beauty від Eonni.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/blog',
+    siteName: 'eonni',
   },
 }
 

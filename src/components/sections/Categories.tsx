@@ -18,35 +18,35 @@ export default function Categories() {
       id: '2',
       name: 'ОБЛИЧЧЯ',
       image: '/categories/category-2.png',
-      href: '/catalog?category=face',
+      href: '/category/face',
     },
     {
       id: '5',
       name: 'ВОЛОССЯ',
       // Woman on pink bg with flowing dark wavy hair, holding hair product — editorial (Lucy Alcorn, user's pick)
       image: '/categories/cat-hair.jpg',
-      href: '/catalog?category=hair',
+      href: '/category/hair',
     },
     {
       id: '3',
       name: 'ТІЛО',
       // Woman applying exfoliating scrub to her shoulder on pink bg — body care editorial (user's pick, Jun 2026)
       image: '/categories/cat-body.jpg',
-      href: '/catalog?category=body',
+      href: '/category/body',
     },
     {
       id: '4',
       name: 'HEALTH & CARE',
       // Two gold spoons on pink — capsules + collagen powder — supplement editorial (user's pick)
       image: '/categories/cat-health.jpg',
-      href: '/catalog?category=health',
+      href: '/category/health',
     },
     {
       id: '6',
       name: 'КОСМЕТИЧНІ ДЕВАЙСИ',
       // Woman holding two pink Medicube AGE-R beauty devices on pink bg (user's pick, Jun 2026)
       image: '/categories/cat-devices.jpg',
-      href: '/catalog?category=devices',
+      href: '/category/devices',
     },
   ]
 

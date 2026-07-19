@@ -4,8 +4,9 @@ import type { Metadata } from 'next'
 import OrderLookupForm from './OrderLookupForm'
 
 export const metadata: Metadata = {
-  title: 'Відстежити замовлення | Eonni',
+  title: 'Відстежити замовлення',
   description: 'Перевірте статус вашого замовлення та історію покупок.',
+  robots: { index: false, follow: false },
 }
 
 export default function OrdersPage() {

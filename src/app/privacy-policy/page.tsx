@@ -4,15 +4,18 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Політика конфіденційності | Eonni — Захист персональних даних',
+  title: 'Політика конфіденційності',
   description:
     'Політика конфіденційності інтернет-магазину Eonni. Дізнайтесь, які дані ми збираємо, як їх використовуємо та захищаємо відповідно до законодавства України.',
   keywords: 'політика конфіденційності, захист даних, персональні дані, GDPR, Eonni',
+  alternates: { canonical: '/privacy-policy' },
   openGraph: {
-    title: 'Політика конфіденційності | Eonni',
+    title: 'Політика конфіденційності | eonni',
     description: 'Як ми захищаємо ваші персональні дані та забезпечуємо приватність.',
     type: 'website',
     locale: 'uk_UA',
+    url: '/privacy-policy',
+    siteName: 'eonni',
   },
 }
 
