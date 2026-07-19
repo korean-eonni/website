@@ -164,6 +164,7 @@ function VolumeSelector({
 
 // ============ IMAGE GALLERY ============
 function ImageGallery({ images, productName }: { images: string[]; productName: string }) {
+  const altProductName = productName.replace(/\s+/g, ' ').trim()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const validImages = images.filter(Boolean)
   
@@ -188,7 +189,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
       <div className="relative w-full aspect-square bg-white rounded-[20px] overflow-hidden border border-[#E5E5E5]">
         <Image
           src={validImages[selectedIndex]}
-          alt={productName}
+          alt={altProductName}
           fill
           className="object-contain p-4"
           sizes="(min-width: 1024px) 50vw, 100vw"
@@ -234,7 +235,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
             >
               <Image
                 src={img}
-                alt={`${productName} - зображення ${index + 1}`}
+                alt={`${altProductName} - зображення ${index + 1}`}
                 fill
                 className="object-cover"
                 sizes="(min-width: 1024px) 25vw, 45vw"

@@ -216,11 +216,11 @@ for (let index = 0; index < sitemapUrls.length; index += 12) {
     batch.map(async (canonicalUrl) => {
       const url = new URL(canonicalUrl)
       const path = `${url.pathname}${url.search}`
-      return { canonicalUrl, path, page: await get(path) }
+      return { canonicalUrl, pathname: url.pathname, path, page: await get(path) }
     })
   )
 
-  for (const { canonicalUrl, path, page } of pages) {
+  for (const { canonicalUrl, pathname, path, page } of pages) {
     const title = tagContent(page.body, 'title').replace(/\s+/g, ' ').trim()
     const description =
       page.body.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i)?.[1] ||
@@ -238,9 +238,9 @@ for (let index = 0; index < sitemapUrls.length; index += 12) {
     expect(!/noindex/i.test(page.body), `${path}: sitemap URL is noindexed`)
     imagesWithAlt(page.body, path)
 
-    const feedProduct = feedItemsByPath.get(url.pathname)
+    const feedProduct = feedItemsByPath.get(pathname)
     if (feedProduct) {
-      matchedFeedPaths.add(url.pathname)
+      matchedFeedPaths.add(pathname)
       const productJsonLd = jsonLdValues(page.body).find((entry) => entry?.['@type'] === 'Product')
       const offer = Array.isArray(productJsonLd?.offers)
         ? productJsonLd.offers[0]

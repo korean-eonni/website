@@ -105,5 +105,17 @@
 ## Локальний Next build падає на відсутній product column
 
 - **Error:** prerender завершується `SqliteError: no such column: image_url_2` (або інше нове поле товару).
-- **Cause:** резервна SQLite-схема та її idempotent migration відстали від актуальної `ProductRecord`/Postgres-схеми.
-- **Fix:** тримати `CREATE TABLE` і `initialize()` migration синхронними з усіма полями товару; існуючі локальні бази автоматично отримують відсутні колонки через `ALTER TABLE`.
+- **Cause:** резервна SQLite-схема та її idempotent migration відстали від актуальної `ProductRecord`/Postgres-схеми; кілька Next build workers також можуть одночасно побачити відсутню колонку.
+- **Fix:** тримати `CREATE TABLE` і `initialize()` migration синхронними з усіма полями товару; існуючі локальні бази автоматично отримують відсутні колонки через `ALTER TABLE`, а конкурентний `duplicate column name` безпечно вважається вже завершеною міграцією.
+
+## SEO crawler втрачає URL між batch callback і перевіркою
+
+- **Error:** `ReferenceError: url is not defined` під час звірки Merchant-feed із product pages.
+- **Cause:** `URL` створювався лише всередині callback для batch fetch, але pathname не повертався в результаті.
+- **Fix:** повертати `pathname` разом із page response та використовувати його як стабільний ключ feed/page mapping.
+
+## Next.js 14 sitemap не серіалізує product images
+
+- **Error:** `sitemap.ts` приймає масив `images`, але готовий `/sitemap.xml` не містить жодного `<image:image>`.
+- **Cause:** стандартний MetadataRoute serializer у поточній Next.js 14 збірці ігнорує image extension.
+- **Fix:** віддавати `/sitemap.xml` власним route handler з image namespace та валідними `<image:image><image:loc>` для всіх фото товару.

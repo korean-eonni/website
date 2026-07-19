@@ -74,7 +74,17 @@ function initialize(database: Database.Database) {
     .all() as Array<{ name: string }>).map((row) => row.name)
   const addColumn = (name: string, def: string) => {
     if (!columns.includes(name)) {
-      database.exec(`ALTER TABLE products ADD COLUMN ${name} ${def}`)
+      try {
+        database.exec(`ALTER TABLE products ADD COLUMN ${name} ${def}`)
+      } catch (error) {
+        // Next build workers can initialize the same fallback DB concurrently.
+        // If another worker added this exact column after our PRAGMA snapshot,
+        // the migration is already complete and this worker may continue.
+        const message = error instanceof Error ? error.message : String(error)
+        if (!message.toLowerCase().includes(`duplicate column name: ${name.toLowerCase()}`)) {
+          throw error
+        }
+      }
     }
   }
   addColumn('image_path', 'TEXT')
