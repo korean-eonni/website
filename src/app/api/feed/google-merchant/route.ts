@@ -2,7 +2,7 @@ import { createHash } from 'crypto'
 import { NextResponse } from 'next/server'
 import { listProducts, type ProductRecord } from '@/lib/productStore'
 
-export const revalidate = 3600
+export const revalidate = 300
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua')
   .trim()
@@ -35,9 +35,11 @@ function feedId(product: ProductRecord): string {
   return `${source.slice(0, 39)}-${digest}`
 }
 
-function availability(product: ProductRecord): 'in_stock' | 'out_of_stock' | 'preorder' {
+function availability(product: ProductRecord): 'in_stock' | 'out_of_stock' {
   if ((product.stock_quantity ?? 0) > 0) return 'in_stock'
-  return product.coming_soon ? 'preorder' : 'out_of_stock'
+  // "Coming soon" is not a Merchant preorder unless checkout can actually
+  // accept and fulfil an order before the item reaches stock.
+  return 'out_of_stock'
 }
 
 function googleProductCategory(product: ProductRecord): string {
@@ -180,7 +182,7 @@ export async function GET() {
       status: 200,
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600',
         'X-Content-Type-Options': 'nosniff',
       },
     })

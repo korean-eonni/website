@@ -51,8 +51,8 @@ export function getProductMetaDescription(product: ProductRecord): string {
     (product.stock_quantity ?? 0) > 0
       ? ' В наявності.'
       : product.coming_soon
-        ? ' Доступне передзамовлення.'
-        : ''
+        ? ' Скоро в наявності.'
+        : ' Наразі немає в наявності.'
 
   return `${primaryName} — оригінальна корейська косметика.${price}${stock} Доставка по Києву та Україні. Замовляйте в eonni.`
 }

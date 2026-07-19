@@ -13,13 +13,13 @@ const SRC_H = 68
 
 export default function Logo({ invert = false }: LogoProps) {
   return (
-    <Link href="/" className="flex items-center" aria-label="Eonni Home">
+    <Link href="/" className="flex items-center" aria-label="eonni — головна">
       <span
         className="block overflow-hidden h-[36px] sm:h-[50px] w-[108px] sm:w-[150px]"
       >
         <Image
           src="/logo.svg"
-          alt="Eonni"
+          alt="eonni"
           width={SRC_W}
           height={SRC_H}
           priority

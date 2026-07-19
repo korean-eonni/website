@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seo:verify": "node scripts/verify-seo.mjs"
+    "seo:verify": "node scripts/verify-seo.mjs",
+    "merchant:verify-images": "node scripts/verify-merchant-images.mjs"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

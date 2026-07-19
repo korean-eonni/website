@@ -54,7 +54,7 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="inline-block">
               <span className="block overflow-hidden" style={{ width: 180, height: 60 }}>
-                <Image src="/logo.svg" alt="Eonni" width={180} height={82} className="block" />
+                <Image src="/logo.svg" alt="eonni" width={180} height={82} className="block" />
               </span>
             </Link>
             

@@ -1,5 +1,11 @@
 # Troubleshooting
 
+## Одноразовий Node stdin-скрипт має неоднозначний формат модулів
+
+- **Error:** `ERR_AMBIGUOUS_MODULE_SYNTAX` при одночасному використанні `require()` і top-level `await`.
+- **Cause:** Node не може визначити CommonJS чи ESM для коду, переданого через stdin.
+- **Fix:** обгорнути асинхронну частину в `async` IIFE для CommonJS або використовувати ESM `import` без `require()`.
+
 ## `npx tsc --noEmit` запускає сторонній placeholder `tsc`
 
 - **Error:** `This is not the tsc command you are looking for`.
@@ -95,3 +101,9 @@
 - **Error:** `/api/cron/nova-poshta-tracking` доходить до Vercel timeout через 60 секунд.
 - **Cause:** один cron-запуск вибирав до 100 ТТН, оновлював їх послідовно та щоразу повторював schema DDL.
 - **Fix:** обмежити один cron batch до 25 ТТН і замінити повторний DDL на одну cached schema probe; наступні batch-и підхоплює 30-хвилинний розклад.
+
+## Локальний Next build падає на відсутній product column
+
+- **Error:** prerender завершується `SqliteError: no such column: image_url_2` (або інше нове поле товару).
+- **Cause:** резервна SQLite-схема та її idempotent migration відстали від актуальної `ProductRecord`/Postgres-схеми.
+- **Fix:** тримати `CREATE TABLE` і `initialize()` migration синхронними з усіма полями товару; існуючі локальні бази автоматично отримують відсутні колонки через `ALTER TABLE`.

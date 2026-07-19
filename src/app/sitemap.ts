@@ -59,7 +59,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         p.image_url_3,
         p.image_url_4,
         p.image_url_5,
-      ].filter((image): image is string => Boolean(image)),
+        p.image_url_6,
+        p.image_url_7,
+        p.image_url_8,
+        p.image_url_9,
+        p.image_url_10,
+        p.image_url_11,
+        p.image_url_12,
+      ]
+        .filter((image): image is string => Boolean(image))
+        .filter((image, index, images) => images.indexOf(image) === index),
     }))
   } catch (err) {
     console.error('[sitemap] failed to load products:', err)

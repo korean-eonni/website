@@ -50,6 +50,7 @@ export type Product = {
   key_ingredients?: string | null
   fit_skin?: string | null
   compatibility?: string | null
+  coming_soon?: number | null
 }
 
 export type SimilarProduct = {
@@ -100,25 +101,29 @@ function StarRating({ reviewCount }: { rating: number; reviewCount: number }) {
 // ============ QUANTITY SELECTOR ============
 function QuantitySelector({ 
   quantity, 
-  onQuantityChange 
+  max,
+  onQuantityChange,
 }: { 
   quantity: number
-  onQuantityChange: (qty: number) => void 
+  max: number
+  onQuantityChange: (qty: number) => void
 }) {
   return (
     <div className="flex items-center border border-[#BBBBBB] w-[120px] h-[40px] justify-between px-[10px]">
       <button
         onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+        disabled={quantity <= 1}
         className="text-[20px] text-black hover:text-[#7C83C9] transition-colors"
-        aria-label="Decrease quantity"
+        aria-label="Зменшити кількість"
       >
         −
       </button>
       <span className="text-[16px] font-normal text-black">{quantity}</span>
       <button
-        onClick={() => onQuantityChange(quantity + 1)}
-        className="text-[20px] text-black hover:text-[#7C83C9] transition-colors"
-        aria-label="Increase quantity"
+        onClick={() => onQuantityChange(Math.min(max, quantity + 1))}
+        disabled={quantity >= max}
+        className="text-[20px] text-black hover:text-[#7C83C9] transition-colors disabled:cursor-not-allowed disabled:opacity-35"
+        aria-label="Збільшити кількість"
       >
         +
       </button>
@@ -1497,8 +1502,26 @@ export default function ProductPageClient({
   const [addingToCart, setAddingToCart] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
   const [cartError, setCartError] = useState<string | null>(null)
+  const availableStock = Math.max(0, Number(product.stock_quantity ?? 0))
+  const hasPrice = Number(product.sale_price ?? 0) > 0
+  const canPurchase = availableStock > 0 && hasPrice
+  const availabilityLabel =
+    availableStock > 0
+      ? 'В наявності'
+      : product.coming_soon
+        ? 'Скоро в наявності'
+        : 'Немає в наявності'
 
   const handleAddToCart = async (goToCheckout = false) => {
+    if (!canPurchase) {
+      setCartError(
+        hasPrice
+          ? 'Товар зараз недоступний для замовлення.'
+          : 'Ціну товару ще уточнюємо.'
+      )
+      return
+    }
+
     setAddingToCart(true)
     setAddedToCart(false)
     setCartError(null)
@@ -1600,10 +1623,13 @@ export default function ProductPageClient({
               </div>
 
               <div className="flex items-baseline gap-3 mb-6">
-                <span className={`text-[32px] font-semibold ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
-                  ₴{product.sale_price ?? 0}
+                <span
+                  data-product-price={product.sale_price ?? ''}
+                  className={`text-[32px] font-semibold ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}
+                >
+                  {hasPrice ? `₴${product.sale_price}` : 'Ціна уточнюється'}
                 </span>
-                {product.original_price && product.original_price > (product.sale_price ?? 0) && (
+                {hasPrice && product.original_price && product.original_price > (product.sale_price ?? 0) && (
                   <>
                     <span className="text-[20px] text-[#999999] line-through">
                       ₴{product.original_price}
@@ -1613,6 +1639,34 @@ export default function ProductPageClient({
                     </span>
                   </>
                 )}
+              </div>
+
+              <div
+                data-product-availability={
+                  availableStock > 0 ? 'in_stock' : 'out_of_stock'
+                }
+                className={`mb-6 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[14px] font-semibold ${
+                  availableStock > 0
+                    ? 'bg-[#E5F5EA] text-[#216E39]'
+                    : product.coming_soon
+                      ? 'bg-[#FFF4D6] text-[#8A5A00]'
+                      : 'bg-[#FDE8E7] text-[#B42318]'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full ${
+                    availableStock > 0
+                      ? 'bg-[#2E9B50]'
+                      : product.coming_soon
+                        ? 'bg-[#D69E00]'
+                        : 'bg-[#D92D20]'
+                  }`}
+                />
+                {availabilityLabel}
+                {availableStock > 0 && availableStock <= 5
+                  ? ` — залишилося ${availableStock} шт.`
+                  : ''}
               </div>
 
               {product.tags && product.tags.trim() && (
@@ -1648,29 +1702,37 @@ export default function ProductPageClient({
 
               <div className="mb-6">
                 <label className="block text-[14px] text-[#666666] mb-2">Кількість</label>
-                <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} />
+                <QuantitySelector
+                  quantity={quantity}
+                  max={Math.max(1, availableStock)}
+                  onQuantityChange={setQuantity}
+                />
               </div>
 
               <div className="flex flex-col gap-3 mt-auto">
                 <button 
                   onClick={() => handleAddToCart()}
-                  disabled={addingToCart}
+                  disabled={addingToCart || !canPurchase}
                   className={`w-full max-w-[605px] h-[50px] font-semibold text-[16px] uppercase tracking-wide transition-all ${
                     addedToCart
                       ? 'bg-[#6046A3] text-white' 
-                      : 'bg-[#BCC2F4] text-black hover:bg-[#A8AFEB]'
+                      : canPurchase
+                        ? 'bg-[#BCC2F4] text-black hover:bg-[#A8AFEB]'
+                        : 'cursor-not-allowed bg-[#D9D9D9] text-[#777777]'
                   }`}
                 >
                   {addingToCart
                     ? 'Додаємо...'
                     : addedToCart
                       ? '✓ Додано в кошик'
-                      : 'Додати в кошик'}
+                      : canPurchase
+                        ? 'Додати в кошик'
+                        : availabilityLabel}
                 </button>
                 <button 
                   onClick={() => handleAddToCart(true)}
-                  disabled={addingToCart}
-                  className="w-full max-w-[605px] h-[50px] bg-[#E2F9FF] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  disabled={addingToCart || !canPurchase}
+                  className="w-full max-w-[605px] h-[50px] bg-[#E2F9FF] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center disabled:cursor-not-allowed disabled:border-[#AAAAAA] disabled:text-[#777777]"
                 >
                   Купити в один клік
                 </button>

@@ -135,7 +135,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
+    const price = Number(product.sale_price ?? 0)
+    const stock = Math.max(0, Number(product.stock_quantity ?? 0))
+    if (!(price > 0)) {
+      return NextResponse.json({ error: 'Product price is unavailable' }, { status: 409 })
+    }
+    if (stock < cleanQuantity) {
+      return NextResponse.json({ error: 'Not enough stock' }, { status: 409 })
+    }
+
     const { sessionId, userId } = await getSessionId()
+    const currentCart = await getFullCart(sessionId, userId)
+    const currentQuantity =
+      currentCart.items.find((item) => item.product_id === cleanProductId)?.quantity ?? 0
+    if (currentQuantity + cleanQuantity > stock) {
+      return NextResponse.json({ error: 'Not enough stock' }, { status: 409 })
+    }
+
     await addToCart(sessionId, cleanProductId, cleanQuantity, userId)
 
     const cart = await getFullCart(sessionId, userId)

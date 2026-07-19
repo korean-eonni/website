@@ -107,9 +107,7 @@ export default async function ProductLayout({ params, children }: Props) {
       const availability =
         (product.stock_quantity ?? 0) > 0
           ? 'https://schema.org/InStock'
-          : product.coming_soon
-            ? 'https://schema.org/PreOrder'
-            : 'https://schema.org/OutOfStock'
+          : 'https://schema.org/OutOfStock'
 
       productJsonLd = {
         '@context': 'https://schema.org',
