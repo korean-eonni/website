@@ -103,10 +103,19 @@ var and is NOT returned by `vercel env pull`. Use the admin-cookie method above.
 ---
 
 ## GitHub's role
-`github.com/korean-eonni/website` is **not wired to auto-deploy**; `origin/main` is stale. Pushing does
-**not** deploy. Use git only for history/backup. If you want git to reflect what's actually live, that's
-a separate, deliberate task: commit the current working tree (e.g. on a new branch) — do it *additively*,
-never by discarding working-tree changes.
+`github.com/korean-eonni/website` (branch `main`) is the **mirror of production**, re-synced 2026‑07
+after drifting ~4 months behind. It is still **not wired to auto-deploy** — pushing does **not** deploy.
+
+So every change needs **two steps, in this order**:
+```bash
+npx vercel --prod --yes                 # 1. ships it to eonni.com.ua
+git add -A && git commit && git push origin main   # 2. records it on GitHub
+```
+Never do only one. If they drift apart again, the fix is always *additive* — commit the current working
+tree on top of `origin/main`. Never discard working-tree changes to "match" git: the working tree is what
+gets deployed, so `git checkout` / `reset --hard` would revert production on the next deploy.
+
+`data/shop.db` is intentionally untracked (local SQLite fallback, may contain real order/customer data).
 
 ## Rollback
 ```bash
