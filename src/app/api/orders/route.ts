@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createOrder, addOrderItem, getSessionByToken, clearCart } from '@/lib/userStore'
 import { getProduct, tryDecrementStock } from '@/lib/productStore'
+import { decrementSheetStock } from '@/lib/sheetStock'
 
 export const dynamic = 'force-dynamic'
 
@@ -154,6 +155,27 @@ export async function POST(request: Request) {
     const sessionId = cookieStore.get('cart_session')?.value
     if (sessionId) {
       await clearCart(sessionId, userId || undefined)
+    }
+
+    // Subtract the sold units in the Google Sheet too. The DB decrement above is
+    // not enough on its own: `/api/sync-sheet` replaces every row from the sheet,
+    // so without this the stock would bounce back on the next sync.
+    // Best-effort by design — the order is already placed and must not fail here.
+    const stockWrite = await decrementSheetStock(
+      lines.map(line => ({
+        productId: line.productId,
+        productName: line.productName,
+        quantity: line.quantity,
+      }))
+    )
+    if (!stockWrite.ok) {
+      console.error(`[order ${order.id}] sheet stock not updated: ${stockWrite.reason}`)
+    } else if (stockWrite.skipped.length > 0) {
+      console.warn(
+        `[order ${order.id}] sheet stock partially updated ` +
+          `(${stockWrite.updated} ok): ` +
+          stockWrite.skipped.map(s => `${s.product} — ${s.reason}`).join('; ')
+      )
     }
 
     // Notification hook for later: this is the single place every order passes

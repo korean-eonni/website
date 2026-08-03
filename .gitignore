@@ -16,3 +16,5 @@ public/uploads
 
 # Local SQLite fallback DB — may hold real orders/customer data. Never publish.
 data/shop.db
+
+.env*.local
