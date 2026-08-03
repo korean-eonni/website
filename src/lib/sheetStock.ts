@@ -14,7 +14,9 @@ import { normalizePrivateKey } from './googleAuth'
  */
 
 const SHEET_TAB = 'Загальний'
-const SHEET_RANGE = `${SHEET_TAB}!A1:AQ`
+// Wide window on purpose: columns are located by header name, so this must not
+// clip whenever a new column is inserted into the sheet.
+const SHEET_RANGE = `${SHEET_TAB}!A1:BZ`
 /** Never let a slow/unreachable Sheets API hold up an order response. */
 const WRITE_TIMEOUT_MS = 9000
 

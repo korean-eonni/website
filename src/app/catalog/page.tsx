@@ -64,6 +64,7 @@ type CatalogProduct = {
   is_exclusive: number
   category: string | null
   subcategory: string | null
+  subcategory_2: string | null
   brand: string | null
   tags: string | null
   volume_options: string | null
@@ -95,6 +96,7 @@ export default async function CatalogPage() {
       is_exclusive: p.is_exclusive,
       category: p.category,
       subcategory: p.subcategory,
+      subcategory_2: p.subcategory_2 ?? null,
       brand: p.brand,
       tags: p.tags,
       volume_options: p.volume_options,

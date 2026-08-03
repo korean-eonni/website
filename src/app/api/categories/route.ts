@@ -44,11 +44,15 @@ export async function GET() {
       const bucket = bucketOf(p.category)
       if (!bucket) continue
       bucketHasProducts.add(bucket)
-      const sub = (p.subcategory ?? '').trim()
-      if (!sub) continue
+      // Count both subcategories — a product listed under two of them should make
+      // each one appear in the menu.
+      const subs = [p.subcategory, p.subcategory_2]
+        .map((s) => (s ?? '').trim())
+        .filter(Boolean)
+      if (subs.length === 0) continue
       if (!counts.has(bucket)) counts.set(bucket, new Map())
       const m = counts.get(bucket)!
-      m.set(sub, (m.get(sub) ?? 0) + 1)
+      for (const sub of subs) m.set(sub, (m.get(sub) ?? 0) + 1)
     }
 
     const tree = CATEGORY_BUCKETS.filter((b) => bucketHasProducts.has(b.label)).map((b) => {

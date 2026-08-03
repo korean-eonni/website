@@ -5,32 +5,35 @@ import { replaceAllProducts } from '@/lib/productStore'
 import { normalizePrivateKey } from '@/lib/googleAuth'
 
 // Sheet "Загальний" — 44 columns after 2026-05-06 expansion (split long description into 6 sections)
-const SHEET_RANGE = 'Загальний!A1:AQ'
+// Read well past the last used column. Columns are matched by HEADER NAME, so a
+// generous window costs nothing — but too narrow a one silently drops whatever
+// sits beyond it (adding «Субкатегрія 2» pushed «Серія»/«Класифікація» past the
+// old A1:AQ limit and made them invisible to the site).
+const SHEET_RANGE = 'Загальний!A1:BZ'
 
-// Column layout (0-indexed). Code reads by HEADER NAME — these comments are just for reference.
-// A=0:  Назва                F=5:  SKU                       L=11: Теги
-// B=1:  Постачальник         G=6:  Вага                      M=12: Короткий опис
-// C=2:  Категорія            H=7:  Собівартість (₴)          N=13: Довгий опис (intro paragraph only)
-// D=3:  Субкатегорія         I=8:  Ціна продажу (₴)          O=14: Спосіб застосування  ← NEW
-// E=4:  Бренд                J=9:  Стара ціна (₴)            P=15: Клінічно підтверджено ← NEW
-//                            K=10: Знижка (₴)                Q=16: Які проблеми вирішує  ← NEW
-//                                                            R=17: Ключові інгредієнти   ← NEW
-//                                                            S=18: Для якої шкіри підходить ← NEW
-//                                                            T=19: Сумісність з іншими компонентами ← NEW
-// U=20: Активний товар       X=23: Фото 1   AD=29: Фото 7    AJ=35: Об'єм/Варіанти
-// V=21: Позначити як новинку Y=24: Фото 2   AE=30: Фото 8    AK=36: Рейтинг
-// W=22: Позначити як ексклюзив Z=25: Фото 3 AF=31: Фото 9    AL=37: Кількість відгуків
-//                            AA=26: Фото 4  AG=32: Фото 10   AM=38: Вік
-//                            AB=27: Фото 5  AH=33: (empty Фото 11 placeholder) AN=39: Інгредієнти
-//                            AC=28: Фото 6  AI=34: (empty Фото 12 placeholder) AO=40: Тип шкіри
-//                                                                              AP=41: Серія
-//                                                                              AQ=42: Класифікація
+// Column layout as of 2026‑07 (45 columns, A→AS). Code reads by HEADER NAME, so
+// inserting a column shifts every letter below — treat this only as a map for humans,
+// and re-check it after editing the sheet rather than trusting it.
+// A  Назва             J  Ціна продажу (₴)   S  Які проблеми вирішує   AB Фото 3   AK (empty)
+// B  Постачальник      K  Стара ціна (₴)     T  Ключові інгредієнти    AC Фото 4   AL Об'єм/Варіанти
+// C  Категорія         L  Знижка (₴)         U  Для якої шкіри         AD Фото 5   AM Рейтинг
+// D  Субкатегорія      M  Кількість          V  Сумісність             AE Фото 6   AN Кількість відгуків
+// E  Субкатегрія 2     N  Теги (через кому)  W  Активний товар         AF Фото 7   AO Вік
+// F  Бренд             O  Короткий опис      X  Позначити як новинку   AG Фото 8   AP Інгредієнти
+// G  SKU               P  Довгий опис        Y  Позначити як ексклюзив AH Фото 9   AQ Тип шкіри
+// H  Вага              Q  Спосіб застосування Z  Фото 1                AI Фото 10  AR Серія
+// I  Собівартість (₴)  R  Клінічно підтверджено AA Фото 2              AJ (empty)  AS Класифікація
 
 type SheetRow = {
   Назва: string
   Постачальник?: string
   Категорія?: string
   Субкатегорія?: string
+  // Second subcategory, so one product can be listed under two of them.
+  // The live sheet header is misspelled («Субкатегрія 2») — accept both spellings
+  // so fixing the typo later doesn't silently drop the column.
+  'Субкатегрія 2'?: string
+  'Субкатегорія 2'?: string
   Бренд?: string
   SKU?: string
   Штрихкод?: string
@@ -521,6 +524,7 @@ export async function syncSheetToDatabase() {
         stock_quantity: parseNumber(row['Кількість'] ?? row['Кількість на складі']) ?? 0,
         category: row.Категорія?.trim() || null,
         subcategory: row.Субкатегорія?.trim() || null,
+        subcategory_2: (row['Субкатегрія 2'] ?? row['Субкатегорія 2'])?.trim() || null,
         weight_grams: parseNumber(row['Вага (г)'] ?? row['Вага']),
         tags: row['Теги (через кому)']?.trim() || null,
         sku: sku || null,

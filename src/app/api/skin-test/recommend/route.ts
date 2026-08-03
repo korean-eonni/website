@@ -141,11 +141,17 @@ export async function POST(request: Request) {
     // the best-scoring product of that subcategory (skipping ones already used).
     const slotKeys = ROUTINE_BY_CONCERN[concern] ?? DEFAULT_ROUTINE
     const results: ReturnType<typeof pack>[] = []
+    // A product can sit in two subcategories («Субкатегрія 2»), so a slot matches
+    // if EITHER of them is the one this routine step is looking for.
+    const matchesSlot = (p: { subcategory: string | null; subcategory_2?: string | null }, def: { sub: string[] }) =>
+      def.sub.includes((p.subcategory ?? '').toLowerCase()) ||
+      def.sub.includes((p.subcategory_2 ?? '').toLowerCase())
+
     for (const key of slotKeys) {
       const def = SLOT_DEFS[key]
       if (!def) continue
       const candidates = face
-        .filter((p) => def.sub.includes((p.subcategory ?? '').toLowerCase()))
+        .filter((p) => matchesSlot(p, def))
         .filter((p) => !chosen.has(p.id))
         .sort((a, b) => score(b) - score(a))
       const packed = pack(candidates[0], def.label, key)
@@ -162,7 +168,7 @@ export async function POST(request: Request) {
         if (usedKeys.has(key)) continue
         const def = SLOT_DEFS[key]
         const candidates = face
-          .filter((p) => def.sub.includes((p.subcategory ?? '').toLowerCase()))
+          .filter((p) => matchesSlot(p, def))
           .filter((p) => !chosen.has(p.id))
           .sort((a, b) => score(b) - score(a))
         const packed = pack(candidates[0], def.label, key)
