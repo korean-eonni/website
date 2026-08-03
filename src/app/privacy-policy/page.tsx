@@ -1,4 +1,5 @@
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -34,7 +35,7 @@ const sections = [
       '<strong>Дані, які ви надаєте:</strong>',
       '• Контактна інформація: ім\'я, прізвище, номер телефону, email',
       '• Адреса доставки: місто, відділення пошти або адреса кур\'єрської доставки',
-      '• Платіжна інформація: обробляється безпосередньо платіжними системами (LiqPay), ми не зберігаємо дані карток',
+      '• Платіжна інформація: обробляється безпосередньо платіжною системою (Platon), ми не зберігаємо дані карток',
       '• Історія замовлень та комунікації з підтримкою',
       '',
       '<strong>Дані, які збираються автоматично:</strong>',
@@ -74,7 +75,7 @@ const sections = [
       '',
       '<strong>Службам доставки:</strong> Нова Пошта, Укрпошта — для доставки замовлень (ім\'я, телефон, адреса)',
       '',
-      '<strong>Платіжним системам:</strong> LiqPay — для обробки онлайн-платежів',
+      '<strong>Платіжним системам:</strong> Platon — для обробки онлайн-платежів',
       '',
       '<strong>Аналітичним сервісам:</strong> Google Analytics — для аналізу відвідуваності (анонімізовані дані)',
       '',
@@ -133,7 +134,7 @@ const sections = [
       '',
       '<strong>Право на скаргу:</strong> подати скаргу до Уповноваженого з прав людини',
       '',
-      'Для реалізації своїх прав зверніться до нас: support@eonni.com.ua',
+      'Для реалізації своїх прав зверніться до нас: eonnisupport@gmail.com',
     ],
   },
   {
@@ -165,11 +166,11 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Юридична інформація</p>
           <h1 className="mt-4 font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[72px] lg:leading-[76px]">
             Політика конфіденційності
@@ -185,28 +186,28 @@ export default function PrivacyPolicyPage() {
       </section>
 
       {/* Key Points */}
-      <section className="py-8 bg-[#F8F7FB]">
+      <section className="py-8 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-[16px] bg-white p-5 border border-[#E5E5E5]">
+            <div className="rounded-[16px] bg-[#E2F9FF] p-5 border border-[#E5E5E5]">
               <div className="text-2xl mb-2">🔒</div>
               <p className="font-gilroy font-semibold text-[15px] text-black">SSL-шифрування</p>
               <p className="text-[13px] text-[#666666]">Захищена передача даних</p>
             </div>
-            <div className="rounded-[16px] bg-white p-5 border border-[#E5E5E5]">
+            <div className="rounded-[16px] bg-[#E2F9FF] p-5 border border-[#E5E5E5]">
               <div className="text-2xl mb-2">🚫</div>
               <p className="font-gilroy font-semibold text-[15px] text-black">Без продажу даних</p>
               <p className="text-[13px] text-[#666666]">Ніколи не продаємо третім особам</p>
             </div>
-            <div className="rounded-[16px] bg-white p-5 border border-[#E5E5E5]">
+            <div className="rounded-[16px] bg-[#E2F9FF] p-5 border border-[#E5E5E5]">
               <div className="text-2xl mb-2">✅</div>
               <p className="font-gilroy font-semibold text-[15px] text-black">Ваші права</p>
               <p className="text-[13px] text-[#666666]">Доступ, виправлення, видалення</p>
             </div>
-            <div className="rounded-[16px] bg-white p-5 border border-[#E5E5E5]">
+            <div className="rounded-[16px] bg-[#E2F9FF] p-5 border border-[#E5E5E5]">
               <div className="text-2xl mb-2">📧</div>
-              <p className="font-gilroy font-semibold text-[15px] text-black">Зв\'язок</p>
-              <p className="text-[13px] text-[#666666]">support@eonni.com.ua</p>
+              <p className="font-gilroy font-semibold text-[15px] text-black">Зв&apos;язок</p>
+              <p className="text-[13px] text-[#666666]">eonnisupport@gmail.com</p>
             </div>
           </div>
         </div>
@@ -249,7 +250,7 @@ export default function PrivacyPolicyPage() {
               зверніться до нас:
             </p>
             <div className="grid gap-3 font-gilroy text-[16px] text-[#444444]">
-              <p><strong>Email:</strong> support@eonni.com.ua</p>
+              <p><strong>Email:</strong> eonnisupport@gmail.com</p>
               <p><strong>Телефон:</strong> +380 73 273 73 30</p>
               <p><strong>Адреса:</strong> м. Київ, вул. Левка Лук&apos;яненка, буд. 21</p>
             </div>
@@ -259,17 +260,17 @@ export default function PrivacyPolicyPage() {
           <div className="mt-12 grid gap-4 sm:grid-cols-2">
             <Link
               href="/business-terms"
-              className="rounded-[16px] border border-[#E5E5E5] bg-white p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
+              className="rounded-[16px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
             >
               <p className="font-bebas uppercase text-[22px] text-black">Умови ведення бізнесу</p>
               <p className="mt-2 text-[14px] text-[#666666]">Публічна оферта та правила магазину</p>
             </Link>
             <Link
               href="/contacts"
-              className="rounded-[16px] border border-[#E5E5E5] bg-white p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
+              className="rounded-[16px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
             >
               <p className="font-bebas uppercase text-[22px] text-black">Контакти</p>
-              <p className="mt-2 text-[14px] text-[#666666]">Зв\'яжіться з нами будь-яким зручним способом</p>
+              <p className="mt-2 text-[14px] text-[#666666]">Зв&apos;яжіться з нами будь-яким зручним способом</p>
             </Link>
           </div>
         </div>

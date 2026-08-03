@@ -1,0 +1,940 @@
+{
+  "300-грам": {
+    "family": "red",
+    "hue": 349.5,
+    "sat": 0.577,
+    "light": 0.841,
+    "order": 2
+  },
+  "ardiem-hi-beauty-tangle-biotin-collagen--134": {
+    "family": "pink",
+    "hue": 345,
+    "sat": 0.693,
+    "light": 0.76,
+    "order": 1
+  },
+  "bioheal-boh-probioderm-collagen-essence--128": {
+    "family": "violet",
+    "hue": 277.3,
+    "sat": 0.569,
+    "light": 0.841,
+    "order": 8
+  },
+  "bioheal-boh-probioderm-collagen-remodeli-127": {
+    "family": "pink",
+    "hue": 299.4,
+    "sat": 0.42,
+    "light": 0.811,
+    "order": 1
+  },
+  "cj-wellcare-melamate-gummy-жувальні-марм-131": {
+    "family": "pink",
+    "hue": 303.9,
+    "sat": 0.598,
+    "light": 0.626,
+    "order": 1
+  },
+  "cj-wellcare-melamate-gummy-жувальні-марм-132": {
+    "family": "pink",
+    "hue": 303.9,
+    "sat": 0.598,
+    "light": 0.626,
+    "order": 1
+  },
+  "innerlab-celltrion-rejuglow-pdrn-glutath-133": {
+    "family": "pink",
+    "hue": 320.8,
+    "sat": 0.843,
+    "light": 0.558,
+    "order": 1
+  },
+  "lactofit-probiotic-gold-синбіотичний-ком-102": {
+    "family": "yellow",
+    "hue": 46.1,
+    "sat": 0.873,
+    "light": 0.583,
+    "order": 4
+  },
+  "medicube-age-r-booster-pro-косметологічн-100": {
+    "family": "red",
+    "hue": 358.9,
+    "sat": 0.486,
+    "light": 0.876,
+    "order": 2
+  },
+  "medicube-age-r-booster-pro-косметологічн-101": {
+    "family": "yellow",
+    "hue": 47.5,
+    "sat": 0.799,
+    "light": 0.76,
+    "order": 4
+  },
+  "medicube-age-r-glutathione-glow-serum-ан-23": {
+    "family": "yellow",
+    "hue": 50.9,
+    "sat": 0.903,
+    "light": 0.8,
+    "order": 4
+  },
+  "medicube-body-shower-towel-рушник-для-ду-72": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.904,
+    "order": 9
+  },
+  "medicube-collagen-glow-booster-milk-seru-66": {
+    "family": "red",
+    "hue": 6.1,
+    "sat": 0.541,
+    "light": 0.791,
+    "order": 2
+  },
+  "medicube-collagen-jelly-cream-желе-крем--37": {
+    "family": "red",
+    "hue": 1.4,
+    "sat": 0.556,
+    "light": 0.792,
+    "order": 2
+  },
+  "medicube-collagen-lifting-mask-тканинна--26": {
+    "family": "red",
+    "hue": 7,
+    "sat": 0.649,
+    "light": 0.867,
+    "order": 2
+  },
+  "medicube-collagen-milk-toning-wrapping-m-74": {
+    "family": "red",
+    "hue": 14.2,
+    "sat": 0.516,
+    "light": 0.801,
+    "order": 2
+  },
+  "medicube-collagen-night-wrapping-mask-ні-48": {
+    "family": "red",
+    "hue": 359.9,
+    "sat": 0.614,
+    "light": 0.73,
+    "order": 2
+  },
+  "medicube-deep-lifting-peptide-eye-cream--17": {
+    "family": "orange",
+    "hue": 38.5,
+    "sat": 0.458,
+    "light": 0.787,
+    "order": 3
+  },
+  "medicube-deep-peptide-radiance-mask-анти-40": {
+    "family": "orange",
+    "hue": 29.2,
+    "sat": 0.302,
+    "light": 0.336,
+    "order": 3
+  },
+  "medicube-deep-vita-a-retinol-serum-антив-65": {
+    "family": "green",
+    "hue": 152.9,
+    "sat": 0.6,
+    "light": 0.521,
+    "order": 5
+  },
+  "medicube-deep-vita-c-capsule-cream-капсу-69": {
+    "family": "orange",
+    "hue": 37.2,
+    "sat": 0.639,
+    "light": 0.552,
+    "order": 3
+  },
+  "medicube-deep-vita-c-capsule-serum-капсу-14": {
+    "family": "yellow",
+    "hue": 51.7,
+    "sat": 0.655,
+    "light": 0.722,
+    "order": 4
+  },
+  "medicube-deep-vita-c-daily-quick-mask-зв-43": {
+    "family": "yellow",
+    "hue": 45.7,
+    "sat": 0.867,
+    "light": 0.747,
+    "order": 4
+  },
+  "medicube-deep-vita-c-glutathione-brighte-85": {
+    "family": "yellow",
+    "hue": 50,
+    "sat": 0.838,
+    "light": 0.643,
+    "order": 4
+  },
+  "medicube-deep-vita-c-pad-тонер-пади-з-ві-52": {
+    "family": "orange",
+    "hue": 37.3,
+    "sat": 0.354,
+    "light": 0.609,
+    "order": 3
+  },
+  "medicube-deep-vita-c-pad-тонер-пади-з-ві-80": {
+    "family": "cyan",
+    "hue": 195.6,
+    "sat": 0.765,
+    "light": 0.55,
+    "order": 6
+  },
+  "medicube-deep-vita-c-patch-мікроголкові--41": {
+    "family": "orange",
+    "hue": 23,
+    "sat": 0.275,
+    "light": 0.406,
+    "order": 3
+  },
+  "medicube-exosome-cica-calming-pad-заспок-79": {
+    "family": "cyan",
+    "hue": 195.6,
+    "sat": 0.765,
+    "light": 0.55,
+    "order": 6
+  },
+  "medicube-exosome-cica-calming-pad-заспок-9": {
+    "family": "green",
+    "hue": 99.6,
+    "sat": 0.548,
+    "light": 0.823,
+    "order": 5
+  },
+  "medicube-exosome-cica-cream-відновлюваль-10": {
+    "family": "green",
+    "hue": 100.2,
+    "sat": 0.487,
+    "light": 0.775,
+    "order": 5
+  },
+  "medicube-facial-cleansing-sponge-спонж-з-71": {
+    "family": "red",
+    "hue": 356.8,
+    "sat": 0.487,
+    "light": 0.513,
+    "order": 2
+  },
+  "medicube-hyaluronic-ceramide-jelly-cream-29": {
+    "family": "blue",
+    "hue": 210.8,
+    "sat": 0.477,
+    "light": 0.597,
+    "order": 7
+  },
+  "medicube-hyaluronic-moisturizing-capsule-30": {
+    "family": "blue",
+    "hue": 212.7,
+    "sat": 0.547,
+    "light": 0.671,
+    "order": 7
+  },
+  "medicube-hyaluronic-multi-peptide-serum--18": {
+    "family": "blue",
+    "hue": 204.6,
+    "sat": 0.689,
+    "light": 0.59,
+    "order": 7
+  },
+  "medicube-jelly-brush-силіконова-лопатка--93": {
+    "family": "orange",
+    "hue": 41.5,
+    "sat": 0.432,
+    "light": 0.659,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-niacinamide-83": {
+    "family": "orange",
+    "hue": 44.5,
+    "sat": 0.868,
+    "light": 0.562,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-night-wrapp-82": {
+    "family": "orange",
+    "hue": 44.3,
+    "sat": 0.765,
+    "light": 0.628,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-pad-пади-з--81": {
+    "family": "orange",
+    "hue": 37.3,
+    "sat": 0.7,
+    "light": 0.707,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-resurfacing-87": {
+    "family": "orange",
+    "hue": 33.3,
+    "sat": 0.863,
+    "light": 0.658,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-toning-clea-88": {
+    "family": "orange",
+    "hue": 37.6,
+    "sat": 0.843,
+    "light": 0.624,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-vita-capsul-84": {
+    "family": "orange",
+    "hue": 36.7,
+    "sat": 0.897,
+    "light": 0.573,
+    "order": 3
+  },
+  "medicube-kojic-acid-turmeric-vita-jelly--86": {
+    "family": "orange",
+    "hue": 41.9,
+    "sat": 0.312,
+    "light": 0.751,
+    "order": 3
+  },
+  "medicube-multi-pore-brush-face-mask-appl-55": {
+    "family": "blue",
+    "hue": 221.3,
+    "sat": 0.688,
+    "light": 0.412,
+    "order": 7
+  },
+  "medicube-one-day-exosome-shot-2000-сиров-32": {
+    "family": "blue",
+    "hue": 221.2,
+    "sat": 0.891,
+    "light": 0.557,
+    "order": 7
+  },
+  "medicube-one-day-exosome-shot-7500-сиров-68": {
+    "family": "blue",
+    "hue": 221.2,
+    "sat": 0.893,
+    "light": 0.556,
+    "order": 7
+  },
+  "medicube-pdrn-hydrating-gel-cleanser-гел-46": {
+    "family": "pink",
+    "hue": 343.7,
+    "sat": 0.796,
+    "light": 0.595,
+    "order": 1
+  },
+  "medicube-pdrn-lip-sleeping-mask-нічна-ма-42": {
+    "family": "pink",
+    "hue": 342.2,
+    "sat": 0.836,
+    "light": 0.839,
+    "order": 1
+  },
+  "medicube-pdrn-pink-caffeine-collagen-eye-98": {
+    "family": "pink",
+    "hue": 343.5,
+    "sat": 0.757,
+    "light": 0.819,
+    "order": 1
+  },
+  "medicube-pdrn-pink-caffeine-night-wrappi-20": {
+    "family": "red",
+    "hue": 4.1,
+    "sat": 0.722,
+    "light": 0.863,
+    "order": 2
+  },
+  "medicube-pdrn-pink-cica-soothing-toner-з-16": {
+    "family": "red",
+    "hue": 346.7,
+    "sat": 0.489,
+    "light": 0.846,
+    "order": 2
+  },
+  "medicube-pdrn-pink-collagen-bubble-serum-73": {
+    "family": "red",
+    "hue": 348.3,
+    "sat": 0.508,
+    "light": 0.662,
+    "order": 2
+  },
+  "medicube-pdrn-pink-collagen-capsule-crea-0": {
+    "family": "red",
+    "hue": 350.2,
+    "sat": 0.954,
+    "light": 0.854,
+    "order": 2
+  },
+  "medicube-pdrn-pink-collagen-exosome-shot-64": {
+    "family": "red",
+    "hue": 359.1,
+    "sat": 0.475,
+    "light": 0.776,
+    "order": 2
+  },
+  "medicube-pdrn-pink-collagen-exosome-shot-7": {
+    "family": "red",
+    "hue": 359,
+    "sat": 0.478,
+    "light": 0.776,
+    "order": 2
+  },
+  "medicube-pdrn-pink-collagen-gel-mask-pdr-4": {
+    "family": "red",
+    "hue": 352.7,
+    "sat": 0.419,
+    "light": 0.871,
+    "order": 2
+  },
+  "medicube-pdrn-pink-collagen-glow-jelly-s-50": {
+    "family": "pink",
+    "hue": 341.5,
+    "sat": 0.865,
+    "light": 0.671,
+    "order": 1
+  },
+  "medicube-pdrn-pink-collagen-jelly-mist-s-47": {
+    "family": "pink",
+    "hue": 338.2,
+    "sat": 0.39,
+    "light": 0.848,
+    "order": 1
+  },
+  "medicube-pdrn-pink-collagen-toning-gel-t-6": {
+    "family": "red",
+    "hue": 356.9,
+    "sat": 0.549,
+    "light": 0.763,
+    "order": 2
+  },
+  "medicube-pdrn-pink-hyaluronic-moisturizi-51": {
+    "family": "red",
+    "hue": 1.3,
+    "sat": 0.703,
+    "light": 0.874,
+    "order": 2
+  },
+  "medicube-pdrn-pink-hyaluronic-moisturizi-92": {
+    "family": "red",
+    "hue": 1.3,
+    "sat": 0.703,
+    "light": 0.874,
+    "order": 2
+  },
+  "medicube-pdrn-pink-niacinamide-milky-ton-2": {
+    "family": "red",
+    "hue": 349.5,
+    "sat": 0.583,
+    "light": 0.864,
+    "order": 2
+  },
+  "medicube-pdrn-pink-niacinamide-whip-clea-1": {
+    "family": "red",
+    "hue": 1.1,
+    "sat": 0.52,
+    "light": 0.871,
+    "order": 2
+  },
+  "medicube-pdrn-pink-one-day-serum-концент-39": {
+    "family": "red",
+    "hue": 2.2,
+    "sat": 0.8,
+    "light": 0.855,
+    "order": 2
+  },
+  "medicube-pdrn-pink-one-day-serum-одноден-38": {
+    "family": "red",
+    "hue": 347.3,
+    "sat": 0.818,
+    "light": 0.848,
+    "order": 2
+  },
+  "medicube-pdrn-pink-peptide-eye-cream-ант-8": {
+    "family": "red",
+    "hue": 1.1,
+    "sat": 0.463,
+    "light": 0.878,
+    "order": 2
+  },
+  "medicube-pdrn-pink-peptide-serum-сироват-36": {
+    "family": "red",
+    "hue": 0.6,
+    "sat": 0.673,
+    "light": 0.795,
+    "order": 2
+  },
+  "medicube-pdrn-pink-tension-up-mask-pdrn--5": {
+    "family": "pink",
+    "hue": 343.9,
+    "sat": 0.717,
+    "light": 0.877,
+    "order": 1
+  },
+  "medicube-pdrn-pink-vita-coating-mask-тка-91": {
+    "family": "red",
+    "hue": 348.3,
+    "sat": 0.68,
+    "light": 0.872,
+    "order": 2
+  },
+  "medicube-red-acne-body-peeling-shot-спре-11": {
+    "family": "red",
+    "hue": 355.3,
+    "sat": 0.634,
+    "light": 0.293,
+    "order": 2
+  },
+  "medicube-red-centella-mask-заспокійлива--90": {
+    "family": "red",
+    "hue": 355.4,
+    "sat": 0.696,
+    "light": 0.469,
+    "order": 2
+  },
+  "medicube-red-clear-capsule-body-lotion-з-49": {
+    "family": "red",
+    "hue": 358,
+    "sat": 0.588,
+    "light": 0.536,
+    "order": 2
+  },
+  "medicube-red-cream-plus-антиакне-зволожу-60": {
+    "family": "red",
+    "hue": 356.9,
+    "sat": 0.481,
+    "light": 0.711,
+    "order": 2
+  },
+  "medicube-red-cream-зволожувальний-крем-п-61": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.968,
+    "order": 9
+  },
+  "medicube-red-erasing-cream-захисний-крем-13": {
+    "family": "pink",
+    "hue": 333.5,
+    "sat": 0.782,
+    "light": 0.565,
+    "order": 1
+  },
+  "medicube-red-foam-cleanser-пінка-для-вми-62": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.896,
+    "order": 9
+  },
+  "medicube-red-serum-антиакне-сироватка-з--59": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.841,
+    "order": 9
+  },
+  "medicube-red-succinic-acid-peel-пілінг-с-12": {
+    "family": "red",
+    "hue": 356,
+    "sat": 0.647,
+    "light": 0.455,
+    "order": 2
+  },
+  "medicube-red-succinic-acid-peeling-pad-п-70": {
+    "family": "red",
+    "hue": 6.4,
+    "sat": 0.593,
+    "light": 0.677,
+    "order": 2
+  },
+  "medicube-red-succinic-acid-peeling-pad-п-78": {
+    "family": "cyan",
+    "hue": 195.5,
+    "sat": 0.765,
+    "light": 0.55,
+    "order": 6
+  },
+  "medicube-red-succinic-acid-serum-сироват-56": {
+    "family": "red",
+    "hue": 358.9,
+    "sat": 0.795,
+    "light": 0.279,
+    "order": 2
+  },
+  "medicube-red-toner-plus-тонер-для-пробле-63": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.885,
+    "order": 9
+  },
+  "medicube-rosemary-pdrn-cooling-thickenin-95": {
+    "family": "pink",
+    "hue": 325.9,
+    "sat": 0.494,
+    "light": 0.803,
+    "order": 1
+  },
+  "medicube-rosemary-pdrn-hair-scalp-condit-96": {
+    "family": "pink",
+    "hue": 330,
+    "sat": 0.615,
+    "light": 0.84,
+    "order": 1
+  },
+  "medicube-rosemary-pdrn-scalp-serum-сиров-97": {
+    "family": "pink",
+    "hue": 330.7,
+    "sat": 0.623,
+    "light": 0.807,
+    "order": 1
+  },
+  "medicube-skinpack-cotton-pads-преміальні-15": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.961,
+    "order": 9
+  },
+  "medicube-super-cica-daily-quick-mask-екс-27": {
+    "family": "green",
+    "hue": 133.5,
+    "sat": 0.613,
+    "light": 0.384,
+    "order": 5
+  },
+  "medicube-triple-collagen-cream-антивіков-25": {
+    "family": "red",
+    "hue": 10.7,
+    "sat": 0.417,
+    "light": 0.767,
+    "order": 2
+  },
+  "medicube-triple-collagen-serum-сироватка-75": {
+    "family": "red",
+    "hue": 13,
+    "sat": 0.602,
+    "light": 0.801,
+    "order": 2
+  },
+  "medicube-triple-collagen-toner-зволожуюч-3": {
+    "family": "orange",
+    "hue": 15.4,
+    "sat": 0.559,
+    "light": 0.806,
+    "order": 3
+  },
+  "medicube-txa-niacinamide-15-serum-сирова-58": {
+    "family": "red",
+    "hue": 349.2,
+    "sat": 0.704,
+    "light": 0.622,
+    "order": 2
+  },
+  "medicube-txa-niacinamide-capsule-cream-к-57": {
+    "family": "red",
+    "hue": 347.4,
+    "sat": 0.673,
+    "light": 0.648,
+    "order": 2
+  },
+  "medicube-ultra-light-pdrn-pink-peptide-a-21": {
+    "family": "pink",
+    "hue": 341,
+    "sat": 0.651,
+    "light": 0.802,
+    "order": 1
+  },
+  "medicube-ultra-light-pdrn-pink-peptide-a-22": {
+    "family": "pink",
+    "hue": 343,
+    "sat": 0.838,
+    "light": 0.75,
+    "order": 1
+  },
+  "medicube-vita-eye-gel-serum-гель-сироват-89": {
+    "family": "orange",
+    "hue": 43.3,
+    "sat": 0.826,
+    "light": 0.607,
+    "order": 3
+  },
+  "medicube-zero-foam-cleanser-пінка-для-гл-28": {
+    "family": "blue",
+    "hue": 203.3,
+    "sat": 0.627,
+    "light": 0.715,
+    "order": 7
+  },
+  "medicube-zero-keratin-pad-ферментні-пад--76": {
+    "family": "blue",
+    "hue": 206.5,
+    "sat": 0.808,
+    "light": 0.578,
+    "order": 7
+  },
+  "medicube-zero-pore-blackhead-deep-cleans-35": {
+    "family": "cyan",
+    "hue": 191.9,
+    "sat": 0.539,
+    "light": 0.629,
+    "order": 6
+  },
+  "medicube-zero-pore-blackhead-mud-mask-гл-31": {
+    "family": "blue",
+    "hue": 214.5,
+    "sat": 0.745,
+    "light": 0.481,
+    "order": 7
+  },
+  "medicube-zero-pore-cooling-mask-зеро-пор-19": {
+    "family": "blue",
+    "hue": 201.2,
+    "sat": 0.455,
+    "light": 0.887,
+    "order": 7
+  },
+  "medicube-zero-pore-cream-2-0-зволожуючий-67": {
+    "family": "blue",
+    "hue": 206.2,
+    "sat": 0.843,
+    "light": 0.43,
+    "order": 7
+  },
+  "medicube-zero-pore-one-day-cream-крем-дл-54": {
+    "family": "blue",
+    "hue": 219.2,
+    "sat": 0.796,
+    "light": 0.408,
+    "order": 7
+  },
+  "medicube-zero-pore-one-day-cream-крем-дл-94": {
+    "family": "blue",
+    "hue": 219.2,
+    "sat": 0.796,
+    "light": 0.408,
+    "order": 7
+  },
+  "medicube-zero-pore-one-day-peptide-serum-45": {
+    "family": "blue",
+    "hue": 221.9,
+    "sat": 0.655,
+    "light": 0.378,
+    "order": 7
+  },
+  "medicube-zero-pore-pad-2-0-двосторонні-т-44": {
+    "family": "blue",
+    "hue": 209.4,
+    "sat": 0.723,
+    "light": 0.743,
+    "order": 7
+  },
+  "medicube-zero-pore-pad-2-0-тонер-пади-з--77": {
+    "family": "cyan",
+    "hue": 195.5,
+    "sat": 0.765,
+    "light": 0.55,
+    "order": 6
+  },
+  "medicube-zero-pore-sa-clear-capsule-clea-33": {
+    "family": "blue",
+    "hue": 210.7,
+    "sat": 0.334,
+    "light": 0.815,
+    "order": 7
+  },
+  "medicube-zero-pore-serum-2-0-сироватка-д-53": {
+    "family": "blue",
+    "hue": 204.8,
+    "sat": 0.774,
+    "light": 0.392,
+    "order": 7
+  },
+  "medicube-zero-pore-toner-тонер-з-aha-bha-34": {
+    "family": "blue",
+    "hue": 205.3,
+    "sat": 0.459,
+    "light": 0.733,
+    "order": 7
+  },
+  "mediheal-collagen-ampoule-pad-антивікові-103": {
+    "family": "red",
+    "hue": 3.8,
+    "sat": 0.767,
+    "light": 0.847,
+    "order": 2
+  },
+  "mediheal-collagen-capsule-patch-vitamin--111": {
+    "family": "yellow",
+    "hue": 46.2,
+    "sat": 0.763,
+    "light": 0.797,
+    "order": 4
+  },
+  "mediheal-hyaluronate-toner-pad-тонер-пад-105": {
+    "family": "blue",
+    "hue": 210.8,
+    "sat": 0.707,
+    "light": 0.713,
+    "order": 7
+  },
+  "mediheal-madecassoside-blemish-pad-заспо-106": {
+    "family": "cyan",
+    "hue": 186,
+    "sat": 0.524,
+    "light": 0.617,
+    "order": 6
+  },
+  "mediheal-pdrn-lifting-pad-ліфтинг-пади-з-107": {
+    "family": "blue",
+    "hue": 249.5,
+    "sat": 0.531,
+    "light": 0.686,
+    "order": 7
+  },
+  "mediheal-phyto-enzyme-peeling-pad-фермен-109": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.954,
+    "order": 9
+  },
+  "mediheal-retinol-collagen-eye-patch-гідр-110": {
+    "family": "red",
+    "hue": 357.5,
+    "sat": 0.676,
+    "light": 0.77,
+    "order": 2
+  },
+  "mediheal-teatree-trouble-pad-тонер-пади--108": {
+    "family": "green",
+    "hue": 121,
+    "sat": 0.375,
+    "light": 0.597,
+    "order": 5
+  },
+  "mediheal-vitamide-brightening-pad-тонер--104": {
+    "family": "orange",
+    "hue": 41.9,
+    "sat": 0.942,
+    "light": 0.723,
+    "order": 3
+  },
+  "skinfood-berry-moisture-sun-cream-spf50--129": {
+    "family": "red",
+    "hue": 0.6,
+    "sat": 0.282,
+    "light": 0.764,
+    "order": 2
+  },
+  "torriden-cellmazing-lip-essence-есенція--116": {
+    "family": "red",
+    "hue": 355.3,
+    "sat": 0.545,
+    "light": 0.734,
+    "order": 2
+  },
+  "torriden-dive-in-low-molecular-hyaluroni-113": {
+    "family": "cyan",
+    "hue": 178.4,
+    "sat": 0.287,
+    "light": 0.845,
+    "order": 6
+  },
+  "torriden-dive-in-low-molecular-hyaluroni-114": {
+    "family": "cyan",
+    "hue": 199.5,
+    "sat": 0.855,
+    "light": 0.884,
+    "order": 6
+  },
+  "torriden-dive-in-low-molecular-hyaluroni-115": {
+    "family": "blue",
+    "hue": 200.4,
+    "sat": 0.641,
+    "light": 0.806,
+    "order": 7
+  },
+  "torriden-solid-in-ceramide-lip-essence-е-117": {
+    "family": "yellow",
+    "hue": 47.6,
+    "sat": 0.863,
+    "light": 0.777,
+    "order": 4
+  },
+  "torriden-solid-in-ceramide-lip-essence-е-118": {
+    "family": "yellow",
+    "hue": 47.6,
+    "sat": 0.863,
+    "light": 0.777,
+    "order": 4
+  },
+  "unove-deep-damage-repair-shampoo-шампунь-121": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.916,
+    "order": 9
+  },
+  "unove-deep-damage-treatment-ex-незмивний-122": {
+    "family": "violet",
+    "hue": 266.8,
+    "sat": 0.335,
+    "light": 0.383,
+    "order": 8
+  },
+  "unove-glow-hand-cream-rosy-aura-парфумов-126": {
+    "family": "red",
+    "hue": 354.4,
+    "sat": 0.426,
+    "light": 0.697,
+    "order": 2
+  },
+  "unove-glow-hand-wash-rosy-aura-парфумова-125": {
+    "family": "orange",
+    "hue": 15.8,
+    "sat": 0.379,
+    "light": 0.777,
+    "order": 3
+  },
+  "unove-silk-oil-essence-tender-bloom-олій-123": {
+    "family": "red",
+    "hue": 11.4,
+    "sat": 0.935,
+    "light": 0.81,
+    "order": 2
+  },
+  "unove-silk-oil-essence-warm-petals-олійн-124": {
+    "family": "red",
+    "hue": 5.6,
+    "sat": 0.326,
+    "light": 0.658,
+    "order": 2
+  },
+  "unove-water-essence-mist-двофазний-міст--119": {
+    "family": "red",
+    "hue": 5.6,
+    "sat": 0.288,
+    "light": 0.65,
+    "order": 2
+  },
+  "unove-water-essence-mist-двофазний-міст--120": {
+    "family": "orange",
+    "hue": 15.3,
+    "sat": 0.348,
+    "light": 0.63,
+    "order": 3
+  },
+  "vitahalo-pomegranate-collagen-jelly-stic-130": {
+    "family": "red",
+    "hue": 357,
+    "sat": 0.768,
+    "light": 0.601,
+    "order": 2
+  },
+  "vt-cosmetics-pdrn-essence-100-веганська--112": {
+    "family": "neutral",
+    "hue": null,
+    "sat": 0,
+    "light": 0.976,
+    "order": 9
+  }
+}

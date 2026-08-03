@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react'
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -103,7 +104,7 @@ const posts = [
     readTime: '5 хв',
     date: '20 грудня 2024',
     image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&q=80',
-    tone: '#F2FBFF',
+    tone: '#E2F9FF',
   },
   {
     slug: 'winter-skincare-tips',
@@ -147,11 +148,11 @@ export default function BlogPage() {
   const showFeatured = activeCategory === 'all' || featuredPost.categorySlug === activeCategory
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="max-w-[800px]">
             <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Блог</p>
             <h1 className="mt-4 font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
@@ -248,7 +249,7 @@ export default function BlogPage() {
                 <Link
                   key={post.slug}
                   href={`/blog/${post.slug}`}
-                  className="group rounded-[24px] border border-[#E5E5E5] overflow-hidden hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 bg-white"
+                  className="group rounded-[24px] border border-[#E5E5E5] overflow-hidden hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 bg-[#E2F9FF]"
                 >
                   <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: post.tone }}>
                     <Image

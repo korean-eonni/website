@@ -1,10 +1,9 @@
 import Hero from '@/components/sections/Hero'
+import HomeIntro from '@/components/sections/HomeIntro'
 import FeaturedIn from '@/components/sections/FeaturedIn'
 import NewProducts from '@/components/sections/NewProducts'
 import Categories from '@/components/sections/Categories'
-import PromoDiscount from '@/components/sections/PromoDiscount'
 import ExclusiveProducts from '@/components/sections/ExclusiveProducts'
-import TipsSection from '@/components/sections/TipsSection'
 import ReviewsSection from '@/components/sections/ReviewsSection'
 import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
@@ -57,33 +56,38 @@ export default async function Home() {
     }
   }
 
-  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 6) as RawRow[]
-  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 6) as RawRow[]
+  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 12) as RawRow[]
+  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 12) as RawRow[]
 
   const newProducts = newRows.map(mapRow)
   const exclusiveProducts = exclusiveRows.map(mapRow)
 
   return (
-    <main className="min-h-screen -mt-[116px] sm:-mt-[132px]">
-      {/* Hero section - fixed behind content, positioned below the layout header */}
-      <div className="fixed top-[116px] sm:top-[132px] left-0 right-0 h-[520px] sm:h-[600px] lg:h-[calc(100vh-132px)] z-0">
+    <main className="min-h-screen -mt-[86px]">
+      {/* Hero spans the full viewport from top:0 — so the floating header capsule
+          appears DIRECTLY over the Hero face image, with no gap or backdrop strip. */}
+      <div className="fixed top-0 left-0 right-0 h-screen z-0 bg-[#E2F9FF]">
         <Hero />
       </div>
-      
+
       {/* Spacer: header height + hero visible area */}
       <div className="h-[576px] sm:h-[652px] lg:h-[calc(100vh)]" />
-      
-      {/* Content sections that scroll over the hero */}
-      <div className="relative z-10 bg-white rounded-t-[30px] sm:rounded-t-[40px] shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+
+      {/* Content sections that scroll over the hero.
+          translate3d promotes this to its own GPU layer so the fixed hero behind it doesn't
+          repaint on every scroll frame; `contain: paint` further isolates section paints. */}
+      <div
+        className="relative z-10 bg-[#E2F9FF] rounded-t-[30px] sm:rounded-t-[40px] shadow-[0_-8px_30px_rgba(0,0,0,0.08)] overflow-hidden"
+        style={{ transform: 'translate3d(0,0,0)', contain: 'paint' }}
+      >
+        <HomeIntro />
         <FeaturedIn />
         <NewProducts products={newProducts} />
         <Categories />
-        <PromoDiscount />
         <ExclusiveProducts products={exclusiveProducts} />
-        <TipsSection />
-        <ReviewsSection />
         <SubscribeSection />
         <DeliverySection />
+        <ReviewsSection />
         <Footer />
       </div>
     </main>

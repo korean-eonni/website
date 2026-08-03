@@ -1,30 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncSheetToDatabase } from '@/lib/sheetSync'
+import { isAuthedRequest } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // Allow up to 60 seconds for sync (Vercel Pro/Enterprise)
 
 /**
- * GET /api/sync-sheet
- * 
- * Syncs products from Google Sheet to database.
- * Called by:
- * - Vercel Cron (every 5 minutes)
- * - Manual trigger from admin panel
- * 
- * Security:
- * - Vercel Cron requests include CRON_SECRET header
- * - Admin requests should be authenticated via session
+ * Authorize callers. Accept either:
+ *   1. Vercel Cron — `Authorization: Bearer ${CRON_SECRET}` (set in vercel.json).
+ *   2. Admin session — signed `eonni_admin` cookie.
+ * Without one of these, refuse the request. The old behaviour (open endpoint)
+ * let anyone trigger a full DB wipe + re-sync.
  */
+function isAuthorized(request: NextRequest): boolean {
+  if (isAuthedRequest(request)) return true
+  const auth = request.headers.get('authorization') || ''
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret && auth === `Bearer ${cronSecret}`) return true
+  return false
+}
+
 export async function GET(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  }
   const startTime = Date.now()
-  
-  // Log request source
-  const cronSecret = request.headers.get('x-vercel-cron-secret')
-  const isCronRequest = !!cronSecret
-  const userAgent = request.headers.get('user-agent') || 'unknown'
-  
-  console.log(`[sync-sheet] Request received - cron: ${isCronRequest}, ua: ${userAgent}`)
 
   try {
     const result = await syncSheetToDatabase()

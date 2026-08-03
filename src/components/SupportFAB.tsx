@@ -1,11 +1,16 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Magnetic from '@/components/ui/Magnetic'
+
+// Distance to lift the FAB when the floating capsule is docked at the bottom of
+// the viewport (mobile drag). Keeps the chat icon visible above the capsule.
+const FAB_LIFT_PX = 132
 
 const contactOptions = [
   {
     label: 'Telegram',
-    href: 'https://t.me/eonni_korean_cosmetics',
+    href: 'https://t.me/Eonni_KC',
     color: '#229ED9',
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
@@ -26,7 +31,7 @@ const contactOptions = [
   {
     label: 'Зателефонувати',
     href: 'tel:+380732737330',
-    color: '#6046A3',
+    color: '#4348AE',
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
@@ -37,6 +42,7 @@ const contactOptions = [
 
 export default function SupportFAB() {
   const [open, setOpen] = useState(false)
+  const [capsuleAtBottom, setCapsuleAtBottom] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,28 +55,45 @@ export default function SupportFAB() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Listen for capsule dock events fired by Header — when the user drags the
+  // capsule to the bottom on mobile, lift the FAB above it so it stays tappable.
+  useEffect(() => {
+    const onDock = (e: Event) => {
+      const detail = (e as CustomEvent<{ atBottom: boolean }>).detail
+      setCapsuleAtBottom(!!detail?.atBottom)
+    }
+    document.addEventListener('capsule-dock', onDock)
+    return () => document.removeEventListener('capsule-dock', onDock)
+  }, [])
+
   return (
-    <div ref={ref} className="fixed bottom-6 right-6 z-[60] flex flex-col-reverse items-end gap-3">
+    <div
+      ref={ref}
+      className="fixed right-6 z-[70] flex flex-col-reverse items-end gap-3 transition-[bottom] duration-500 ease-out"
+      style={{ bottom: capsuleAtBottom ? FAB_LIFT_PX : 24 }}
+    >
       {/* Main toggle button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
-          open
-            ? 'bg-[#333] text-white rotate-45'
-            : 'bg-[#6046A3] text-white hover:bg-[#4D3882] animate-pulse-slow'
-        }`}
-        aria-label="Підтримка"
-      >
-        {open ? (
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
-          </svg>
-        ) : (
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </button>
+      <Magnetic strength={12}>
+        <button
+          onClick={() => setOpen(!open)}
+          className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
+            open
+              ? 'bg-[#333] text-white rotate-45'
+              : 'bg-[#4348AE] text-white hover:bg-[#373B8A] animate-pulse-slow'
+          }`}
+          aria-label="Підтримка"
+        >
+          {open ? (
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </button>
+      </Magnetic>
 
       {/* Contact options */}
       {open && (
@@ -81,7 +104,7 @@ export default function SupportFAB() {
               href={opt.href}
               target={opt.href.startsWith('http') ? '_blank' : undefined}
               rel={opt.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-              className="flex items-center gap-3 pl-4 pr-5 py-2.5 rounded-full bg-white shadow-md border border-[#E5E5E5] hover:shadow-lg transition-all duration-200 group"
+              className="flex items-center gap-3 pl-4 pr-5 py-2.5 rounded-full bg-[#E2F9FF] shadow-md border border-[#E5E5E5] hover:shadow-lg transition-all duration-200 group"
               style={{ animationDelay: `${i * 60}ms` }}
               onClick={() => setOpen(false)}
             >
@@ -91,7 +114,7 @@ export default function SupportFAB() {
               >
                 {opt.icon}
               </span>
-              <span className="text-[14px] font-medium text-black whitespace-nowrap group-hover:text-[#6046A3] transition-colors">
+              <span className="text-[14px] font-medium text-black whitespace-nowrap group-hover:text-[#4348AE] transition-colors">
                 {opt.label}
               </span>
             </a>

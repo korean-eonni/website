@@ -1,24 +1,24 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getProduct, updateProduct, ProductRecord } from '@/lib/productStore'
-import { ADMIN_COOKIE, isAuthed } from '@/lib/adminAuth'
+import {
+  ADMIN_COOKIE,
+  ADMIN_COOKIE_OPTIONS,
+  checkAdminPassword,
+  isAuthed,
+  makeAdminToken,
+} from '@/lib/adminAuth'
 import { storeImage } from '@/lib/uploads'
 import { brands } from '@/data/brands'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 
 type ProductRow = ProductRecord
 
 async function loginAction(formData: FormData) {
   'use server'
   const password = String(formData.get('password') || '')
-  if (password === ADMIN_PASSWORD) {
-    cookies().set(ADMIN_COOKIE, '1', {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-    })
+  if (checkAdminPassword(password)) {
+    cookies().set(ADMIN_COOKIE, makeAdminToken(), ADMIN_COOKIE_OPTIONS)
   }
   redirect('/admin')
 }
@@ -68,6 +68,13 @@ async function updateProductAction(formData: FormData) {
     skin_type: existing?.skin_type ?? null,
     series: existing?.series ?? null,
     classification: existing?.classification ?? null,
+    // Long-description sections — preserved from the last sheet sync on edit
+    usage_instructions: existing?.usage_instructions ?? null,
+    clinical_proof: existing?.clinical_proof ?? null,
+    solves_problems: existing?.solves_problems ?? null,
+    key_ingredients: existing?.key_ingredients ?? null,
+    fit_skin: existing?.fit_skin ?? null,
+    compatibility: existing?.compatibility ?? null,
     is_active: formData.get('is_active') ? 1 : 0,
     is_new: formData.get('is_new') ? 1 : 0,
     is_exclusive: formData.get('is_exclusive') ? 1 : 0,
@@ -97,8 +104,9 @@ async function updateProductAction(formData: FormData) {
       updates.image_path = stored.image_path
       updates.image_url = stored.image_url
       includeImage = true
-    } catch {
-      redirect(`/admin/${id}`)
+    } catch (err) {
+      console.error('[admin/updateProduct] storeImage failed:', err)
+      redirect(`/admin/${id}?error=image-upload-failed`)
     }
   }
 
@@ -113,7 +121,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
       <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center px-6">
         <form
           action={loginAction}
-          className="w-full max-w-md bg-white rounded-2xl border border-[#E5E5E5] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+          className="w-full max-w-md bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
         >
           <h1 className="text-3xl font-bebas uppercase text-black mb-6">
             Admin доступ
@@ -154,7 +162,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
           </a>
         </div>
 
-        <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8">
+        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8">
           <ConfirmableForm
             action={updateProductAction}
             title="Зберегти зміни?"
@@ -220,7 +228,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
               <select
                 name="brand"
                 defaultValue={product.brand || ''}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3 bg-white"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3 bg-[#E2F9FF]"
               >
                 <option value="">Оберіть бренд</option>
                 {brands.map((brand) => (
@@ -279,7 +287,7 @@ export default async function AdminEditPage({ params }: { params: { id: string }
               />
             </div>
             <div>
-              <label className="block text-sm mb-2">Знижка (₴)</label>
+              <label className="block text-sm mb-2">Знижка (%)</label>
               <input
                 name="discount_amount"
                 type="number"

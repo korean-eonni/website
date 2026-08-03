@@ -4,9 +4,8 @@ import Image from 'next/image'
 
 const announcements = [
   '10% ЗНИЖКИ НА ПЕРШЕ ЗАМОВЛЕННЯ',
-  'ЗАПРОСИ ПОДРУГУ І ОТРИМАЙ ПОДАРУНОК',
-  'ОРИГІНАЛЬНІ КОРЕЙСЬКІ ЗАСОБИ',
-  'КУПУЙ СКРАБ ДЛЯ ТІЛА DEAR DOER И ОТРИМАЙ МАСКУ В ПОДАРУНОК',
+  'ДО КОЖНОЇ 1000грн. МАСКА MEDICUBE В ПОДАРУНОК',
+  'ОРИГІНАЛЬНА КОРЕЙСЬКА КОСМЕТИКА',
 ]
 
 export default function AnnouncementBar() {
@@ -14,7 +13,7 @@ export default function AnnouncementBar() {
   const items = [...announcements, ...announcements]
 
   return (
-    <div className="bg-white border-b border-gray-200 overflow-hidden py-3">
+    <div className="bg-[#E2F9FF] border-b border-gray-200 overflow-hidden py-3">
       <div className="animate-marquee flex whitespace-nowrap pause-animation">
         {items.map((text, index) => (
           <div key={index} className="flex items-center mx-8">

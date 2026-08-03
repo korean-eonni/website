@@ -376,7 +376,13 @@ async function getAuthClient() {
   return auth
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Refuse to overwrite product copy unless caller is an authenticated admin.
+  // This endpoint was previously open and re-keyed the entire sheet.
+  const { isAuthedRequest } = await import('@/lib/adminAuth')
+  if (!isAuthedRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const auth = await getAuthClient()
     const sheets = google.sheets({ version: 'v4', auth })

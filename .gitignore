@@ -10,3 +10,9 @@ out
 .vercel
 .env*.local
 public/uploads
+
+.vercel
+.env*.local
+
+# Local SQLite fallback DB — may hold real orders/customer data. Never publish.
+data/shop.db

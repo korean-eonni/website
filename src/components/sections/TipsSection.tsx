@@ -20,7 +20,7 @@ const tips = [
 
 export default function TipsSection() {
   return (
-    <section className="bg-white py-16 sm:py-20">
+    <section className="bg-[#E2F9FF] py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between mb-10">
           <h2 className="font-bebas uppercase text-black text-[40px] leading-[44px] sm:text-[56px] sm:leading-[60px] lg:text-[72px] lg:leading-[72px]">

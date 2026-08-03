@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function PromoDiscount() {
   return (
-    <section className="bg-white">
+    <section className="bg-[#E2F9FF]">
       <div
         className="w-full bg-center bg-cover"
         style={{ backgroundImage: "url('/promo-gradient.png')" }}
@@ -19,7 +19,7 @@ export default function PromoDiscount() {
               На всі новинки брендів Anua та Medicube
             </p>
             <Link
-              href="/sales"
+              href="/catalog?sale=true"
               className="mt-8 inline-flex h-[50px] w-[200px] items-center justify-center bg-black text-white uppercase font-gilroy text-[18px] font-semibold leading-[18px] transition-opacity duration-300 hover:opacity-80"
             >
               Перейти

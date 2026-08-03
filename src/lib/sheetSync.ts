@@ -3,22 +3,27 @@ import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 import { replaceAllProducts } from '@/lib/productStore'
 
-// Sheet "Загальний" - columns A through AK (37 columns including new fields)
-const SHEET_RANGE = 'Загальний!A1:AK'
+// Sheet "Загальний" — 44 columns after 2026-05-06 expansion (split long description into 6 sections)
+const SHEET_RANGE = 'Загальний!A1:AQ'
 
-// Column indices based on actual Google Sheet structure (0-indexed)
-// A=0: Назва, B=1: Постачальник, C=2: Категорія, D=3: Субкатегорія, E=4: Бренд
-// F=5: SKU, G=6: Штрихкод, H=7: Собівартість, I=8: Ціна продажу, J=9: Стара ціна
-// K=10: Знижка, L=11: Кількість на складі, M=12: Вага, N=13: Теги
-// O=14: Короткий опис, P=15: Довгий опис, Q=16: Активний товар
-// R=17: Позначити як новинку, S=18: Позначити як ексклюзив
-// T=19: Фото 1, U=20: Фото 2, V=21: Фото 3, W=22: Фото 4, X=23: Фото 5
-// Y=24: Фото 6, Z=25: Фото 7, AA=26: Фото 8, AB=27: Фото 9, AC=28: Фото 10
-// AD=29: Фото 11, AE=30: Фото 12
-// NEW COLUMNS:
-// AF=31: Об'єм/Варіанти (e.g., "20 мл,40 мл,80 мл")
-// AG=32: Рейтинг (e.g., 4.5)
-// AH=33: Кількість відгуків (e.g., 12)
+// Column layout (0-indexed). Code reads by HEADER NAME — these comments are just for reference.
+// A=0:  Назва                F=5:  SKU                       L=11: Теги
+// B=1:  Постачальник         G=6:  Вага                      M=12: Короткий опис
+// C=2:  Категорія            H=7:  Собівартість (₴)          N=13: Довгий опис (intro paragraph only)
+// D=3:  Субкатегорія         I=8:  Ціна продажу (₴)          O=14: Спосіб застосування  ← NEW
+// E=4:  Бренд                J=9:  Стара ціна (₴)            P=15: Клінічно підтверджено ← NEW
+//                            K=10: Знижка (₴)                Q=16: Які проблеми вирішує  ← NEW
+//                                                            R=17: Ключові інгредієнти   ← NEW
+//                                                            S=18: Для якої шкіри підходить ← NEW
+//                                                            T=19: Сумісність з іншими компонентами ← NEW
+// U=20: Активний товар       X=23: Фото 1   AD=29: Фото 7    AJ=35: Об'єм/Варіанти
+// V=21: Позначити як новинку Y=24: Фото 2   AE=30: Фото 8    AK=36: Рейтинг
+// W=22: Позначити як ексклюзив Z=25: Фото 3 AF=31: Фото 9    AL=37: Кількість відгуків
+//                            AA=26: Фото 4  AG=32: Фото 10   AM=38: Вік
+//                            AB=27: Фото 5  AH=33: (empty Фото 11 placeholder) AN=39: Інгредієнти
+//                            AC=28: Фото 6  AI=34: (empty Фото 12 placeholder) AO=40: Тип шкіри
+//                                                                              AP=41: Серія
+//                                                                              AQ=42: Класифікація
 
 type SheetRow = {
   Назва: string
@@ -32,14 +37,25 @@ type SheetRow = {
   'Ціна продажу (₴)'?: string
   'Стара ціна (₴)'?: string
   'Знижка (₴)'?: string
-  'Кількість на складі'?: string
+  'Кількість'?: string            // stock quantity (actual sheet header)
+  'Кількість на складі'?: string  // legacy header name
+  'Вага'?: string
   'Вага (г)'?: string
   'Теги (через кому)'?: string
   'Короткий опис'?: string
   'Довгий опис'?: string
+  // Long-description sections (NEW, split out 2026-05-06)
+  'Спосіб застосування'?: string
+  'Клінічно підтверджено'?: string
+  'Які проблеми вирішує'?: string
+  'Ключові інгредієнти'?: string
+  'Для якої шкіри підходить'?: string
+  'Сумісність та застереження'?: string
+  'Сумісність з іншими компонентами'?: string // legacy header name
   'Активний товар'?: string
   'Позначити як новинку'?: string
   'Позначити як ексклюзив'?: string
+  'Скоро в наявності'?: string
   'Фото 1'?: string
   'Фото 2'?: string
   'Фото 3'?: string
@@ -60,6 +76,7 @@ type SheetRow = {
   'Вік'?: string             // e.g., "18+", "25+", "Всі віки"
   'Інгредієнти'?: string     // Key ingredients
   'Тип шкіри'?: string       // e.g., "Всі типи", "Жирна", "Суха"
+  'Тип шкіри '?: string      // header has trailing space in some sheets
   'Серія'?: string           // Product series/line
   'Класифікація'?: string    // e.g., "Натуральна", "Професійна"
 }
@@ -68,6 +85,43 @@ function parseBool(input?: string) {
   if (!input) return 0
   const value = input.trim().toLowerCase()
   return ['1', 'true', 'так', 'yes', 'y', 'on', '+'].includes(value) ? 1 : 0
+}
+
+// Known brand aliases → canonical display name. The catalog brand filter and the
+// /brands gallery match products by EXACT brand string, so any drift in the sheet's
+// "Бренд" column (blank cell, alternate spelling) drops products off the brand page.
+// We canonicalise here so every spelling lands on one name. When the cell is blank we
+// infer from the product name, whose leading token is always the brand
+// ("Medicube, …", "BioHeal BOH, …"). Keep `name` in `src/data/brands.ts` identical to
+// the canonical value here.
+const BRAND_CANONICAL: Array<{ match: RegExp; name: string }> = [
+  { match: /bioheal|bio\s*heal|probioderm|\bboh\b/i, name: 'BIOHEAL BOH' },
+  { match: /medicube/i, name: 'Medicube' },
+  { match: /mediheal/i, name: 'Mediheal' },
+  { match: /torriden/i, name: 'Torriden' },
+  { match: /unove/i, name: 'UNOVE' },
+  { match: /lacto\s*fit/i, name: 'LACTOFIT' },
+  { match: /vitahalo/i, name: 'VITAHALO' },
+  { match: /vt\s*cosmetics/i, name: 'VT Cosmetics' },
+  { match: /cj\s*wellcare/i, name: 'CJ WELLCARE' },
+  { match: /innerlab/i, name: 'INNERLAB' },
+  { match: /ardiem/i, name: 'ARDIEM' },
+  { match: /bb\s*lab/i, name: 'BB LAB' },
+  { match: /skinfood/i, name: 'Skinfood' },
+]
+
+function normalizeBrand(rawBrand?: string, productName?: string): string | null {
+  const raw = rawBrand?.trim() || ''
+  // 1) Canonicalise whatever is in the brand cell.
+  for (const b of BRAND_CANONICAL) if (b.match.test(raw)) return b.name
+  // 2) Blank cell → infer from the product name's leading token. (Only when blank, so
+  //    a real but unlisted brand value is never overridden by the name.)
+  if (!raw) {
+    const lead = (productName || '').split(',')[0]
+    for (const b of BRAND_CANONICAL) if (b.match.test(lead)) return b.name
+  }
+  // 3) Nothing matched — keep the original cell value (or null).
+  return raw || null
 }
 
 function parseNumber(input?: string) {
@@ -358,8 +412,11 @@ function createAuthClient() {
   const hasBegin = normalizedKey.includes('-----BEGIN PRIVATE KEY-----')
   const hasRSABegin = normalizedKey.includes('-----BEGIN RSA PRIVATE KEY-----')
   const lineCount = normalizedKey.split('\n').length
-  console.log(`[auth] Key info: lines=${lineCount}, hasPKCS8=${hasBegin}, hasRSA=${hasRSABegin}`)
-  console.log(`[auth] Email: ${clientEmail}`)
+  // Don't log service-account email — it leaks into Vercel logs which may be
+  // shared. Gate verbose auth diagnostics behind an explicit debug flag.
+  if (process.env.DEBUG_SHEET_SYNC === '1') {
+    console.log(`[auth] Key info: lines=${lineCount}, hasPKCS8=${hasBegin}, hasRSA=${hasRSABegin}`)
+  }
 
   try {
     return new google.auth.JWT({
@@ -466,34 +523,58 @@ export async function syncSheetToDatabase() {
           ? Math.round(originalPrice - salePrice)
           : null)
 
-      // Helper function to get Drive thumbnail URL from a photo field
+      // Helper function to get a directly-loadable thumbnail URL from a photo field.
+      // We use lh3.googleusercontent.com because drive.google.com/thumbnail returns a 302
+      // redirect that Next.js's image optimizer rejects with 400.
       const getDriveThumbnail = (photoUrl?: string): string | null => {
-        if (!photoUrl || !photoUrl.includes('drive.google.com')) return null
-        const fileId = extractDriveFileId(photoUrl)
-        if (!fileId) return null
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`
+        const trimmed = (photoUrl || '').trim()
+        if (!trimmed) return null
+        // Google Drive share link → directly-loadable thumbnail URL.
+        if (trimmed.includes('drive.google.com')) {
+          const fileId = extractDriveFileId(trimmed)
+          return fileId ? `https://lh3.googleusercontent.com/d/${fileId}=w800` : null
+        }
+        // Any other direct image URL (Vercel Blob, CDN, edited photos) — use as-is.
+        if (/^https?:\/\//i.test(trimmed)) return trimmed
+        return null
       }
 
-      // Get all photo URLs (Фото 1-12)
-      const imageUrl = getDriveThumbnail(row['Фото 1'])
-      const imageUrl2 = getDriveThumbnail(row['Фото 2'])
-      const imageUrl3 = getDriveThumbnail(row['Фото 3'])
-      const imageUrl4 = getDriveThumbnail(row['Фото 4'])
-      const imageUrl5 = getDriveThumbnail(row['Фото 5'])
-      const imageUrl6 = getDriveThumbnail(row['Фото 6'])
-      const imageUrl7 = getDriveThumbnail(row['Фото 7'])
-      const imageUrl8 = getDriveThumbnail(row['Фото 8'])
-      const imageUrl9 = getDriveThumbnail(row['Фото 9'])
-      const imageUrl10 = getDriveThumbnail(row['Фото 10'])
-      const imageUrl11 = getDriveThumbnail(row['Фото 11'])
-      const imageUrl12 = getDriveThumbnail(row['Фото 12'])
+      // The sheet's photo-import automation sometimes writes the FIRST photo one
+      // column too far left — into "Позначити як ексклюзив" instead of "Фото 1".
+      // If that column holds a Drive link (not a yes/no flag), treat it as the
+      // real first photo so the main image is always correct, whether or not the
+      // automation shifted the row.
+      const exclusiveCol = row['Позначити як ексклюзив']
+      const shiftedFirstPhoto =
+        exclusiveCol && exclusiveCol.includes('drive.google.com') ? exclusiveCol : undefined
 
-      // Count images for logging
-      const imageCount = [imageUrl, imageUrl2, imageUrl3, imageUrl4, imageUrl5, imageUrl6,
-                         imageUrl7, imageUrl8, imageUrl9, imageUrl10, imageUrl11, imageUrl12]
-                         .filter(Boolean).length
+      // Get all photo URLs (Фото 1-12) — dedupe by Drive file ID to handle the
+      // legacy Apps Script bug that wrote the same URL into multiple slots.
+      const photoSlots: (string | undefined)[] = [
+        ...(shiftedFirstPhoto ? [shiftedFirstPhoto] : []),
+        row['Фото 1'], row['Фото 2'], row['Фото 3'], row['Фото 4'],
+        row['Фото 5'], row['Фото 6'], row['Фото 7'], row['Фото 8'],
+        row['Фото 9'], row['Фото 10'], row['Фото 11'], row['Фото 12'],
+      ]
+      const seenIds = new Set<string>()
+      const dedupedThumbs: (string | null)[] = photoSlots.map(slot => {
+        if (!slot) return null
+        const id = extractDriveFileId(slot)
+        if (id) {
+          if (seenIds.has(id)) return null
+          seenIds.add(id)
+        }
+        return getDriveThumbnail(slot)
+      })
+      const [
+        imageUrl, imageUrl2, imageUrl3, imageUrl4,
+        imageUrl5, imageUrl6, imageUrl7, imageUrl8,
+        imageUrl9, imageUrl10, imageUrl11, imageUrl12,
+      ] = dedupedThumbs
+
+      const imageCount = dedupedThumbs.filter(Boolean).length
       if (imageCount > 0) {
-        console.log(`Row ${rowNum}: Found ${imageCount} images`)
+        console.log(`Row ${rowNum}: Found ${imageCount} unique images`)
       }
 
       const now = new Date().toISOString()
@@ -515,20 +596,22 @@ export async function syncSheetToDatabase() {
         image_url_11: imageUrl11,
         image_url_12: imageUrl12,
         short_description: row['Короткий опис']?.trim() || null,
+        // Intro paragraph only. Each rich section is stored in its own column
+        // below so the product-page tabs can render them individually.
         long_description: row['Довгий опис']?.trim() || null,
         supplier: row.Постачальник?.trim() || null,
         cost_price: parseNumber(row['Собівартість (₴)']),
         sale_price: salePrice,
         original_price: originalPrice,
         discount_amount: discountAmount,
-        stock_quantity: parseNumber(row['Кількість на складі']) ?? 0,
+        stock_quantity: parseNumber(row['Кількість'] ?? row['Кількість на складі']) ?? 0,
         category: row.Категорія?.trim() || null,
         subcategory: row.Субкатегорія?.trim() || null,
-        weight_grams: parseNumber(row['Вага (г)']),
+        weight_grams: parseNumber(row['Вага (г)'] ?? row['Вага']),
         tags: row['Теги (через кому)']?.trim() || null,
         sku: sku || null,
         barcode: barcode || null,
-        brand: row.Бренд?.trim() || null,
+        brand: normalizeBrand(row.Бренд, name),
         // New fields for product page
         volume_options: row["Об'єм/Варіанти"]?.trim() || null,
         rating: parseNumber(row['Рейтинг']),
@@ -536,13 +619,21 @@ export async function syncSheetToDatabase() {
         // Extended product attributes
         age_group: row['Вік']?.trim() || null,
         ingredients: row['Інгредієнти']?.trim() || null,
-        skin_type: row['Тип шкіри']?.trim() || null,
+        skin_type: (row['Тип шкіри'] ?? row['Тип шкіри '])?.trim() || null,
         series: row['Серія']?.trim() || null,
         classification: row['Класифікація']?.trim() || null,
+        // Rich sections — one per product-page tab (read by exact sheet header)
+        usage_instructions: row['Спосіб застосування']?.trim() || null,
+        clinical_proof: row['Клінічно підтверджено']?.trim() || null,
+        solves_problems: row['Які проблеми вирішує']?.trim() || null,
+        key_ingredients: row['Ключові інгредієнти']?.trim() || null,
+        fit_skin: row['Для якої шкіри підходить']?.trim() || null,
+        compatibility: (row['Сумісність та застереження'] ?? row['Сумісність з іншими компонентами'])?.trim() || null,
         // ALWAYS set to active (1) - we want all imported products to be visible
         is_active: 1,
         is_new: parseBool(row['Позначити як новинку']),
         is_exclusive: parseBool(row['Позначити як ексклюзив']),
+        coming_soon: parseBool(row['Скоро в наявності']),
         created_at: now,
         updated_at: now,
       })

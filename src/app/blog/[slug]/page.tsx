@@ -1,4 +1,5 @@
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
@@ -412,7 +413,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
 
     case 'callout':
       const variants = {
-        info: { bg: 'bg-[#E8F4FD]', border: 'border-[#2196F3]', icon: 'ℹ️' },
+        info: { bg: 'bg-[#E2F9FF]', border: 'border-[#2196F3]', icon: 'ℹ️' },
         tip: { bg: 'bg-[#E8F5E9]', border: 'border-[#4CAF50]', icon: '💡' },
         warning: { bg: 'bg-[#FFF3E0]', border: 'border-[#FF9800]', icon: '⚠️' },
       }
@@ -452,7 +453,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
     case 'step':
       return (
         <div key={index} className="flex gap-4 sm:gap-6 my-6 sm:my-8">
-          <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#BCC2F4] to-[#6046A3] flex items-center justify-center text-white font-bebas text-[20px] sm:text-[24px]">
+          <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#BCC2F4] to-[#4842AB] flex items-center justify-center text-white font-bebas text-[20px] sm:text-[24px]">
             {block.number}
           </div>
           <div className="flex-1 pt-1">
@@ -465,7 +466,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
     case 'recommendation':
       return (
         <div key={index} className="bg-[#F8F7FB] rounded-[12px] px-5 py-4 my-4 ml-0 sm:ml-[72px]">
-          <p className="font-gilroy text-[14px] sm:text-[15px] text-[#6046A3] font-medium">
+          <p className="font-gilroy text-[14px] sm:text-[15px] text-[#4348AE] font-medium">
             {block.text}
           </p>
         </div>
@@ -481,13 +482,13 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
               <ul className="space-y-2">
                 {item.items.map((li, j) => (
                   <li key={j} className="font-gilroy text-[14px] sm:text-[15px] text-[#444444] flex items-start gap-2">
-                    <span className="text-[#6046A3] mt-1">•</span>
+                    <span className="text-[#4348AE] mt-1">•</span>
                     {li}
                   </li>
                 ))}
               </ul>
               {item.recommendation && (
-                <p className="mt-4 pt-4 border-t border-[#E5E5E5] font-gilroy text-[13px] text-[#6046A3] font-medium">
+                <p className="mt-4 pt-4 border-t border-[#E5E5E5] font-gilroy text-[13px] text-[#4348AE] font-medium">
                   👉 {item.recommendation}
                 </p>
               )}
@@ -508,7 +509,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
               <ul className="space-y-2">
                 {col.items.map((item, j) => (
                   <li key={j} className="font-gilroy text-[15px] text-[#444444] flex items-start gap-2">
-                    <span className="text-[#6046A3]">→</span>
+                    <span className="text-[#4348AE]">→</span>
                     {item}
                   </li>
                 ))}
@@ -520,9 +521,9 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
 
     case 'ingredientCard':
       return (
-        <div key={index} className="bg-white border border-[#E5E5E5] rounded-[24px] p-6 sm:p-8 my-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+        <div key={index} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[24px] p-6 sm:p-8 my-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
           <div className="flex items-start gap-4 mb-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#6046A3] flex items-center justify-center text-white font-bebas text-[18px]">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#4348AE] flex items-center justify-center text-white font-bebas text-[18px]">
               {block.number}
             </div>
             <div>
@@ -565,7 +566,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
           )}
           {block.products && block.products.length > 0 && (
             <div className="pt-4 border-t border-[#E5E5E5]">
-              <p className="font-gilroy font-semibold text-[14px] text-[#6046A3] mb-2">Рекомендуємо:</p>
+              <p className="font-gilroy font-semibold text-[14px] text-[#4348AE] mb-2">Рекомендуємо:</p>
               <div className="flex flex-wrap gap-2">
                 {block.products.map((p, i) => (
                   <span key={i} className="px-3 py-1 bg-[#F8F7FB] rounded-full text-[13px] text-black">
@@ -583,7 +584,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
         <div key={index} className="grid grid-cols-3 gap-4 my-8 sm:my-10">
           {block.stats.map((stat, i) => (
             <div key={i} className="text-center p-4 sm:p-6 bg-gradient-to-br from-[#F8F7FB] to-[#E8E6F0] rounded-[16px]">
-              <p className="font-bebas text-[32px] sm:text-[40px] lg:text-[48px] text-[#6046A3]">{stat.value}</p>
+              <p className="font-bebas text-[32px] sm:text-[40px] lg:text-[48px] text-[#4348AE]">{stat.value}</p>
               <p className="font-gilroy text-[12px] sm:text-[14px] text-[#666] leading-tight">{stat.label}</p>
             </div>
           ))}
@@ -594,7 +595,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
       return (
         <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 my-8 sm:my-10">
           {block.items.map((item, i) => (
-            <div key={i} className="bg-white border border-[#E5E5E5] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+            <div key={i} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
               <h4 className="font-bebas uppercase text-[22px] text-black">{item.title}</h4>
               <p className="font-gilroy text-[14px] text-[#666] mb-4">{item.subtitle}</p>
               <div className="space-y-3">
@@ -647,7 +648,7 @@ function ContentRenderer({ block, index }: { block: ContentBlock; index: number 
         <div key={index} className="my-8 sm:my-10 space-y-4">
           {block.items.map((item, i) => (
             <div key={i} className="flex gap-4 items-start">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#6046A3] flex items-center justify-center text-white font-bebas text-[14px]">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#4348AE] flex items-center justify-center text-white font-bebas text-[14px]">
                 {i + 1}
               </div>
               <div className="flex-1 pt-1">
@@ -689,11 +690,11 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-10 sm:py-14 lg:py-16">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1200px] mx-auto px-6 sm:px-8 lg:px-12">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1200px] mx-auto px-6 sm:px-8 lg:px-12">
           <Link
             href="/blog"
             className="inline-flex items-center gap-2 text-[14px] text-[#666666] hover:text-black transition-colors mb-6"
@@ -704,7 +705,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             Назад до блогу
           </Link>
           <div className="flex items-center gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full bg-[#6046A3] text-[12px] text-white font-medium">
+            <span className="px-3 py-1 rounded-full bg-[#4348AE] text-[12px] text-white font-medium">
               {post.category}
             </span>
             <span className="text-[14px] text-[#999999]">{post.readTime} читання</span>
@@ -762,10 +763,10 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                   <Link
                     key={product.name}
                     href={product.link}
-                    className="flex items-center justify-between p-5 rounded-[16px] bg-white hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1"
+                    className="flex items-center justify-between p-5 rounded-[16px] bg-[#E2F9FF] hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1"
                   >
                     <span className="font-gilroy text-[15px] text-black font-medium">{product.name}</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6046A3" strokeWidth="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4348AE" strokeWidth="2">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
                   </Link>
@@ -814,7 +815,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       </article>
 
       {/* More Articles */}
-      <section className="py-16 sm:py-20 bg-[#F8F7FB]">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <h2 className="font-bebas uppercase text-[32px] sm:text-[40px] text-black mb-8 text-center">Читайте також</h2>
           <div className="flex justify-center">

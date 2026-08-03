@@ -1,4 +1,6 @@
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
+import Magnetic from '@/components/ui/Magnetic'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -34,7 +36,7 @@ const values = [
     icon: '🎁',
     title: 'Дбайливе пакування',
     text: 'Кожне замовлення пакуємо з любов\'ю: захисна плівка, бабл-пакети та приємні бонуси в кожній посилці.',
-    tone: '#F2FBFF',
+    tone: '#E2F9FF',
   },
   {
     icon: '🤝',
@@ -86,11 +88,11 @@ const stats = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,_rgba(188,194,244,0.55),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_12%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_20%_80%,_rgba(207,236,254,0.4),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+      <section className="relative overflow-hidden py-16 sm:py-24 bg-[#E2F9FF]">
+        <FloatingIcons count={7} offset={2} />
+        <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-12 lg:grid-cols-[1.1fr,0.9fr] items-center">
             <div>
               <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Про нас</p>
@@ -106,25 +108,27 @@ export default function AboutPage() {
                 пройшов особисту перевірку, і ми впевнені в його якості та ефективності.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
-                <Link
-                  href="/catalog"
-                  className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[16px] font-semibold transition-colors hover:bg-[#A8AFEB]"
-                >
-                  Перейти до каталогу
-                </Link>
-                <Link
-                  href="/contacts"
-                  className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] border-2 border-black text-black uppercase font-gilroy text-[16px] font-semibold transition-colors hover:bg-black hover:text-white"
-                >
-                  Зв&apos;язатися з нами
-                </Link>
+                <Magnetic strength={12}>
+                  <Link
+                    href="/catalog"
+                    className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-[#BCC2F4] text-black uppercase font-gilroy text-[16px] font-semibold transition-colors duration-300 hover:bg-[#4348AE] hover:text-white"
+                  >
+                    Перейти до каталогу
+                  </Link>
+                </Magnetic>
+                <Magnetic strength={12}>
+                  <Link
+                    href="/contacts"
+                    className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] border-2 border-black text-black uppercase font-gilroy text-[16px] font-semibold transition-colors duration-300 hover:bg-black hover:text-white"
+                  >
+                    Зв&apos;язатися з нами
+                  </Link>
+                </Magnetic>
               </div>
             </div>
 
             <div className="relative">
-              <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-[#BCC2F4]/30 blur-3xl" />
-              <div className="absolute -bottom-10 -right-6 h-36 w-36 rounded-full bg-[#FFE4ED]/40 blur-3xl" />
-              <div className="rounded-[28px] border border-[#E5E5E5] bg-white/90 backdrop-blur p-8 shadow-[0_20px_60px_rgba(0,0,0,0.1)]">
+              <div className="rounded-[28px] border border-[#E5E5E5] bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.1)]">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 rounded-full bg-[#F6F1FF] flex items-center justify-center text-3xl">
                     🇰🇷
@@ -152,7 +156,7 @@ export default function AboutPage() {
       </section>
 
       {/* Our Story */}
-      <section className="py-16 sm:py-20 bg-[#F8F7FB]">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-12 lg:grid-cols-2 items-center">
             <div>
@@ -179,7 +183,7 @@ export default function AboutPage() {
               {milestones.map((milestone, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-4 rounded-[16px] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
+                  className="flex items-center gap-4 rounded-[16px] bg-[#E2F9FF] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
                 >
                   <div className="w-16 h-16 rounded-full bg-[#BCC2F4] flex items-center justify-center">
                     <span className="font-bebas text-[20px] text-black">{milestone.year}</span>
@@ -225,7 +229,7 @@ export default function AboutPage() {
       </section>
 
       {/* Why Korean Cosmetics */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-white to-[#F8F7FB]">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-12 lg:grid-cols-[0.9fr,1.1fr] items-start">
             <div className="lg:sticky lg:top-32">
@@ -249,7 +253,7 @@ export default function AboutPage() {
               {whyKorea.map((item, index) => (
                 <div
                   key={item.title}
-                  className="rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+                  className="rounded-[20px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <span className="w-8 h-8 rounded-full bg-[#F6F1FF] flex items-center justify-center text-[14px] font-semibold">
@@ -324,7 +328,7 @@ export default function AboutPage() {
               </Link>
               <Link
                 href="/blog"
-                className="inline-flex h-[50px] px-10 items-center justify-center rounded-[12px] bg-white text-black uppercase font-gilroy text-[16px] font-semibold transition-colors hover:bg-[#F8F7FB] border border-[#E5E5E5]"
+                className="inline-flex h-[50px] px-10 items-center justify-center rounded-[12px] bg-[#E2F9FF] text-black uppercase font-gilroy text-[16px] font-semibold transition-colors hover:bg-[#F8F7FB] border border-[#E5E5E5]"
               >
                 Читати блог
               </Link>

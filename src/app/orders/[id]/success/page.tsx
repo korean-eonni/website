@@ -60,7 +60,7 @@ export default function OrderSuccessPage() {
 
   const paymentMethodLabels: Record<string, string> = {
     cash_on_delivery: 'Накладний платіж',
-    liqpay: 'LiqPay',
+    platon: 'Оплата карткою онлайн',
     card: 'Оплата на картку',
     bank_transfer: 'Безготівковий розрахунок',
   }
@@ -68,7 +68,6 @@ export default function OrderSuccessPage() {
   const shippingMethodLabels: Record<string, string> = {
     nova_poshta: 'Нова Пошта',
     ukrposhta: 'Укрпошта',
-    pickup: 'Самовивіз',
   }
 
   return (
@@ -77,12 +76,12 @@ export default function OrderSuccessPage() {
         <div className="max-w-[800px] mx-auto px-6">
           {loading ? (
             <div className="text-center py-20">
-              <div className="animate-spin w-10 h-10 border-2 border-[#6046A3] border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin w-10 h-10 border-2 border-[#4348AE] border-t-transparent rounded-full mx-auto" />
             </div>
           ) : !order ? (
             <div className="text-center py-20">
               <h1 className="font-bebas text-[40px] text-black mb-4">Замовлення не знайдено</h1>
-              <Link href="/" className="text-[#6046A3] hover:underline">
+              <Link href="/" className="text-[#4348AE] hover:underline">
                 Повернутися на головну
               </Link>
             </div>
@@ -104,7 +103,7 @@ export default function OrderSuccessPage() {
               </div>
 
               {/* Order Details */}
-              <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm mb-6">
+              <div className="bg-[#E2F9FF] rounded-[24px] p-6 sm:p-8 shadow-sm mb-6">
                 <h2 className="font-bebas text-[28px] text-black mb-6">Деталі замовлення</h2>
 
                 {/* Items */}
@@ -134,13 +133,13 @@ export default function OrderSuccessPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <h3 className="text-[14px] text-[#999] uppercase tracking-wider mb-3">Доставка</h3>
-                    <p className="font-medium">{shippingMethodLabels[order.shipping_method]}</p>
+                    <p className="font-medium">{shippingMethodLabels[order.shipping_method] || order.shipping_method}</p>
                     {order.shipping_city && <p className="text-[14px] text-[#666] mt-1">{order.shipping_city}</p>}
                     {order.shipping_warehouse && <p className="text-[14px] text-[#666]">{order.shipping_warehouse}</p>}
                   </div>
                   <div>
                     <h3 className="text-[14px] text-[#999] uppercase tracking-wider mb-3">Оплата</h3>
-                    <p className="font-medium">{paymentMethodLabels[order.payment_method]}</p>
+                    <p className="font-medium">{paymentMethodLabels[order.payment_method] || order.payment_method}</p>
                     {order.payment_method === 'card' && (
                       <div className="mt-3 p-3 bg-[#FEF3C7] rounded-lg">
                         <p className="text-[13px] text-[#B45309]">
@@ -159,7 +158,7 @@ export default function OrderSuccessPage() {
               </div>
 
               {/* Contact Info */}
-              <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm mb-6">
+              <div className="bg-[#E2F9FF] rounded-[24px] p-6 sm:p-8 shadow-sm mb-6">
                 <h2 className="font-bebas text-[28px] text-black mb-6">Контактна інформація</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -181,13 +180,13 @@ export default function OrderSuccessPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/catalog"
-                  className="px-8 py-4 bg-[#6046A3] text-white text-center font-semibold rounded-lg hover:bg-[#4D3882] transition-colors"
+                  className="px-8 py-4 bg-[#4348AE] text-white text-center font-semibold rounded-lg hover:bg-[#373B8A] transition-colors"
                 >
                   Продовжити покупки
                 </Link>
                 <Link
                   href="/account"
-                  className="px-8 py-4 border border-[#6046A3] text-[#6046A3] text-center font-semibold rounded-lg hover:bg-[#F5F3FF] transition-colors"
+                  className="px-8 py-4 border border-[#4348AE] text-[#4348AE] text-center font-semibold rounded-lg hover:bg-[#F5F3FF] transition-colors"
                 >
                   Мої замовлення
                 </Link>

@@ -1,14 +1,29 @@
+import type { Metadata } from 'next'
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Image from 'next/image'
 import Link from 'next/link'
 import { brands } from '@/data/brands'
 
+export const metadata: Metadata = {
+  title: 'Бренди корейської косметики',
+  description:
+    'Офіційні K-beauty бренди в Eonni: Medicube, Mediheal, Torriden, UNOVE, LACTOFIT, VT Cosmetics, VITAHALO, BIOHEAL BOH, CJ WELLCARE, INNERLAB, ARDIEM. Оригінальна корейська косметика з доставкою по Україні.',
+  alternates: { canonical: '/brands' },
+  openGraph: {
+    title: 'Бренди корейської косметики | Eonni',
+    description: 'Офіційні K-beauty бренди з доставкою по Україні.',
+    type: 'website',
+    locale: 'uk_UA',
+  },
+}
+
 export default function BrandsPage() {
   return (
-    <main className="min-h-screen bg-white relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_8%,_rgba(188,194,244,0.65),_rgba(255,255,255,0)_55%),radial-gradient(circle_at_85%_12%,_rgba(255,228,237,0.55),_rgba(255,255,255,0)_55%),radial-gradient(circle_at_20%_40%,_rgba(207,236,254,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_80%_45%,_rgba(255,245,213,0.55),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_30%_75%,_rgba(246,241,255,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_70%_80%,_rgba(244,248,243,0.5),_rgba(255,255,255,0)_60%)]" />
+    <main className="min-h-screen bg-[#E2F9FF] relative overflow-hidden">
 
-      <section className="relative py-16 sm:py-20">
+      <section className="relative py-16 sm:py-20 overflow-hidden">
+        <FloatingIcons count={7} offset={5} />
         <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-10 lg:grid-cols-[1.1fr,0.9fr] items-end">
             <div>
@@ -20,7 +35,7 @@ export default function BrandsPage() {
                 Зібрали улюблені бренди в одному місці. Натисніть на бренд, щоб переглянути його товари.
               </p>
             </div>
-            <div className="rounded-[24px] border border-[#E5E5E5] bg-white/90 backdrop-blur px-8 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.08)]">
+            <div className="relative z-10 rounded-[24px] border border-[#E5E5E5] bg-white px-8 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.08)]">
               <p className="font-gilroy text-[12px] uppercase tracking-[0.2em] text-[#999999]">Для швидкого старту</p>
               <p className="mt-3 font-bebas uppercase text-[28px] leading-[32px] text-black">Обирайте бренд</p>
               <p className="mt-2 font-gilroy text-[16px] leading-[22px] text-[#444444]">
@@ -32,19 +47,22 @@ export default function BrandsPage() {
       </section>
 
       <section className="relative bg-transparent pb-20">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_25%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_75%_28%,_rgba(207,236,254,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_35%_78%,_rgba(255,245,213,0.45),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_80%,_rgba(188,194,244,0.4),_rgba(255,255,255,0)_60%)]" />
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+                <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {brands.map((brand) => (
               <Link
                 key={brand.slug}
-                href={`/catalog?brand=${brand.slug}`}
-                className="group rounded-[16px] sm:rounded-[20px] border border-[#E5E5E5] bg-white p-3 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] block"
+                // Use the brand's display name (matches `brand` column in the sheet
+                // exactly) so the catalog can pre-check the right filter checkbox.
+                href={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                className="group relative rounded-[16px] sm:rounded-[20px] border border-white/60 p-3 sm:p-6 shadow-[0_10px_30px_rgba(96,70,163,0.10)] hover:shadow-[0_18px_44px_rgba(96,70,163,0.22)] hover:-translate-y-1 transition-[transform,box-shadow] duration-300 block overflow-hidden bg-center bg-cover"
+                style={{ backgroundImage: "url('/promo-gradient.png')" }}
               >
-                <div
-                  className="flex items-center justify-center h-[100px] sm:h-[140px] rounded-[12px] sm:rounded-[16px] overflow-hidden"
-                  style={{ backgroundColor: brand.tone }}
-                >
+                {/* Soft white veil over the gradient — keeps cards readable while letting
+                    the site palette (pink/cream/cyan/lavender) flow through them. */}
+                <span aria-hidden className="absolute inset-0 bg-white/55 pointer-events-none" />
+
+                <div className="relative flex items-center justify-center h-[100px] sm:h-[140px] rounded-[12px] sm:rounded-[16px] overflow-hidden bg-white/85 border border-white">
                   <Image
                     src={brand.logo}
                     alt={brand.name}
@@ -54,9 +72,9 @@ export default function BrandsPage() {
                     style={{ transform: `scale(${brand.scale ?? 1})` }}
                   />
                 </div>
-                <div className="mt-3 sm:mt-4 text-center">
+                <div className="relative mt-3 sm:mt-4 text-center">
                   <p className="font-gilroy text-[13px] sm:text-[16px] font-semibold text-black uppercase">{brand.name}</p>
-                  <p className="mt-1 text-[12px] uppercase tracking-[0.18em] text-[#6046A3] opacity-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                  <p className="mt-1 text-[12px] uppercase tracking-[0.18em] text-[#4348AE] opacity-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                     Дивитись товари →
                   </p>
                 </div>

@@ -1,4 +1,5 @@
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -122,11 +123,11 @@ const sections = [
 
 export default function BusinessTermsPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Юридична інформація</p>
           <h1 className="mt-4 font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[72px] lg:leading-[76px]">
             Умови ведення бізнесу
@@ -142,7 +143,7 @@ export default function BusinessTermsPage() {
       </section>
 
       {/* Quick Navigation */}
-      <section className="py-8 border-y border-[#E5E5E5] bg-[#F8F7FB]">
+      <section className="py-8 border-y border-[#E5E5E5] bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <p className="text-[12px] uppercase tracking-[0.2em] text-[#999999] mb-4">Швидка навігація</p>
           <div className="flex flex-wrap gap-2">
@@ -150,7 +151,7 @@ export default function BusinessTermsPage() {
               <a
                 key={section.id}
                 href={`#section-${section.id}`}
-                className="px-4 py-2 rounded-full bg-white text-[14px] text-black hover:bg-[#BCC2F4] transition-colors border border-[#E5E5E5]"
+                className="px-4 py-2 rounded-full bg-[#E2F9FF] text-[14px] text-black hover:bg-[#BCC2F4] transition-colors border border-[#E5E5E5]"
               >
                 {section.title.split('. ')[1]}
               </a>
@@ -193,7 +194,7 @@ export default function BusinessTermsPage() {
               <p><strong>Продавець:</strong> ФОП Людвічук Катерина Миколаївна</p>
               <p><strong>ІПН:</strong> 3402113126</p>
               <p><strong>Адреса:</strong> м. Київ, вул. Левка Лук&apos;яненка, буд. 21</p>
-              <p><strong>Email:</strong> support@eonni.com.ua</p>
+              <p><strong>Email:</strong> eonnisupport@gmail.com</p>
               <p><strong>Телефон:</strong> +380 73 273 73 30</p>
             </div>
           </div>
@@ -202,14 +203,14 @@ export default function BusinessTermsPage() {
           <div className="mt-12 grid gap-4 sm:grid-cols-2">
             <Link
               href="/privacy-policy"
-              className="rounded-[16px] border border-[#E5E5E5] bg-white p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
+              className="rounded-[16px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
             >
               <p className="font-bebas uppercase text-[22px] text-black">Політика конфіденційності</p>
               <p className="mt-2 text-[14px] text-[#666666]">Як ми захищаємо ваші персональні дані</p>
             </Link>
             <Link
               href="/returns-exchange"
-              className="rounded-[16px] border border-[#E5E5E5] bg-white p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
+              className="rounded-[16px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow"
             >
               <p className="font-bebas uppercase text-[22px] text-black">Повернення та обмін</p>
               <p className="mt-2 text-[14px] text-[#666666]">Детальні умови та процедура</p>

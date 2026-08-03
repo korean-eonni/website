@@ -117,7 +117,7 @@ export default function AdminReviewsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-[#E2F9FF] rounded-lg shadow p-6">
             <p className="text-sm text-gray-500">Всього відгуків</p>
             <p className="text-3xl font-bold text-gray-900">{reviews.length}</p>
           </div>
@@ -159,7 +159,7 @@ export default function AdminReviewsPage() {
             ✅ Опубліковані відгуки ({approvedReviews.length})
           </h2>
           {approvedReviews.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            <div className="bg-[#E2F9FF] rounded-lg shadow p-8 text-center text-gray-500">
               Поки немає опублікованих відгуків
             </div>
           ) : (
@@ -200,7 +200,7 @@ function ReviewCard({
   const isLoading = actionLoading === review.id
 
   return (
-    <div className={`bg-white rounded-lg shadow p-6 ${isPending ? 'border-l-4 border-yellow-400' : ''}`}>
+    <div className={`bg-[#E2F9FF] rounded-lg shadow p-6 ${isPending ? 'border-l-4 border-yellow-400' : ''}`}>
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="flex-1">
           {/* Header */}
