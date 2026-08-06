@@ -206,6 +206,7 @@ export default function Header() {
     setSearchOpen(false)
     setOpenDropdown(null)
     setExpandedMobileItem(null)
+    setExpandedCatalogCat(null)
   }, [pathname])
 
   useEffect(() => {
@@ -217,6 +218,9 @@ export default function Header() {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
+      // Collapse any expanded catalog drill-down so it reopens fresh next time.
+      setExpandedMobileItem(null)
+      setExpandedCatalogCat(null)
     }
     return () => { document.body.style.overflow = '' }
   }, [mobileMenuOpen])
@@ -655,6 +659,9 @@ export default function Header() {
               <nav className="flex flex-col gap-2 sm:gap-3">
                 {fullscreenLinks.map((item, i) => {
                   const isOpen = expandedMobileItem === item.label
+                  // The Catalog item drills two levels deep on mobile (category →
+                  // subcategories), mirroring the desktop dropdown.
+                  const isCatalog = item.label === 'Каталог'
                   return (
                     <motion.div
                       key={item.label}
@@ -662,11 +669,11 @@ export default function Header() {
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.1 + i * 0.05, duration: 0.55, ease: EXPO_OUT }}
                     >
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
                         <Link
                           href={item.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className={`block font-bebas uppercase text-[36px] sm:text-[48px] leading-[1.05] tracking-[0.01em] hover:translate-x-2 hover:text-[#4348AE] transition-all duration-300 ${
+                          className={`block min-w-0 font-bebas uppercase text-[36px] sm:text-[48px] leading-[1.05] tracking-[0.01em] hover:translate-x-2 hover:text-[#4348AE] transition-all duration-300 ${
                             item.href === '/skin-test' ? 'text-[#4348AE]' : 'text-black'
                           }`}
                         >
@@ -710,27 +717,98 @@ export default function Header() {
                             transition={{ duration: 0.35, ease: EXPO_OUT }}
                             className="overflow-hidden"
                           >
-                            <div className="pl-2 pt-3 pb-1 flex flex-col gap-2.5">
-                              {/* "All items in this category" first — reaches products with
-                                  no subcategory (e.g. the devices themselves). */}
-                              <Link
-                                href={item.href}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="block font-gilroy text-[16px] sm:text-[18px] text-black/75 hover:text-[#4348AE] transition-colors"
-                              >
-                                {item.label}
-                              </Link>
-                              {item.children.map((sub) => (
+                            {isCatalog ? (
+                              // Two-level catalog: each category with subcategories gets
+                              // its own +/− that reveals them (like the desktop dropdown).
+                              <div className="pl-2 pt-3 pb-1 flex flex-col gap-2">
+                                {catalogTree.map((cat) => {
+                                  const catOpen = expandedCatalogCat === cat.label
+                                  const hasSubs = (cat.subcategories?.length ?? 0) > 0
+                                  const catSlug = cat.href.split('=')[1] ?? ''
+                                  return (
+                                    <div key={cat.label}>
+                                      <div className="flex items-center gap-2">
+                                        <Link
+                                          href={cat.href}
+                                          onClick={() => setMobileMenuOpen(false)}
+                                          className="block font-gilroy text-[18px] sm:text-[20px] text-black/80 hover:text-[#4348AE] transition-colors"
+                                        >
+                                          {cat.label}
+                                        </Link>
+                                        {hasSubs && (
+                                          <button
+                                            onClick={() => setExpandedCatalogCat(catOpen ? null : cat.label)}
+                                            className="flex-shrink-0 w-7 h-7 rounded-full border border-black/15 flex items-center justify-center text-black hover:bg-black/5 transition-colors"
+                                            aria-label={catOpen ? `Згорнути ${cat.label}` : `Розгорнути ${cat.label}`}
+                                            aria-expanded={catOpen}
+                                          >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                              {catOpen ? (
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                              ) : (
+                                                <>
+                                                  <line x1="12" y1="5" x2="12" y2="19" />
+                                                  <line x1="5" y1="12" x2="19" y2="12" />
+                                                </>
+                                              )}
+                                            </svg>
+                                          </button>
+                                        )}
+                                      </div>
+                                      {hasSubs && (
+                                        <AnimatePresence initial={false}>
+                                          {catOpen && (
+                                            <motion.div
+                                              key="subs"
+                                              initial={{ height: 0, opacity: 0 }}
+                                              animate={{ height: 'auto', opacity: 1 }}
+                                              exit={{ height: 0, opacity: 0 }}
+                                              transition={{ duration: 0.3, ease: EXPO_OUT }}
+                                              className="overflow-hidden"
+                                            >
+                                              <div className="pl-4 pt-2 pb-1 flex flex-col gap-2">
+                                                {cat.subcategories!.map((sub) => (
+                                                  <Link
+                                                    key={sub}
+                                                    href={`/catalog?category=${catSlug}&subcategory=${encodeURIComponent(sub)}`}
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                    className="block font-gilroy text-[15px] sm:text-[16px] text-black/65 hover:text-[#4348AE] transition-colors"
+                                                  >
+                                                    {sub}
+                                                  </Link>
+                                                ))}
+                                              </div>
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ) : (
+                              <div className="pl-2 pt-3 pb-1 flex flex-col gap-2.5">
+                                {/* "All items in this category" first — reaches products with
+                                    no subcategory (e.g. the devices themselves). */}
                                 <Link
-                                  key={sub.href}
-                                  href={sub.href}
+                                  href={item.href}
                                   onClick={() => setMobileMenuOpen(false)}
                                   className="block font-gilroy text-[16px] sm:text-[18px] text-black/75 hover:text-[#4348AE] transition-colors"
                                 >
-                                  {sub.label}
+                                  {item.label}
                                 </Link>
-                              ))}
-                            </div>
+                                {item.children.map((sub) => (
+                                  <Link
+                                    key={sub.href}
+                                    href={sub.href}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="block font-gilroy text-[16px] sm:text-[18px] text-black/75 hover:text-[#4348AE] transition-colors"
+                                  >
+                                    {sub.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </AnimatePresence>

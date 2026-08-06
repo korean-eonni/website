@@ -292,14 +292,19 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
         )}
         
         <div>
-          <label className="block text-[14px] text-[#666] mb-2">Email *</label>
+          <label className="block text-[14px] text-[#666] mb-2">
+            {mode === 'login' ? 'Email або номер телефону *' : 'Email *'}
+          </label>
           <input
-            type="email"
+            // Logging in accepts either, so it can't be type="email" — the browser
+            // would reject a phone number before the form is ever submitted.
+            type={mode === 'login' ? 'text' : 'email'}
+            inputMode={mode === 'login' ? 'text' : 'email'}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
-            placeholder="your@email.com"
+            placeholder={mode === 'login' ? 'your@email.com або 0XX XXX XX XX' : 'your@email.com'}
           />
         </div>
         
@@ -535,10 +540,12 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
     removeWishlistId(productId)
   }
   
+  const latestOrder = orders[0]
+
   return (
     <div className="max-w-[1200px] mx-auto">
-      {/* User Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      {/* Who is signed in + the way out */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
           <AccountAvatar userId={user.id} initials={(user.first_name?.[0] || user.email[0]).toUpperCase()} />
           <div>
@@ -552,26 +559,10 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
           onClick={onLogout}
           className="px-6 py-2 border border-[#DC2626] text-[#DC2626] rounded-lg hover:bg-red-50 transition-colors text-[14px] font-medium self-start sm:self-auto"
         >
-          Вийти
+          Вийти з акаунту
         </button>
       </div>
-      
-      {/* Tabs */}
-      <div className="border-b border-[#E5E5E5] mb-8 overflow-x-auto">
-        <div className="flex gap-1 sm:gap-2 min-w-max">
-          <Tab active={activeTab === 'orders'} onClick={() => setActiveTab('orders')}>
-            Мої замовлення
-          </Tab>
-          <Tab active={activeTab === 'wishlist'} onClick={() => setActiveTab('wishlist')}>
-            Список бажань ({wishlist.length})
-          </Tab>
-          <Tab active={activeTab === 'settings'} onClick={() => setActiveTab('settings')}>
-            Налаштування
-          </Tab>
-        </div>
-      </div>
-      
-      {/* Tab Content */}
+
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin w-8 h-8 border-2 border-[#4348AE] border-t-transparent rounded-full mx-auto" />
@@ -579,74 +570,80 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
         </div>
       ) : (
         <>
-          {/* Orders Tab */}
-          {activeTab === 'orders' && (
-            <div>
+          {/* Tracking for the most recent order — why most people open this page */}
+          <section className="mb-12">
+            <h2 className="font-bebas uppercase text-black text-[28px] sm:text-[36px] mb-4">
+              Відстежити замовлення
+            </h2>
+            {latestOrder ? (
+              <OrderTrackingCard order={latestOrder} />
+            ) : (
+              <div className="rounded-[24px] bg-[#F8F7FB] p-8 text-center">
+                <p className="text-[#666] mb-5">У вас поки немає замовлень для відстеження.</p>
+                <Link
+                  href="/catalog"
+                  className="inline-block px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors"
+                >
+                  Перейти до каталогу
+                </Link>
+              </div>
+            )}
+          </section>
+
+          <div className="grid gap-8 lg:gap-10 lg:grid-cols-[1.1fr,0.9fr] items-start">
+            {/* Order history — newest first */}
+            <section>
+              <h2 className="font-bebas uppercase text-black text-[26px] sm:text-[32px] mb-4">
+                Історія замовлень
+              </h2>
               {orders.length === 0 ? (
-                <div className="text-center py-16 bg-[#F8F7FB] rounded-[24px]">
-                  <svg className="w-16 h-16 mx-auto text-[#BBBBBB] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  <h3 className="font-bebas text-[24px] text-black mb-2">Поки немає замовлень</h3>
-                  <p className="text-[#666] mb-6">Час зробити перше замовлення!</p>
-                  <Link
-                    href="/catalog"
-                    className="inline-block px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors"
-                  >
-                    Перейти до каталогу
-                  </Link>
+                <div className="rounded-[20px] bg-[#F8F7FB] p-8 text-center text-[#666]">
+                  Тут з&apos;являться ваші замовлення.
                 </div>
               ) : (
-                <OrdersList orders={orders} />
+                <div className="flex flex-col gap-4">
+                  {orders.map((order, index) => (
+                    <OrderHistoryCard key={order.id} order={order} index={index} />
+                  ))}
+                </div>
               )}
-            </div>
-          )}
-          
-          {/* Wishlist Tab */}
-          {activeTab === 'wishlist' && (
-            <div>
+            </section>
+
+            {/* Wishlist */}
+            <section>
+              <h2 className="font-bebas uppercase text-black text-[26px] sm:text-[32px] mb-4 flex items-center gap-2">
+                Мої
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="#E84A8A" stroke="#E84A8A" strokeWidth="1.5">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </h2>
               {wishlist.length === 0 ? (
-                <div className="text-center py-16 bg-[#F8F7FB] rounded-[24px]">
-                  <svg className="w-16 h-16 mx-auto text-[#BBBBBB] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <h3 className="font-bebas text-[24px] text-black mb-2">Список бажань порожній</h3>
-                  <p className="text-[#666] mb-6">Додайте товари, які вам сподобались</p>
-                  <Link
-                    href="/catalog"
-                    className="inline-block px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors"
-                  >
-                    Перейти до каталогу
-                  </Link>
+                <div className="rounded-[20px] bg-[#F8F7FB] p-8 text-center text-[#666]">
+                  Додавайте улюблене кнопкою-сердечком.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   {wishlist.map((product) => (
-                    <div key={product.id} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[16px] overflow-hidden group">
-                      <Link href={`/product/${product.id}`} className="block relative aspect-square bg-[#F8F7FB]">
+                    <div key={product.id} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[16px] overflow-hidden">
+                      <Link href={`/product/${product.id}`} className="block relative aspect-square bg-white">
                         {product.image_url && (
-                          <Image
-                            src={product.image_url}
-                            alt={product.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform"
-                          />
+                          <Image src={product.image_url} alt={product.name} fill className="object-contain p-3" sizes="200px" />
                         )}
                       </Link>
-                      <div className="p-4">
+                      <div className="p-3">
                         <Link href={`/product/${product.id}`}>
-                          <h3 className="font-gilroy text-[16px] text-black hover:text-[#4348AE] transition-colors line-clamp-2 mb-2">
+                          <h3 className="font-gilroy text-[13px] text-black hover:text-[#4348AE] transition-colors line-clamp-2 mb-1.5">
                             {product.name}
                           </h3>
                         </Link>
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-[18px]">₴{product.sale_price}</span>
+                          <span className="font-semibold text-[15px]">₴{product.sale_price}</span>
                           <button
                             onClick={() => removeFromWishlist(product.id)}
-                            className="p-2 text-[#999] hover:text-[#DC2626] transition-colors"
+                            className="p-1.5 text-[#999] hover:text-[#DC2626] transition-colors"
                             title="Видалити зі списку"
                           >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
@@ -656,107 +653,144 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                   ))}
                 </div>
               )}
-            </div>
-          )}
-          
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <div className="max-w-[600px]">
-              <div className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[24px] p-6 sm:p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-bebas text-[24px] sm:text-[28px] text-black">Особисті дані</h2>
-                  {!editMode && (
-                    <button
-                      onClick={() => setEditMode(true)}
-                      className="text-[14px] text-[#4348AE] font-medium hover:underline"
-                    >
-                      Редагувати
-                    </button>
-                  )}
-                </div>
-                
-                {editMode ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[14px] text-[#666] mb-2">Ім&apos;я</label>
-                        <input
-                          type="text"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[14px] text-[#666] mb-2">Прізвище</label>
-                        <input
-                          type="text"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE]"
-                        />
-                      </div>
-                    </div>
+            </section>
+          </div>
+
+          {/* Personal details, kept so name/phone stay editable */}
+          <section className="mt-12 max-w-[600px]">
+            <div className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[24px] p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-bebas text-[24px] sm:text-[28px] text-black">Особисті дані</h2>
+                {!editMode && (
+                  <button onClick={() => setEditMode(true)} className="text-[14px] text-[#4348AE] font-medium hover:underline">
+                    Редагувати
+                  </button>
+                )}
+              </div>
+
+              {editMode ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[14px] text-[#666] mb-2">Email</label>
+                      <label className="block text-[14px] text-[#666] mb-2">Ім&apos;я</label>
                       <input
-                        type="email"
-                        value={user.email}
-                        disabled
-                        className="w-full h-[50px] px-4 border border-[#E5E5E5] rounded-lg font-gilroy text-[16px] bg-[#F8F7FB] text-[#999]"
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[14px] text-[#666] mb-2">Телефон</label>
-                      <PhoneInput value={phone} onChange={setPhone} />
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                      <button
-                        onClick={handleSaveProfile}
-                        disabled={saving}
-                        className="px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
-                      >
-                        {saving ? 'Збереження...' : 'Зберегти'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditMode(false)
-                          setFirstName(user.first_name || '')
-                          setLastName(user.last_name || '')
-                          setPhone(user.phone || '')
-                        }}
-                        className="px-8 py-3 border border-[#BBBBBB] text-black rounded-lg hover:bg-[#F8F7FB] transition-colors"
-                      >
-                        Скасувати
-                      </button>
+                      <label className="block text-[14px] text-[#666] mb-2">Прізвище</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE]"
+                      />
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-between py-3 border-b border-[#E5E5E5]">
-                      <span className="text-[#666]">Ім&apos;я</span>
-                      <span className="font-medium">{user.first_name || '—'}</span>
-                    </div>
-                    <div className="flex justify-between py-3 border-b border-[#E5E5E5]">
-                      <span className="text-[#666]">Прізвище</span>
-                      <span className="font-medium">{user.last_name || '—'}</span>
-                    </div>
-                    <div className="flex justify-between py-3 border-b border-[#E5E5E5]">
-                      <span className="text-[#666]">Email</span>
-                      <span className="font-medium">{user.email}</span>
-                    </div>
-                    <div className="flex justify-between py-3">
-                      <span className="text-[#666]">Телефон</span>
-                      <span className="font-medium">{user.phone || '—'}</span>
-                    </div>
+                  <div>
+                    <label className="block text-[14px] text-[#666] mb-2">Телефон</label>
+                    <PhoneInput value={phone} onChange={setPhone} />
                   </div>
-                )}
-              </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                      className="px-6 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Збереження...' : 'Зберегти'}
+                    </button>
+                    <button
+                      onClick={() => setEditMode(false)}
+                      className="px-6 py-3 border border-[#BBBBBB] rounded-lg hover:bg-[#F8F7FB] transition-colors"
+                    >
+                      Скасувати
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 text-[15px]">
+                  <p><span className="text-[#666]">Ім&apos;я: </span>{[user.first_name, user.last_name].filter(Boolean).join(' ') || '—'}</p>
+                  <p><span className="text-[#666]">Email: </span>{user.email}</p>
+                  <p><span className="text-[#666]">Телефон: </span>{user.phone || '—'}</p>
+                </div>
+              )}
             </div>
-          )}
+          </section>
         </>
       )}
     </div>
+  )
+}
+
+/** Full detail of the most recent order, at the top of the account page. */
+function OrderTrackingCard({ order }: { order: Order }) {
+  const delivery = [order.shipping_city, order.shipping_warehouse].filter(Boolean).join(', ')
+  return (
+    <div className="rounded-[24px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 sm:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <p className="text-[12px] uppercase tracking-[0.18em] text-[#666]">Замовлення</p>
+          <p className="font-bebas text-[26px] text-black leading-tight">#{order.id.slice(0, 8)}</p>
+        </div>
+        <StatusBadge status={order.status} />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 text-[15px] mb-5">
+        <p><span className="text-[#666]">Дата: </span>{new Date(order.created_at).toLocaleDateString('uk-UA')}</p>
+        <p><span className="text-[#666]">Сума: </span><span className="font-semibold">₴{Number(order.total_amount).toFixed(0)}</span></p>
+        {delivery && <p className="sm:col-span-2"><span className="text-[#666]">Доставка: </span>{delivery}</p>}
+        <p className="sm:col-span-2">
+          <span className="text-[#666]">ТТН: </span>
+          {order.tracking_number ? (
+            <span className="font-semibold">{order.tracking_number}</span>
+          ) : (
+            <span className="text-[#666]">буде додано після відправлення</span>
+          )}
+        </p>
+      </div>
+
+      {order.items && order.items.length > 0 && (
+        <div className="border-t border-black/10 pt-4 space-y-2">
+          {order.items.map((item, i) => (
+            <div key={i} className="flex justify-between gap-4 text-[14px]">
+              <span className="text-black/80">{item.product_name} x {item.quantity}</span>
+              <span className="font-medium whitespace-nowrap">₴{Number(item.price * item.quantity).toFixed(0)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Each order gets its own tint from the site palette, so the list reads as
+// separate purchases at a glance rather than one long block.
+const ORDER_TINTS = ['#FFE8F0', '#E2F9FF', '#F6F1FF', '#FFF8E9', '#F4F8F3']
+
+function OrderHistoryCard({ order, index }: { order: Order; index: number }) {
+  return (
+    <Link
+      href={`/orders/${order.id}`}
+      className="block rounded-[18px] border border-white/70 p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(0,0,0,0.10)]"
+      style={{ backgroundColor: ORDER_TINTS[index % ORDER_TINTS.length] }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <p className="font-bebas text-[20px] text-black leading-tight">#{order.id.slice(0, 8)}</p>
+        <StatusBadge status={order.status} />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[14px]">
+        <span className="text-black/65">{new Date(order.created_at).toLocaleDateString('uk-UA')}</span>
+        <span className="font-semibold">₴{Number(order.total_amount).toFixed(0)}</span>
+      </div>
+      {order.items && order.items.length > 0 && (
+        <p className="mt-2 text-[13px] text-black/60 line-clamp-1">
+          {order.items.map((i) => i.product_name).join(', ')}
+        </p>
+      )}
+    </Link>
   )
 }
 
@@ -805,8 +839,17 @@ function GuestView({ onAuthSuccess }: { onAuthSuccess: () => void }) {
 function AccountContent() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [justSignedIn, setJustSignedIn] = useState(false)
   const router = useRouter()
   const { refresh: refreshAuth } = useAuth()
+
+  // Confirm the sign-in for a moment, then drop the customer on the home page —
+  // they came to log in, not to sit on the account screen.
+  const handleAuthSuccess = async () => {
+    setJustSignedIn(true)
+    await checkAuth()
+    setTimeout(() => router.push('/'), 1400)
+  }
 
   useEffect(() => {
     checkAuth()
@@ -852,7 +895,29 @@ function AccountContent() {
     return <UserDashboard user={user} onLogout={handleLogout} />
   }
 
-  return <GuestView onAuthSuccess={checkAuth} />
+  return (
+    <>
+      {justSignedIn && <SignedInToast />}
+      <GuestView onAuthSuccess={handleAuthSuccess} />
+    </>
+  )
+}
+
+/** Brief confirmation shown right after signing in. */
+function SignedInToast() {
+  return (
+    <div
+      role="status"
+      className="fixed inset-x-0 top-[100px] z-[70] flex justify-center px-4 pointer-events-none"
+    >
+      <div className="flex items-center gap-3 rounded-[14px] bg-[#22C55E] text-white px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+        <span className="font-gilroy text-[15px] font-semibold">Ви увійшли в свій профіль</span>
+      </div>
+    </div>
+  )
 }
 
 export default function AccountPage() {

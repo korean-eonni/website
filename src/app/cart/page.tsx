@@ -316,6 +316,14 @@ export default function CartPage() {
                     Оформити замовлення
                   </Link>
 
+                  {/* Second way into the account, next to where people already are */}
+                  <Link
+                    href="/account"
+                    className="mt-3 block w-full py-3.5 border border-[#4348AE] text-[#4348AE] text-center font-medium text-[15px] rounded-lg hover:bg-[#F5F3FF] transition-colors"
+                  >
+                    Подивитись мої замовлення
+                  </Link>
+
                   {/* Payment Methods */}
                   <div className="mt-6 pt-6 border-t border-[#E5E5E5]">
                     <p className="text-[12px] text-[#999] text-center mb-3">Приймаємо до оплати:</p>

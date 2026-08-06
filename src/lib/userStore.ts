@@ -201,6 +201,31 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return rows[0] || null
 }
 
+/**
+ * Find an account by whatever the customer typed into the login box — their email
+ * or their phone number. Phones are compared by digits only, on the last 9 (the
+ * Ukrainian subscriber number), so "+380 73 273 73 30", "0732737330" and
+ * "380732737330" all resolve to the same account no matter how it was saved.
+ */
+export async function getUserByEmailOrPhone(identifier: string): Promise<User | null> {
+  await ensureUserSchema()
+  const raw = (identifier || '').trim()
+  if (!raw) return null
+
+  if (raw.includes('@')) return getUserByEmail(raw)
+
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length < 9) return null
+  const subscriber = digits.slice(-9)
+  const { rows } = await sql<User>`
+    SELECT * FROM users
+    WHERE regexp_replace(COALESCE(phone, ''), '\D', '', 'g') LIKE ${'%' + subscriber}
+    ORDER BY created_at ASC
+    LIMIT 1
+  `
+  return rows[0] || null
+}
+
 export async function getUserById(id: string): Promise<User | null> {
   await ensureUserSchema()
   const { rows } = await sql<User>`SELECT * FROM users WHERE id = ${id}`

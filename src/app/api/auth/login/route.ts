@@ -1,27 +1,35 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { getUserByEmail, verifyPassword, createSession } from '@/lib/userStore'
+import { getUserByEmailOrPhone, verifyPassword, createSession } from '@/lib/userStore'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
+    // The field is still called `email` for compatibility, but it now accepts an
+    // email OR a phone number — customers remember their phone far more reliably.
+    const identifier = String(body.identifier ?? body.email ?? '').trim()
+    const password = body.password
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email та пароль обов\'язкові' }, { status: 400 })
+    if (!identifier || !password) {
+      return NextResponse.json(
+        { error: 'Вкажіть email або номер телефону та пароль' },
+        { status: 400 }
+      )
     }
 
-    // Find user
-    const user = await getUserByEmail(email)
+    const user = await getUserByEmailOrPhone(identifier)
+    // Same message whether the account doesn't exist or the password is wrong, so
+    // the form can't be used to discover which numbers are registered.
+    const WRONG = 'Невірний email/телефон або пароль'
     if (!user) {
-      return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+      return NextResponse.json({ error: WRONG }, { status: 401 })
     }
 
-    // Verify password
     const isValid = await verifyPassword(user, password)
     if (!isValid) {
-      return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+      return NextResponse.json({ error: WRONG }, { status: 401 })
     }
 
     // Create session
