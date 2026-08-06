@@ -81,9 +81,9 @@ const whyKorea = [
 
 const stats = [
   { value: '100', suffix: '+', label: 'товарів в асортименті' },
-  { value: '30', suffix: '+', label: 'брендів K-beauty' },
+  { value: 'Найбільший вибір', suffix: '', label: 'ексклюзивних товарів K-beauty' },
   { value: '100', suffix: '%', label: 'оригінальна продукція' },
-  { value: 'Пн-Пт', suffix: '', label: 'підтримка 10:00-20:00' },
+  { value: 'Пн-Нд', suffix: '', label: 'підтримка 12:00-23:00' },
 ]
 
 export default function AboutPage() {
@@ -299,7 +299,7 @@ export default function AboutPage() {
                   <p className="mt-2 text-[14px] text-white/70">Відправляємо в день замовлення до 18:00</p>
                 </div>
                 <div className="rounded-[16px] bg-white/10 p-5">
-                  <p className="font-bebas uppercase text-[22px]">✓ Підтримка 10-20</p>
+                  <p className="font-bebas uppercase text-[22px]">✓ Підтримка 12-23</p>
                   <p className="mt-2 text-[14px] text-white/70">Відповідаємо на питання щодня</p>
                 </div>
               </div>
