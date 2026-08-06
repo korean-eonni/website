@@ -14,6 +14,8 @@ import { brands } from '@/data/brands'
 import { productFromForm } from '@/lib/productForm'
 import { compactGallery, uploadProductImage, MAX_PRODUCT_IMAGES } from '@/lib/productImages'
 import AdminFlash from '@/components/admin/AdminFlash'
+import TaxonomyFields from '@/components/admin/TaxonomyFields'
+import { getProductTaxonomy } from '@/lib/taxonomy'
 
 type ProductRow = {
   id: string
@@ -153,6 +155,7 @@ export default async function AdminPage({
 
   // The table below renders nine fields — fetching the full record (including
   // every description and section) would move ~1 MB instead of ~45 KB.
+  const taxonomy = await getProductTaxonomy()
   const products = (await listProducts(undefined, [
     'id',
     'name',
@@ -255,38 +258,7 @@ export default async function AdminPage({
                 сховищі сайту за шаблоном «Назва товару.jpg», «Назва товару (2).jpg», і т.д.
               </p>
             </div>
-            <div>
-              <label className="block text-sm mb-2">Постачальник</label>
-              <input
-                name="supplier"
-                maxLength={80}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-2">Категорія</label>
-              <input
-                name="category"
-                maxLength={80}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-2">Субкатегорія</label>
-              <input
-                name="subcategory"
-                maxLength={80}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-2">Субкатегорія 2</label>
-              <input
-                name="subcategory_2"
-                maxLength={80}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
-              />
-            </div>
+            <TaxonomyFields taxonomy={taxonomy} />
             <div>
               <label className="block text-sm mb-2">Бренд</label>
               <select

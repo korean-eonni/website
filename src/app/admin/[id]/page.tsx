@@ -10,6 +10,8 @@ import {
 } from '@/lib/adminAuth'
 import { brands } from '@/data/brands'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
+import TaxonomyFields from '@/components/admin/TaxonomyFields'
+import { getProductTaxonomy } from '@/lib/taxonomy'
 import { productFromForm } from '@/lib/productForm'
 import {
   MAX_PRODUCT_IMAGES,
@@ -161,6 +163,7 @@ export default async function AdminEditPage({
     redirect('/admin')
   }
 
+  const taxonomy = await getProductTaxonomy()
   const gallery = galleryFromRecord(product as unknown as Record<string, unknown>)
   const photoCount = gallery.filter(Boolean).length
 
@@ -249,18 +252,15 @@ export default async function AdminEditPage({
             </div>
 
             {/* ---------- ОСНОВНЕ ---------- */}
-            <Field label="Постачальник">
-              <input name="supplier" defaultValue={product.supplier || ''} maxLength={80} className={inputCls} />
-            </Field>
-            <Field label="Категорія">
-              <input name="category" defaultValue={product.category || ''} maxLength={80} className={inputCls} />
-            </Field>
-            <Field label="Субкатегорія">
-              <input name="subcategory" defaultValue={product.subcategory || ''} maxLength={80} className={inputCls} />
-            </Field>
-            <Field label="Субкатегорія 2">
-              <input name="subcategory_2" defaultValue={product.subcategory_2 || ''} maxLength={80} className={inputCls} />
-            </Field>
+            <TaxonomyFields
+              taxonomy={taxonomy}
+              defaults={{
+                supplier: product.supplier,
+                category: product.category,
+                subcategory: product.subcategory,
+                subcategory_2: product.subcategory_2,
+              }}
+            />
             <Field label="Бренд">
               <select name="brand" defaultValue={product.brand || ''} className={`${inputCls} bg-[#E2F9FF]`}>
                 <option value="">Оберіть бренд</option>
