@@ -118,20 +118,13 @@ type Product = {
   rating: number | null
 }
 
-// Availability is driven by an explicit "coming soon" flag (a dedicated sheet
-// column the owner will add later), NOT by stock_quantity. Until a product is
-// explicitly marked, it counts as in stock — so for now every product shows
-// under "В наявності" and "Скоро в наявності" stays empty.
-// When the sheet column exists and the sync maps it to `coming_soon`, this
-// helper will start splitting products across the two tabs automatically.
+// Availability is driven by the stock column: a product is "coming soon" (not
+// yet purchasable) when its stock has no number ≥ 1 — i.e. empty, 0 or
+// non-numeric. Such products still appear in the catalogue, but dimmed and with
+// a "Скоро в наявності" badge instead of the add-to-cart button.
 function isComingSoon(p: Product): boolean {
-  const v = p.coming_soon
-  if (v === null || v === undefined) return false
-  if (typeof v === 'boolean') return v
-  if (typeof v === 'number') return v > 0
-  const s = v.toString().trim().toLowerCase()
-  if (!s) return false
-  return ['так', 'yes', 'true', '1', '+', 'скоро'].includes(s)
+  const n = typeof p.stock_quantity === 'number' ? p.stock_quantity : Number(p.stock_quantity)
+  return !(Number.isFinite(n) && n >= 1)
 }
 
 const PRODUCTS_PER_PAGE = 20
@@ -269,7 +262,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
             src={allImages[hoveredIndex]}
             alt={product.name}
             fill
-            className="product-image object-contain p-3 transition-opacity duration-300"
+            className={`product-image object-contain p-3 transition-opacity duration-300 ${comingSoon ? 'opacity-50' : ''}`}
             sizes="(min-width: 1280px) 288px, (min-width: 640px) 280px, 100vw"
             loading="lazy"
             placeholder="blur"
@@ -288,15 +281,6 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
             <div className="absolute top-3 left-3 z-[4] flex flex-col items-start gap-1.5">
               <span className="h-[32px] px-3 rounded-[8px] bg-[#E84A8A] text-white text-[15px] font-bold flex items-center shadow-[0_3px_10px_rgba(232,74,138,0.45)]">
                 −{product.discount_amount}%
-              </span>
-            </div>
-          )}
-
-          {/* "Скоро" badge for coming-soon products */}
-          {comingSoon && (
-            <div className="absolute top-3 left-3 z-[4]">
-              <span className="h-[26px] px-3 rounded-[8px] bg-[#4348AE] text-white text-[12px] font-semibold flex items-center shadow-[0_3px_10px_rgba(96,70,163,0.35)]">
-                Скоро
               </span>
             </div>
           )}
@@ -386,7 +370,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         {/* Product Info — sits inside the gradient frame, below the photo cradle */}
         <div className="relative z-[1] flex-1 flex flex-col px-3 sm:px-4 pt-3 pb-3 sm:pt-3.5 sm:pb-4">
           <h3
-            className="font-gilroy text-[13px] sm:text-[15px] leading-[18px] sm:leading-[20px] text-black mb-1.5 min-h-[36px] sm:min-h-[40px]"
+            className={`font-gilroy text-[13px] sm:text-[15px] leading-[18px] sm:leading-[20px] text-black mb-1.5 min-h-[36px] sm:min-h-[40px] ${comingSoon ? 'opacity-60' : ''}`}
           >
             {product.name}
           </h3>
@@ -418,13 +402,18 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
 
           {/* Regular price only. The registered-customer discount is deliberately
               NOT shown while browsing — it appears once items are in the cart. */}
-          <div className="flex items-center gap-2 mt-auto">
-            <span className={`font-gilroy font-semibold text-[15px] sm:text-[18px] leading-[22px] ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-auto">
+            <span className={`font-gilroy font-semibold text-[15px] sm:text-[18px] leading-[22px] ${comingSoon ? 'opacity-60' : ''} ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
               ₴{product.sale_price ?? 0}
             </span>
             {product.original_price && product.original_price > (product.sale_price ?? 0) && (
               <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">
                 ₴{product.original_price}
+              </span>
+            )}
+            {comingSoon && (
+              <span className="inline-flex items-center rounded-full bg-[#4348AE] text-white text-[10px] sm:text-[11px] font-semibold px-2 py-1 whitespace-nowrap">
+                Скоро в наявності
               </span>
             )}
           </div>

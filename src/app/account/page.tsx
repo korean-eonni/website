@@ -189,6 +189,10 @@ function GuestOrderLookup({ onOrdersFound }: { onOrdersFound: (orders: Order[]) 
 // Login/Register Form
 function AuthForm({ onSuccess }: { onSuccess: () => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
+  // Sign in by phone by default — it is what customers remember — with email as
+  // the alternative. Registration always collects the email separately.
+  const [loginBy, setLoginBy] = useState<'phone' | 'email'>('phone')
+  const [loginPhone, setLoginPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -228,15 +232,22 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
           throw new Error(data.error || 'Помилка реєстрації')
         }
       } else {
+        const identifier = loginBy === 'phone' ? loginPhone : email
+        if (!identifier.trim()) {
+          setError(loginBy === 'phone' ? 'Вкажіть номер телефону' : 'Вкажіть email')
+          setLoading(false)
+          return
+        }
+
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ identifier, password }),
         })
-        
+
         if (!res.ok) {
           const data = await res.json()
-          throw new Error(data.error || 'Невірний email або пароль')
+          throw new Error(data.error || 'Невірний email/телефон або пароль')
         }
       }
       
@@ -291,22 +302,63 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
         )}
         
-        <div>
-          <label className="block text-[14px] text-[#666] mb-2">
-            {mode === 'login' ? 'Email або номер телефону *' : 'Email *'}
-          </label>
-          <input
-            // Logging in accepts either, so it can't be type="email" — the browser
-            // would reject a phone number before the form is ever submitted.
-            type={mode === 'login' ? 'text' : 'email'}
-            inputMode={mode === 'login' ? 'text' : 'email'}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
-            placeholder={mode === 'login' ? 'your@email.com або 0XX XXX XX XX' : 'your@email.com'}
-          />
-        </div>
+        {mode === 'login' ? (
+          <div>
+            {/* Phone first, email one tap away */}
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => { setLoginBy('phone'); setError(null) }}
+                className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
+                  loginBy === 'phone'
+                    ? 'bg-[#4348AE] text-white'
+                    : 'bg-[#E2F9FF] text-[#666] border border-[#E5E5E5] hover:border-[#4348AE]'
+                }`}
+              >
+                За телефоном
+              </button>
+              <button
+                type="button"
+                onClick={() => { setLoginBy('email'); setError(null) }}
+                className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
+                  loginBy === 'email'
+                    ? 'bg-[#4348AE] text-white'
+                    : 'bg-[#E2F9FF] text-[#666] border border-[#E5E5E5] hover:border-[#4348AE]'
+                }`}
+              >
+                За email
+              </button>
+            </div>
+
+            <label className="block text-[14px] text-[#666] mb-2">
+              {loginBy === 'phone' ? 'Номер телефону *' : 'Email *'}
+            </label>
+            {loginBy === 'phone' ? (
+              <PhoneInput value={loginPhone} onChange={setLoginPhone} required />
+            ) : (
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
+                placeholder="your@email.com"
+              />
+            )}
+          </div>
+        ) : (
+          <div>
+            <label className="block text-[14px] text-[#666] mb-2">Email *</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
+              placeholder="your@email.com"
+            />
+          </div>
+        )}
         
         {mode === 'register' && (
           <div>
