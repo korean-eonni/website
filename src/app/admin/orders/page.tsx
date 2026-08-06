@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { isAuthed } from '@/lib/adminAuth'
 import { getAllOrders, getAllUsers, type Order, type User } from '@/lib/userStore'
+import { updateCustomerAction, deleteCustomerAction } from './actions'
+import ConfirmDeleteButton from './ConfirmDeleteButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,6 +96,9 @@ function LoginGate() {
 
 type Customer = {
   key: string
+  userId: string
+  firstName: string
+  lastName: string
   name: string
   phone: string
   email: string
@@ -294,6 +299,9 @@ function CustomersView({
     const latest = list[0]
     return {
       key: normPhone(latest.phone) || (latest.email || '').toLowerCase() || latest.id,
+      userId: list.find((o) => o.user_id)?.user_id || '',
+      firstName: latest.first_name,
+      lastName: latest.last_name,
       name: `${latest.first_name} ${latest.last_name}`.trim(),
       phone: latest.phone,
       email: latest.email,
@@ -315,6 +323,9 @@ function CustomersView({
     if (!covered) {
       customers.push({
         key: `u:${u.id}`,
+        userId: u.id,
+        firstName: u.first_name || '',
+        lastName: u.last_name || '',
         name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
         phone: u.phone || '',
         email: u.email,
@@ -394,6 +405,52 @@ function CustomersView({
               </div>
             </div>
           )}
+
+          {/* Edit / delete */}
+          <div className="border-t border-[#EEE] mt-3 pt-3 flex flex-wrap items-start gap-3">
+            <details className="group flex-1 min-w-[240px]">
+              <summary className="cursor-pointer list-none text-[13px] text-[#4348AE] hover:underline select-none">
+                Редагувати дані
+              </summary>
+              <form action={updateCustomerAction} className="mt-3 grid sm:grid-cols-2 gap-2">
+                <input type="hidden" name="userId" value={c.userId} />
+                <input type="hidden" name="orderIds" value={c.orders.map((o) => o.id).join(',')} />
+                <input
+                  name="first_name"
+                  defaultValue={c.firstName}
+                  placeholder="Ім'я"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
+                />
+                <input
+                  name="last_name"
+                  defaultValue={c.lastName}
+                  placeholder="Прізвище"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
+                />
+                <input
+                  name="phone"
+                  defaultValue={c.phone}
+                  placeholder="Телефон"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
+                />
+                <input
+                  name="email"
+                  defaultValue={c.email}
+                  placeholder="Email"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
+                />
+                <button className="h-10 px-4 bg-[#4348AE] text-white rounded-lg text-[14px] font-medium sm:col-span-2 sm:justify-self-start sm:px-6">
+                  Зберегти
+                </button>
+              </form>
+            </details>
+            <ConfirmDeleteButton
+              action={deleteCustomerAction}
+              userId={c.userId}
+              orderIds={c.orders.map((o) => o.id).join(',')}
+              name={c.name}
+            />
+          </div>
         </div>
       ))}
     </div>

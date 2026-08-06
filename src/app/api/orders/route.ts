@@ -4,6 +4,7 @@ import { createOrder, addOrderItem, getSessionByToken, clearCart } from '@/lib/u
 import { getProduct, tryDecrementStock } from '@/lib/productStore'
 import { decrementSheetStock } from '@/lib/sheetStock'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
+import { giftMasksForSubtotal } from '@/lib/giftMasks'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +86,13 @@ export async function POST(request: Request) {
       totalAmount += price * quantity
     }
 
+    // Free "подарунок" masks: one per full 1000₴ of the (pre-discount) items
+    // subtotal, cycling through a fixed set, capped at 25. They cost nothing, so
+    // they do NOT change totalAmount; they're recorded as 0₴ order lines so the
+    // shop knows which masks to include. Gift stock is managed manually — we do
+    // not reserve it here (a mask being low on stock must never block an order).
+    const giftLines = giftMasksForSubtotal(totalAmount)
+
     // Identify user (if any). Needed before discounts — being logged in is itself
     // one, so the order total depends on it.
     const cookieStore = await cookies()
@@ -158,6 +166,18 @@ export async function POST(request: Request) {
         product_image: line.productImage,
         quantity: line.quantity,
         price: line.price,
+      })
+    }
+
+    // Free promo masks as 0₴ lines (clearly labelled) so they appear on the order.
+    for (const g of giftLines) {
+      await addOrderItem({
+        order_id: order.id,
+        product_id: g.productId,
+        product_name: `Подарунок — ${g.name}`,
+        product_image: g.image,
+        quantity: 1,
+        price: 0,
       })
     }
 

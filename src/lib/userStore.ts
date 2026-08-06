@@ -227,6 +227,60 @@ export async function updateUser(id: string, updates: Partial<Pick<User, 'first_
   return getUserById(id)
 }
 
+// Admin edit — updates the account profile, email included (login uses email,
+// so this is intentionally separate from the self-service updateUser above).
+export async function updateUserProfile(
+  id: string,
+  updates: Partial<Pick<User, 'first_name' | 'last_name' | 'phone' | 'email'>>
+): Promise<User | null> {
+  await ensureUserSchema()
+  const now = new Date().toISOString()
+  await sql`
+    UPDATE users
+    SET first_name = COALESCE(${updates.first_name ?? null}, first_name),
+        last_name = COALESCE(${updates.last_name ?? null}, last_name),
+        phone = COALESCE(${updates.phone ?? null}, phone),
+        email = COALESCE(${updates.email ?? null}, email),
+        updated_at = ${now}
+    WHERE id = ${id}
+  `
+  return getUserById(id)
+}
+
+// Admin edit — overwrites the customer details stored on a single order.
+export async function updateOrderCustomer(
+  id: string,
+  data: { first_name: string; last_name: string; phone: string; email: string }
+): Promise<void> {
+  await ensureUserSchema()
+  const now = new Date().toISOString()
+  await sql`
+    UPDATE orders
+    SET first_name = ${data.first_name},
+        last_name = ${data.last_name},
+        phone = ${data.phone},
+        email = ${data.email},
+        updated_at = ${now}
+    WHERE id = ${id}
+  `
+}
+
+// Admin — permanently remove one order and its items (no FK cascade in schema).
+export async function deleteOrderCascade(id: string): Promise<void> {
+  await ensureUserSchema()
+  await sql`DELETE FROM order_items WHERE order_id = ${id}`
+  await sql`DELETE FROM orders WHERE id = ${id}`
+}
+
+// Admin — permanently remove an account and everything tied to it.
+export async function deleteUserAccount(id: string): Promise<void> {
+  await ensureUserSchema()
+  await sql`DELETE FROM user_sessions WHERE user_id = ${id}`
+  await sql`DELETE FROM wishlist WHERE user_id = ${id}`
+  await sql`DELETE FROM cart_items WHERE user_id = ${id}`
+  await sql`DELETE FROM users WHERE id = ${id}`
+}
+
 export async function updatePassword(id: string, newPassword: string): Promise<void> {
   await ensureUserSchema()
   const now = new Date().toISOString()

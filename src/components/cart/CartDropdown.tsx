@@ -9,15 +9,44 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import Magnetic from '@/components/ui/Magnetic'
+import type { GiftLine } from '@/lib/giftMasks'
 
 export default function CartDropdown() {
-  const { items, itemCount, subtotal, loading, updateQuantity, removeItem } = useCart()
+  const { items, itemCount, subtotal, loading, updateQuantity, removeItem, giftMasks, giftFly } = useCart()
   const [isOpen, setIsOpen] = useState(false)
   const { isMember } = useAuth()
   const [promo, setPromo] = useState<string | null>(null)
   const [promoItems, setPromoItems] = useState<string[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+
+  // Free masks are counted in the icon badge (they live in the cart too).
+  const badgeCount = itemCount + giftMasks.length
+
+  // --- Fly-to-cart gift animation -------------------------------------------
+  // When an add crosses a 1000₴ threshold, the context hands us the newly-earned
+  // masks. We queue them and animate ONE at a time (по черзі), each pop-out +
+  // suck-in taking exactly 1 second, so several masks fly in sequence.
+  const [flyQueue, setFlyQueue] = useState<GiftLine[]>([])
+  const [flying, setFlying] = useState<{ mask: GiftLine; uid: number } | null>(null)
+  const lastFlyId = useRef(0)
+  const flyUid = useRef(0)
+
+  useEffect(() => {
+    if (giftFly && giftFly.id !== lastFlyId.current) {
+      lastFlyId.current = giftFly.id
+      setFlyQueue((q) => [...q, ...giftFly.masks])
+    }
+  }, [giftFly])
+
+  useEffect(() => {
+    if (!flying && flyQueue.length > 0) {
+      const [next, ...rest] = flyQueue
+      setFlyQueue(rest)
+      flyUid.current += 1
+      setFlying({ mask: next, uid: flyUid.current })
+    }
+  }, [flying, flyQueue])
 
   // Skin-test bundle promo (10% off) — re-read when the dropdown opens.
   useEffect(() => {
@@ -82,21 +111,43 @@ export default function CartDropdown() {
           </svg>
 
           <AnimatePresence mode="wait">
-            {itemCount > 0 && (
+            {badgeCount > 0 && (
               <motion.span
-                key={itemCount}
+                key={badgeCount}
                 initial={{ scale: 0, y: -6 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0 }}
                 transition={{ type: 'spring', stiffness: 600, damping: 22 }}
                 className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#4348AE] text-white text-[10px] leading-none font-semibold rounded-full flex items-center justify-center ring-2 ring-[#FFFCF5]"
               >
-                {itemCount > 99 ? '99+' : itemCount}
+                {badgeCount > 99 ? '99+' : badgeCount}
               </motion.span>
             )}
           </AnimatePresence>
         </button>
       </Magnetic>
+
+      {/* Gift-mask fly-to-cart animation: pops out below the icon showing
+          "Подарунок", then is sucked back into the cart icon — 1s per mask. */}
+      <AnimatePresence>
+        {flying && (
+          <motion.div
+            key={flying.uid}
+            initial={{ scale: 0.3, opacity: 0, y: 0 }}
+            animate={{ scale: [0.3, 1, 1, 0.2], opacity: [0, 1, 1, 0], y: [0, 66, 66, 0] }}
+            transition={{ duration: 1, times: [0, 0.35, 0.7, 1], ease: 'easeInOut' }}
+            onAnimationComplete={() => setFlying(null)}
+            className="pointer-events-none absolute left-1/2 top-1/2 z-[60] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+          >
+            <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white shadow-[0_8px_24px_rgba(0,0,0,0.22)] ring-2 ring-[#4348AE]">
+              <Image src={flying.mask.image} alt="" fill className="object-cover" sizes="56px" />
+            </div>
+            <span className="mt-1 whitespace-nowrap rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-[#4348AE] shadow">
+              Подарунок
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dropdown */}
       {isOpen && (
@@ -203,6 +254,24 @@ export default function CartDropdown() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
+                  </div>
+                ))}
+
+                {/* Gift masks — read-only, one free mask per 1000₴ */}
+                {giftMasks.map((g) => (
+                  <div key={`gift-${g.seq}`} className="flex gap-3 p-4 border-b border-[#F0F0F0] last:border-0 bg-[#FFF0F6]">
+                    <div className="relative w-[70px] h-[70px] bg-white rounded-lg overflow-hidden flex-shrink-0">
+                      <Image src={g.image} alt={g.name} fill className="object-cover" sizes="70px" />
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <p className="font-gilroy text-[14px] text-black line-clamp-2">{g.name}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="inline-flex items-center rounded-full bg-[#FFE8F0] px-2 py-0.5 text-[11px] font-semibold text-[#E84A8A]">
+                          Подарунок
+                        </span>
+                        <span className="font-semibold text-[14px] text-[#E84A8A]">₴0</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

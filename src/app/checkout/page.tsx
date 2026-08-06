@@ -68,7 +68,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, subtotal, clearCart } = useCart()
+  const { items, subtotal, clearCart, giftMasks } = useCart()
   const { isMember } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
   // Skin-test bundle promo (10% off) — activated from /skin-test "add full routine".
@@ -932,6 +932,19 @@ export default function CheckoutPage() {
                       <div className="flex-grow min-w-0">
                         <p className="text-[13px] text-black line-clamp-2">{item.product?.name}</p>
                         <p className="text-[13px] font-medium mt-1">₴{((item.product?.sale_price || 0) * item.quantity).toFixed(0)}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Gift masks (free) */}
+                  {giftMasks.map((g) => (
+                    <div key={`gift-${g.seq}`} className="flex gap-3 py-3 border-b border-[#F0F0F0] last:border-0">
+                      <div className="relative w-[50px] h-[50px] bg-white rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-[#FFD6E6]">
+                        <Image src={g.image} alt={g.name} fill className="object-cover" sizes="50px" />
+                      </div>
+                      <div className="flex-grow min-w-0">
+                        <p className="text-[13px] text-black line-clamp-2">{g.name}</p>
+                        <p className="text-[12px] font-semibold text-[#E84A8A] mt-1">Подарунок · ₴0</p>
                       </div>
                     </div>
                   ))}

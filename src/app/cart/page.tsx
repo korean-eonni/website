@@ -9,7 +9,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export default function CartPage() {
-  const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart } = useCart()
+  const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
   const { isMember } = useAuth()
 
   // Skin-test bundle promo (10% off), set when the user added the full routine.
@@ -183,6 +183,28 @@ export default function CartPage() {
                       </button>
                     </div>
                   ))}
+
+                  {/* Gift masks — free, one per 1000₴, read-only */}
+                  {giftMasks.map((g) => (
+                    <div key={`gift-${g.seq}`} className="py-6 grid grid-cols-1 md:grid-cols-[2fr,1fr,1fr,1fr,auto] gap-4 items-center">
+                      <div className="flex gap-4">
+                        <div className="relative w-[100px] h-[100px] bg-white rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-[#FFD6E6]">
+                          <Image src={g.image} alt={g.name} fill className="object-cover" sizes="100px" />
+                        </div>
+                        <div className="flex flex-col justify-center gap-1.5">
+                          <p className="font-gilroy text-[16px] text-black line-clamp-2">{g.name}</p>
+                          <span className="inline-flex w-fit items-center rounded-full bg-[#FFE8F0] px-2.5 py-0.5 text-[12px] font-semibold text-[#E84A8A]">
+                            Подарунок
+                          </span>
+                          <p className="md:hidden mt-1 font-semibold text-[#E84A8A]">₴0</p>
+                        </div>
+                      </div>
+                      <div className="hidden md:block text-center font-semibold text-[#E84A8A]">₴0</div>
+                      <div className="hidden md:flex items-center justify-center text-[14px] text-[#999]">1 шт</div>
+                      <div className="hidden md:block text-right font-semibold text-[18px] text-[#E84A8A]">₴0</div>
+                      <span className="hidden md:block w-8" />
+                    </div>
+                  ))}
                 </div>
 
                 {/* Clear Cart */}
@@ -215,6 +237,12 @@ export default function CartPage() {
                       <span className="text-[#666]">Товари ({itemCount})</span>
                       <span className="font-medium">₴{subtotal.toFixed(0)}</span>
                     </div>
+                    {giftMasks.length > 0 && (
+                      <div className="flex justify-between text-[16px] font-semibold text-[#E84A8A]">
+                        <span>Маски в подарунок ({giftMasks.length})</span>
+                        <span>₴0</span>
+                      </div>
+                    )}
                     {memberApplied && (
                       <div className="flex justify-between text-[16px] font-semibold text-[#E84A8A]">
                         <span>{MEMBER_DISCOUNT_LABEL}</span>

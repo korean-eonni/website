@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react'
+import { giftCountForSubtotal, giftMasksForSubtotal, GiftLine } from '@/lib/giftMasks'
 
 type CartProduct = {
   id: string
@@ -18,11 +19,20 @@ type CartItem = {
   product: CartProduct | null
 }
 
+// Set whenever an add-to-cart crosses one or more 1000₴ gift thresholds. The
+// header cart flyer watches `id` (a fresh timestamp each time) and animates the
+// newly-earned `masks` into the cart icon, one after another.
+type GiftFly = { id: number; masks: GiftLine[] }
+
 type CartContextType = {
   items: CartItem[]
   itemCount: number
   subtotal: number
   loading: boolean
+  /** Free "подарунок" masks earned by the current subtotal (derived, read-only). */
+  giftMasks: GiftLine[]
+  /** Latest batch of newly-earned masks to fly into the cart icon (or null). */
+  giftFly: GiftFly | null
   addToCart: (productId: string, quantity?: number) => Promise<void>
   updateQuantity: (itemId: string, quantity: number) => Promise<void>
   removeItem: (itemId: string) => Promise<void>
@@ -37,6 +47,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [itemCount, setItemCount] = useState(0)
   const [subtotal, setSubtotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [giftFly, setGiftFly] = useState<GiftFly | null>(null)
+
+  // Mirror of `subtotal` readable inside async callbacks without stale closures,
+  // so addToCart can tell how many gift masks existed before the server response.
+  const subtotalRef = useRef(0)
+  useEffect(() => { subtotalRef.current = subtotal }, [subtotal])
+
+  const giftMasks = useMemo(() => giftMasksForSubtotal(subtotal), [subtotal])
 
   const applyCartData = useCallback((data: { items?: CartItem[]; itemCount?: number; subtotal?: number }) => {
     if (data.items) setItems(data.items)
@@ -72,7 +90,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }).then(async (res) => {
       if (res.ok) {
         const data = await res.json()
+        // How many free masks existed before vs. after this add — if the subtotal
+        // crossed one or more 1000₴ thresholds, fly the newly-earned masks in.
+        const prevN = giftCountForSubtotal(subtotalRef.current)
+        const nextSubtotal = typeof data.subtotal === 'number' ? data.subtotal : subtotalRef.current
+        const nextN = giftCountForSubtotal(nextSubtotal)
         applyCartData(data)
+        if (nextN > prevN) {
+          const newly = giftMasksForSubtotal(nextSubtotal).slice(prevN, nextN)
+          setGiftFly({ id: Date.now(), masks: newly })
+        }
       }
     }).catch(() => {
       setItemCount(prev => prev - quantity)
@@ -164,6 +191,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         itemCount,
         subtotal,
         loading,
+        giftMasks,
+        giftFly,
         addToCart,
         updateQuantity,
         removeItem,

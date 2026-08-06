@@ -32,7 +32,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/me')
+      // `cache: 'no-store'` matters: a cached anonymous answer would keep the
+      // customer looking logged-out and quietly drop their discount.
+      const res = await fetch('/api/auth/me', { cache: 'no-store', credentials: 'same-origin' })
       // 401 is the normal "not logged in" answer here, not an error worth logging.
       setUser(res.ok ? (await res.json()).user ?? null : null)
     } catch {
@@ -44,6 +46,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void refresh()
+
+    // Re-check when the tab becomes visible again. Covers signing in from another
+    // tab, and a session that started or expired while this page sat open — the
+    // prices on screen would otherwise stay wrong until a manual reload.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
   }, [refresh])
 
   return (
