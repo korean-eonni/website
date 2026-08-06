@@ -89,8 +89,10 @@ function extFromFilename(fileName: string | null | undefined): string | null {
 }
 
 /**
- * Upload one photo into a given slot. Accepts a browser `File` (admin upload)
- * or a raw Buffer (used by the one-time migration from Google).
+ * Upload one photo. `slot` is the index used in the file name (1 → «Назва.jpg»,
+ * 2 → «Назва (2).jpg»); use nextImageIndex() to pick a free one when adding to
+ * an existing product. Accepts a browser `File` (admin upload) or a raw Buffer
+ * (used by the one-time migration from Google).
  *
  * Deterministic key + overwrite, so re-uploading the same slot replaces the
  * photo instead of piling up orphans.
@@ -108,7 +110,10 @@ export async function uploadProductImage(opts: {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     throw new Error('blob-token-missing')
   }
-  if (slot < 1 || slot > MAX_PRODUCT_IMAGES) {
+  // `slot` is the file-name index, not the gallery position — it may run past
+  // MAX_PRODUCT_IMAGES as photos are added and removed over time. How many
+  // photos a product may show is enforced by the caller.
+  if (!Number.isInteger(slot) || slot < 1 || slot > 999) {
     throw new Error('invalid-slot')
   }
 
@@ -139,6 +144,27 @@ export async function uploadProductImage(opts: {
     cacheControlMaxAge: 60 * 60 * 24 * 365,
   })
   return blob.url
+}
+
+/**
+ * The next file-name index that is free for this product.
+ *
+ * The storage key must NOT be derived from the display position: after removing
+ * a photo from the middle, an existing photo can already occupy the key that the
+ * new position would produce, and the upload (which overwrites by design) would
+ * destroy it. Reading the indices already in use and continuing past the highest
+ * keeps names in the familiar «Назва (N)» form while staying collision-free.
+ */
+export function nextImageIndex(existingUrls: (string | null | undefined)[]): number {
+  let highest = 0
+  for (const url of existingUrls) {
+    if (!url) continue
+    const file = decodeURIComponent(url.split('?')[0].split('/').pop() ?? '')
+    const m = file.match(/\((\d+)\)\.[^.]+$/)
+    const idx = m ? parseInt(m[1], 10) : 1
+    if (Number.isFinite(idx) && idx > highest) highest = idx
+  }
+  return highest + 1
 }
 
 /** True when the URL points at our own Blob storage (safe to delete). */

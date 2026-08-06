@@ -11,6 +11,7 @@ import {
 import { brands } from '@/data/brands'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import TaxonomyFields from '@/components/admin/TaxonomyFields'
+import ProductPhotos from '@/components/admin/ProductPhotos'
 import { getProductTaxonomy } from '@/lib/taxonomy'
 import { productFromForm } from '@/lib/productForm'
 import {
@@ -18,6 +19,7 @@ import {
   compactGallery,
   deleteProductImage,
   galleryFromRecord,
+  nextImageIndex,
   uploadProductImage,
 } from '@/lib/productImages'
 
@@ -46,36 +48,48 @@ async function updateProductAction(formData: FormData) {
 
   const name = String(formData.get('name') || '').trim() || existing.name
 
-  // 1) Start from the current gallery, drop the photos ticked for removal.
-  const current = galleryFromRecord(existing as unknown as Record<string, unknown>)
-  const removed: string[] = []
-  const kept = current.map((url, i) => {
-    if (url && formData.get(`remove_${i + 1}`)) {
-      removed.push(url)
-      return null
+  // 1) The admin submits the exact order they arranged, plus what they removed.
+  const parseList = (raw: FormDataEntryValue | null): string[] => {
+    try {
+      const parsed = JSON.parse(String(raw ?? '[]'))
+      return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []
+    } catch {
+      return []
     }
-    return url
-  })
+  }
 
-  // 2) Append newly uploaded photos into the first free slots.
+  const currentGallery = galleryFromRecord(existing as unknown as Record<string, unknown>)
+    .filter((u): u is string => !!u)
+  const submittedOrder = parseList(formData.get('gallery_order'))
+  // Only trust URLs the product actually owns, so a tampered field cannot
+  // inject a foreign image; fall back to the stored order if nothing came in.
+  const ordered = submittedOrder.filter((u) => currentGallery.includes(u))
+  const kept = ordered.length || formData.has('gallery_order') ? ordered : currentGallery
+  const removed = parseList(formData.get('gallery_removed')).filter((u) =>
+    currentGallery.includes(u) && !kept.includes(u)
+  )
+
+  // 2) Append newly uploaded photos after the existing ones.
   let gallery = compactGallery(kept)
   const newFiles = (formData.getAll('images') as File[]).filter(
     (f) => f && typeof f === 'object' && f.size > 0
   )
 
   if (newFiles.length) {
-    const free = gallery.filter(Boolean).length
-    const room = MAX_PRODUCT_IMAGES - free
+    const used = gallery.filter(Boolean).length
+    const room = MAX_PRODUCT_IMAGES - used
+    // File names continue past the highest index already stored, so a new upload
+    // can never overwrite a photo that is still in the gallery.
+    let nameIndex = nextImageIndex(currentGallery)
     try {
       for (let i = 0; i < Math.min(newFiles.length, room); i++) {
-        const slot = free + i + 1
         const url = await uploadProductImage({
           data: newFiles[i],
           productId: id,
           productName: name,
-          slot,
+          slot: nameIndex++,
         })
-        gallery[slot - 1] = url
+        gallery[used + i] = url
       }
     } catch (err) {
       console.error('[admin/updateProduct] image upload failed:', err)
@@ -165,7 +179,6 @@ export default async function AdminEditPage({
 
   const taxonomy = await getProductTaxonomy()
   const gallery = galleryFromRecord(product as unknown as Record<string, unknown>)
-  const photoCount = gallery.filter(Boolean).length
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
@@ -203,53 +216,7 @@ export default async function AdminEditPage({
               <input name="name" required defaultValue={product.name} maxLength={200} className={inputCls} />
             </Field>
 
-            {/* ---------- ФОТО ---------- */}
-            <div className="md:col-span-2 rounded-xl border border-[#CCCCCC] bg-white p-4">
-              <p className="text-sm font-semibold mb-3">
-                Фото ({photoCount}/{MAX_PRODUCT_IMAGES})
-              </p>
-
-              {photoCount === 0 && (
-                <p className="text-xs text-[#666] mb-3">Фото ще немає.</p>
-              )}
-
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                {gallery.map((url, i) =>
-                  url ? (
-                    <label
-                      key={i}
-                      className="block cursor-pointer rounded-lg border border-[#E5E5E5] p-2 hover:border-[#B91C1C] transition-colors"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={url}
-                        alt={`Фото ${i + 1}`}
-                        className="w-full aspect-square object-contain bg-white"
-                      />
-                      <span className="mt-2 flex items-center gap-1.5 text-[11px] text-[#7F1D1D]">
-                        <input type="checkbox" name={`remove_${i + 1}`} />
-                        Видалити {i === 0 ? '(головне)' : `#${i + 1}`}
-                      </span>
-                    </label>
-                  ) : null
-                )}
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-sm mb-2">Додати фото</label>
-                <input
-                  name="images"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/avif"
-                  multiple
-                  className="w-full"
-                />
-                <p className="mt-1 text-xs text-[#666]">
-                  Нові фото стають у вільні слоти. Перше фото в списку — головне. Зберігаються у
-                  власному сховищі як «Назва товару.jpg», «Назва товару (2).jpg» …
-                </p>
-              </div>
-            </div>
+            <ProductPhotos initial={gallery.filter(Boolean) as string[]} max={MAX_PRODUCT_IMAGES} />
 
             {/* ---------- ОСНОВНЕ ---------- */}
             <TaxonomyFields

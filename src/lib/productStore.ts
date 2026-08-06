@@ -1,4 +1,5 @@
 import { sql } from '@vercel/postgres'
+import { unstable_noStore } from 'next/cache'
 import { del } from '@vercel/blob'
 import { getDb } from '@/lib/db'
 import { randomUUID } from 'crypto'
@@ -63,6 +64,26 @@ export type ProductRecord = {
 }
 
 const usePostgres = !!process.env.POSTGRES_URL
+
+/**
+ * Product reads must never come from Next's data cache.
+ *
+ * @vercel/postgres talks to Postgres over HTTP, so Next caches the underlying
+ * fetch and a second read of the same row inside one deployment can return a
+ * stale snapshot. In the admin that silently undoes work: edit a product, save,
+ * edit again — the second save writes back the pre-edit row. Stock and prices
+ * have the same problem on the storefront.
+ *
+ * Safe to call outside a request (scripts) — it is a no-op there.
+ */
+function freshRead() {
+  try {
+    unstable_noStore()
+  } catch {
+    // not in a request scope (e.g. a CLI script) — nothing to opt out of
+  }
+}
+
 
 /**
  * Schema setup is idempotent DDL (CREATE TABLE IF NOT EXISTS + ~34 ALTER … IF NOT
@@ -280,6 +301,7 @@ export const PRODUCT_COLUMNS = [
  * PRODUCT_COLUMNS are accepted, so this can never become an injection point.
  */
 export async function listProducts(where?: string, columns?: readonly string[]) {
+  freshRead()
   const allowed = columns?.filter((c) => (PRODUCT_COLUMNS as readonly string[]).includes(c))
   const select = allowed && allowed.length ? allowed.join(', ') : '*'
 
@@ -462,6 +484,7 @@ export async function saveProduct(product: ProductRecord): Promise<void> {
 }
 
 export async function getProduct(id: string) {
+  freshRead()
   if (usePostgres) {
     await ensurePostgresSchema()
     const result = await sql`SELECT * FROM products WHERE id = ${id}`
@@ -697,9 +720,13 @@ export async function tryDecrementStock(productId: string, qty: number): Promise
   if (qty <= 0) return null
   if (usePostgres) {
     await ensurePostgresSchema()
+    // Selling the last unit flips "Скоро в наявності" on in the same statement,
+    // so the flag can never disagree with the stock it describes.
     const result = await sql`
       UPDATE products
-      SET stock_quantity = stock_quantity - ${qty}, updated_at = ${new Date().toISOString()}
+      SET stock_quantity = stock_quantity - ${qty},
+          coming_soon = CASE WHEN stock_quantity - ${qty} < 1 THEN 1 ELSE coming_soon END,
+          updated_at = ${new Date().toISOString()}
       WHERE id = ${productId} AND stock_quantity >= ${qty}
       RETURNING stock_quantity
     `

@@ -5,6 +5,7 @@
  * drift apart — previously the edit screen silently dropped a dozen fields.
  */
 import type { ProductRecord } from '@/lib/productStore'
+import { resolveComingSoon } from '@/lib/stock'
 
 export type ProductFormOptions = {
   /** Existing record when editing — used for id/created_at and as fallback. */
@@ -44,6 +45,7 @@ export function productFromForm(
   { existing, gallery, id }: ProductFormOptions
 ): ProductRecord {
   const now = new Date().toISOString()
+  const stockQuantity = numberOf(formData, 'stock_quantity')
 
   return {
     id,
@@ -71,7 +73,7 @@ export function productFromForm(
     sale_price: numberOf(formData, 'sale_price'),
     original_price: numberOf(formData, 'original_price'),
     discount_amount: numberOf(formData, 'discount_amount'),
-    stock_quantity: numberOf(formData, 'stock_quantity'),
+    stock_quantity: stockQuantity,
 
     category: textOf(formData, 'category', 80),
     subcategory: textOf(formData, 'subcategory', 80),
@@ -102,7 +104,8 @@ export function productFromForm(
     is_active: boolOf(formData, 'is_active'),
     is_new: boolOf(formData, 'is_new'),
     is_exclusive: boolOf(formData, 'is_exclusive'),
-    coming_soon: boolOf(formData, 'coming_soon'),
+    // Out of stock always means "Скоро в наявності" — see resolveComingSoon().
+    coming_soon: resolveComingSoon(stockQuantity, boolOf(formData, 'coming_soon')),
 
     created_at: existing?.created_at ?? now,
     updated_at: now,
