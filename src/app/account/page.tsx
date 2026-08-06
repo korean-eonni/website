@@ -42,22 +42,6 @@ type WishlistProduct = {
   image_url: string | null
 }
 
-// Tab component
-function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 sm:px-6 py-3 font-gilroy text-[14px] sm:text-[16px] transition-colors border-b-2 whitespace-nowrap ${
-        active 
-          ? 'border-[#4348AE] text-[#4348AE] font-semibold' 
-          : 'border-transparent text-[#666] hover:text-black'
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
-
 // Order status badge
 function StatusBadge({ status }: { status: string }) {
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -78,111 +62,6 @@ function StatusBadge({ status }: { status: string }) {
     >
       {config.label}
     </span>
-  )
-}
-
-// Guest Order Lookup
-function GuestOrderLookup({ onOrdersFound }: { onOrdersFound: (orders: Order[]) => void }) {
-  const [lookupType, setLookupType] = useState<'phone' | 'email'>('phone')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [searched, setSearched] = useState(false)
-
-  const handleLookup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    setSearched(true)
-
-    try {
-      const res = await fetch('/api/orders/lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lookupType === 'phone' ? { phone } : { email }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Помилка пошуку')
-      }
-
-      const orders = await res.json()
-      onOrdersFound(orders)
-    } catch (err: any) {
-      setError(err.message)
-      onOrdersFound([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="bg-[#F8F7FB] rounded-[24px] p-6 sm:p-8">
-      <h3 className="font-bebas text-[24px] sm:text-[28px] text-black mb-2">Відстежити замовлення</h3>
-      <p className="text-[14px] text-[#666] mb-6">
-        Введіть номер телефону або email, який ви вказували при оформленні замовлення
-      </p>
-
-      {/* Toggle */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setLookupType('phone')}
-          className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
-            lookupType === 'phone'
-              ? 'bg-[#4348AE] text-white'
-              : 'bg-[#E2F9FF] text-[#666] border border-[#E5E5E5] hover:border-[#4348AE]'
-          }`}
-        >
-          За телефоном
-        </button>
-        <button
-          onClick={() => setLookupType('email')}
-          className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
-            lookupType === 'email'
-              ? 'bg-[#4348AE] text-white'
-              : 'bg-[#E2F9FF] text-[#666] border border-[#E5E5E5] hover:border-[#4348AE]'
-          }`}
-        >
-          За email
-        </button>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[14px]">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-3">
-        {lookupType === 'phone' ? (
-          <PhoneInput value={phone} onChange={setPhone} required className="flex-1" />
-        ) : (
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            required
-            className="flex-1 h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
-          />
-        )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="h-[50px] px-8 bg-[#4348AE] text-white font-semibold rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Пошук...' : 'Знайти'}
-        </button>
-      </form>
-
-      {searched && !loading && (
-        <p className="mt-4 text-[13px] text-[#999]">
-          Якщо ви не знайшли своє замовлення, зверніться до нас: +380 73 273 73 30
-        </p>
-      )}
-    </div>
   )
 }
 
@@ -422,98 +301,6 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 // Orders List Component
-function OrdersList({ orders, showCustomerInfo = false }: { orders: Order[]; showCustomerInfo?: boolean }) {
-  if (orders.length === 0) {
-    return (
-      <div className="text-center py-16 bg-[#F8F7FB] rounded-[24px]">
-        <svg className="w-16 h-16 mx-auto text-[#BBBBBB] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-        <h3 className="font-bebas text-[24px] text-black mb-2">Замовлення не знайдено</h3>
-        <p className="text-[#666] mb-6">Спробуйте інший номер телефону або email</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      {orders.map((order) => (
-        <div key={order.id} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[16px] p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <p className="text-[13px] text-[#666]">Замовлення</p>
-              <p className="font-semibold text-[16px] sm:text-[18px] text-black">{order.id}</p>
-            </div>
-            <StatusBadge status={order.status} />
-          </div>
-
-          {/* Order Items Preview */}
-          {order.items && order.items.length > 0 && (
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-              {order.items.slice(0, 4).map((item, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[60px] h-[60px] bg-[#F8F7FB] rounded-lg overflow-hidden relative">
-                  {item.product_image && (
-                    <Image
-                      src={item.product_image}
-                      alt={item.product_name}
-                      fill
-                      className="object-cover"
-                    />
-                  )}
-                  {item.quantity > 1 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#4348AE] text-white text-[10px] rounded-full flex items-center justify-center">
-                      {item.quantity}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {order.items.length > 4 && (
-                <div className="flex-shrink-0 w-[60px] h-[60px] bg-[#F8F7FB] rounded-lg flex items-center justify-center text-[14px] text-[#666]">
-                  +{order.items.length - 4}
-                </div>
-              )}
-            </div>
-          )}
-
-          {showCustomerInfo && (
-            <div className="mb-4 p-3 bg-[#F8F7FB] rounded-lg text-[13px]">
-              <p><span className="text-[#666]">Отримувач:</span> {order.first_name} {order.last_name}</p>
-              <p><span className="text-[#666]">Телефон:</span> {order.phone}</p>
-            </div>
-          )}
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#E5E5E5]">
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-              <div>
-                <p className="text-[11px] sm:text-[12px] text-[#999]">Дата</p>
-                <p className="text-[13px] sm:text-[14px] text-black">
-                  {new Date(order.created_at).toLocaleDateString('uk-UA')}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] sm:text-[12px] text-[#999]">Сума</p>
-                <p className="text-[13px] sm:text-[14px] font-semibold text-black">₴{order.total_amount}</p>
-              </div>
-              {order.tracking_number && (
-                <div>
-                  <p className="text-[11px] sm:text-[12px] text-[#999]">ТТН</p>
-                  <p className="text-[13px] sm:text-[14px] text-[#4348AE] font-medium">{order.tracking_number}</p>
-                </div>
-              )}
-            </div>
-            <Link
-              href={`/orders/${order.id}`}
-              className="text-[14px] text-[#4348AE] font-medium hover:underline"
-            >
-              Детальніше →
-            </Link>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // User Dashboard
 function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const searchParams = useSearchParams()
@@ -846,44 +633,21 @@ function OrderHistoryCard({ order, index }: { order: Order; index: number }) {
   )
 }
 
-// Guest View (not logged in)
+// Guest View (not logged in). Signing in is the only thing offered here — order
+// tracking lives inside the account, so a separate lookup box would just be a
+// second, weaker way to do what logging in already does.
 function GuestView({ onAuthSuccess }: { onAuthSuccess: () => void }) {
-  const [guestOrders, setGuestOrders] = useState<Order[]>([])
-  const [hasSearched, setHasSearched] = useState(false)
-
-  const handleOrdersFound = (orders: Order[]) => {
-    setGuestOrders(orders)
-    setHasSearched(true)
-  }
-
   return (
-    <div className="max-w-[900px] mx-auto">
+    <div className="max-w-[560px] mx-auto">
       <h1 className="font-bebas text-[40px] sm:text-[56px] text-black text-center mb-4">
         Мій акаунт
       </h1>
-      <p className="text-[#666] text-center text-[16px] mb-10 max-w-[500px] mx-auto">
-        Увійдіть в акаунт або знайдіть ваше замовлення за номером телефону
+      <p className="text-[#666] text-center text-[16px] mb-10">
+        Увійдіть, щоб відстежити своє замовлення, побачити історію покупок
+        та список бажань.
       </p>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Guest Order Lookup */}
-        <div>
-          <GuestOrderLookup onOrdersFound={handleOrdersFound} />
-          
-          {/* Guest Orders Results */}
-          {hasSearched && guestOrders.length > 0 && (
-            <div className="mt-6">
-              <h3 className="font-bebas text-[24px] text-black mb-4">Знайдені замовлення</h3>
-              <OrdersList orders={guestOrders} showCustomerInfo />
-            </div>
-          )}
-        </div>
-
-        {/* Login/Register */}
-        <div>
-          <AuthForm onSuccess={onAuthSuccess} />
-        </div>
-      </div>
+      <AuthForm onSuccess={onAuthSuccess} />
     </div>
   )
 }
