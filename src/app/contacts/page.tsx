@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 const contactMethods = [
   {

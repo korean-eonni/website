@@ -4,6 +4,7 @@ import Magnetic from '@/components/ui/Magnetic'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import SalesNewsletter from './SalesNewsletter'
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 export const metadata: Metadata = {
   title: 'Знижки та акції | Eonni — Вигідні пропозиції на корейську косметику',

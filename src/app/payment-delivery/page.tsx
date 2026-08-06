@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   keywords: 'доставка косметики, Нова Пошта, Укрпошта, оплата онлайн, накладений платіж, Eonni',
   openGraph: {
     title: 'Доставка та оплата | Eonni',
-    description: 'Швидка доставка по всій Україні. Безкоштовно від 2500₴. Відправка в день замовлення.',
+    description: `Швидка доставка по всій Україні. Безкоштовно від ${FREE_SHIPPING_THRESHOLD}₴. Відправка в день замовлення.`,
     type: 'website',
     locale: 'uk_UA',
   },
@@ -95,7 +95,7 @@ const faqItems = [
   },
   {
     question: 'Чи є безкоштовна доставка?',
-    answer: 'Так! При замовленні від 2500₴ доставка Новою Поштою до відділення — безкоштовна. Слідкуйте за акціями — іноді знижуємо поріг безкоштовної доставки.',
+    answer: `Так! При замовленні від ${FREE_SHIPPING_THRESHOLD}₴ доставка Новою Поштою до відділення — безкоштовна. Слідкуйте за акціями — іноді знижуємо поріг безкоштовної доставки.`,
   },
   {
     question: 'Як відстежити посилку?',
@@ -131,7 +131,7 @@ export default function PaymentDeliveryPage() {
               <p className="mt-6 text-black font-gilroy text-[16px] leading-[24px] sm:text-[18px] sm:leading-[28px]">
                 Доставляємо по всій Україні Новою Поштою та Укрпоштою. 
                 Замовлення до 18:00 відправляємо в той же день. 
-                Безкоштовна доставка від 2500₴.
+                Безкоштовна доставка від {FREE_SHIPPING_THRESHOLD}₴.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link
@@ -150,7 +150,7 @@ export default function PaymentDeliveryPage() {
               </div>
               <div className="rounded-[20px] bg-[#F6F1FF] p-6 text-center">
                 <div className="text-4xl mb-3">🎁</div>
-                <p className="font-bebas uppercase text-[24px] text-black">Від 2500₴</p>
+                <p className="font-bebas uppercase text-[24px] text-black">Від {FREE_SHIPPING_THRESHOLD}₴</p>
                 <p className="text-[13px] text-[#666666]">безкоштовна доставка</p>
               </div>
               <div className="rounded-[20px] bg-[#FFF8E9] p-6 text-center">
