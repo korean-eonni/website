@@ -314,7 +314,6 @@ export default function Header() {
     { label: 'Який в тебе тип шкіри? Пройти тест', href: '/skin-test' },
     { label: 'Бренди', href: '/brands', children: brandLinks },
     { label: 'Знижки', href: '/catalog?sale=true' },
-    { label: 'Блог', href: '/blog' },
     { label: 'Про нас', href: '/about' },
   ]
 
@@ -727,9 +726,24 @@ export default function Header() {
                 transition={{ delay: 0.45, duration: 0.55, ease: EXPO_OUT }}
                 className="mt-12 pt-8 border-t border-black/20 flex flex-col gap-2"
               >
-                <p className="text-[12px] text-black/60 uppercase tracking-[0.2em] mb-2">Контакти</p>
-                <a href="tel:+380732737330" className="text-[18px] text-black">+380 73 273 73 30</a>
-                <a href="mailto:eonnisupport@gmail.com" className="text-[16px] text-black/75">eonnisupport@gmail.com</a>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="font-bebas uppercase text-[28px] sm:text-[32px] leading-[1.15] tracking-[0.01em] text-black hover:translate-x-2 hover:text-[#4348AE] transition-all duration-300"
+                >
+                  Профіль
+                </Link>
+                {/* Search lives in an overlay, so close the menu and open it. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    setSearchOpen(true)
+                  }}
+                  className="text-left font-bebas uppercase text-[28px] sm:text-[32px] leading-[1.15] tracking-[0.01em] text-black hover:translate-x-2 hover:text-[#4348AE] transition-all duration-300"
+                >
+                  Пошук
+                </button>
               </motion.div>
             </div>
           </motion.div>
