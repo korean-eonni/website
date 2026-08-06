@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { memberPrice } from '@/lib/memberDiscount'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/layout/Footer'
@@ -22,7 +20,6 @@ type Product = {
 export default function WishlistPage() {
   const { ids, ready, count } = useWishlist()
   const { addToCart } = useCart()
-  const { isMember } = useAuth()
   const [productMap, setProductMap] = useState<Record<string, Product>>({})
   const [loading, setLoading] = useState(true)
 
@@ -90,18 +87,9 @@ export default function WishlistPage() {
                       <div className="px-3 sm:px-4 pt-3 pb-3">
                         <h3 className="font-gilroy text-[13px] sm:text-[15px] leading-[18px] sm:leading-[20px] text-black mb-1.5 line-clamp-2 min-h-[36px] sm:min-h-[40px]">{p.name}</h3>
                         <div className="flex items-center gap-2">
-                          {isMember ? (
-                            <>
-                              <span className="font-gilroy font-semibold text-[15px] sm:text-[18px] text-[#E84A8A]">₴{memberPrice(p.sale_price)}</span>
-                              <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">₴{p.sale_price ?? 0}</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="font-gilroy font-semibold text-[15px] sm:text-[18px] text-black">₴{p.sale_price ?? 0}</span>
-                              {p.original_price && p.original_price > (p.sale_price ?? 0) && (
-                                <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">₴{p.original_price}</span>
-                              )}
-                            </>
+                          <span className="font-gilroy font-semibold text-[15px] sm:text-[18px] text-black">₴{p.sale_price ?? 0}</span>
+                          {p.original_price && p.original_price > (p.sale_price ?? 0) && (
+                            <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">₴{p.original_price}</span>
                           )}
                         </div>
                       </div>

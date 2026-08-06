@@ -120,8 +120,19 @@ export default function CartPage() {
                           >
                             {item.product?.name}
                           </Link>
-                          {/* Mobile price */}
-                          <p className="md:hidden mt-2 font-semibold">₴{item.product?.sale_price}</p>
+                          {/* Mobile price — mirrors the desktop column, discount included */}
+                          <p className="md:hidden mt-2 font-semibold">
+                            {memberApplied ? (
+                              <>
+                                <span className="text-[#E84A8A]">₴{memberPrice(item.product?.sale_price)}</span>
+                                <span className="ml-2 text-[13px] font-normal text-[#999] line-through">
+                                  ₴{item.product?.sale_price}
+                                </span>
+                              </>
+                            ) : (
+                              <>₴{item.product?.sale_price}</>
+                            )}
+                          </p>
                         </div>
                       </div>
 

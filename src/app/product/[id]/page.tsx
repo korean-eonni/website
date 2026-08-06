@@ -8,8 +8,6 @@ import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
-import { useAuth } from '@/contexts/AuthContext'
-import { MEMBER_DISCOUNT_LABEL, memberPrice } from '@/lib/memberDiscount'
 import WishlistButton from '@/components/WishlistButton'
 
 type Product = {
@@ -1482,7 +1480,6 @@ export default function ProductPage() {
   const router = useRouter()
   const productId = params.id as string
   const { addToCart } = useCart()
-  const { isMember } = useAuth()
   
   const [product, setProduct] = useState<Product | null>(null)
   const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([])
@@ -1619,49 +1616,23 @@ export default function ProductPage() {
                 <StarRating rating={rating} reviewCount={reviewCount} />
               </div>
 
-              <div className="flex items-baseline gap-3 mb-2">
-                {isMember ? (
+              {/* Regular price only — the registered-customer discount is applied
+                  and shown in the cart, not while browsing. */}
+              <div className="flex items-baseline gap-3 mb-6">
+                <span className={`text-[32px] font-semibold ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
+                  ₴{product.sale_price ?? 0}
+                </span>
+                {product.original_price && product.original_price > (product.sale_price ?? 0) && (
                   <>
-                    <span className="text-[32px] font-semibold text-[#E84A8A]">
-                      ₴{memberPrice(product.sale_price)}
-                    </span>
                     <span className="text-[20px] text-[#999999] line-through">
-                      ₴{product.sale_price ?? 0}
+                      ₴{product.original_price}
                     </span>
                     <span className="text-[14px] font-bold text-white bg-[#E84A8A] rounded-[6px] px-2 py-0.5">
-                      −10%
+                      −{product.discount_amount}%
                     </span>
-                  </>
-                ) : (
-                  <>
-                    <span className={`text-[32px] font-semibold ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
-                      ₴{product.sale_price ?? 0}
-                    </span>
-                    {product.original_price && product.original_price > (product.sale_price ?? 0) && (
-                      <>
-                        <span className="text-[20px] text-[#999999] line-through">
-                          ₴{product.original_price}
-                        </span>
-                        <span className="text-[14px] font-bold text-white bg-[#E84A8A] rounded-[6px] px-2 py-0.5">
-                          −{product.discount_amount}%
-                        </span>
-                      </>
-                    )}
                   </>
                 )}
               </div>
-              <p className="text-[14px] mb-6">
-                {isMember ? (
-                  <span className="text-[#E84A8A] font-medium">{MEMBER_DISCOUNT_LABEL} вже враховано</span>
-                ) : (
-                  <span className="text-[#666]">
-                    <Link href="/account" className="text-[#E84A8A] font-semibold underline hover:text-black">
-                      Зареєструйтесь
-                    </Link>{' '}
-                    і купіть за ₴{memberPrice(product.sale_price)} — знижка 10%
-                  </span>
-                )}
-              </p>
 
               {product.tags && product.tags.trim() && (
                 <div className="mb-6">
