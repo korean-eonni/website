@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines, memberPrice } from '@/lib/memberDiscount'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -11,6 +13,7 @@ import Magnetic from '@/components/ui/Magnetic'
 export default function CartDropdown() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem } = useCart()
   const [isOpen, setIsOpen] = useState(false)
+  const { isMember } = useAuth()
   const [promo, setPromo] = useState<string | null>(null)
   const [promoItems, setPromoItems] = useState<string[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -31,9 +34,16 @@ export default function CartDropdown() {
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
-  const promoActive = promo === 'SKINTEST10' && bundlePresent && subtotal > 0
-  const promoDiscount = promoActive ? Math.round(subtotal * 0.1) : 0
-  const total = subtotal - promoDiscount
+  const promoEligible = promo === 'SKINTEST10' && bundlePresent && subtotal > 0
+  const promoDiscount = promoEligible ? Math.round(subtotal * 0.1) : 0
+  // Registered-customer discount — same rule as the cart and the order API,
+  // including that the two never stack.
+  const memberDiscount = isMember
+    ? memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))
+    : 0
+  const memberApplied = memberDiscount >= promoDiscount && memberDiscount > 0
+  const promoActive = promoEligible && !memberApplied && promoDiscount > 0
+  const total = subtotal - Math.max(memberDiscount, promoDiscount)
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -168,7 +178,18 @@ export default function CartDropdown() {
 
                         {/* Price */}
                         <span className="font-semibold text-[14px]">
-                          ₴{((item.product?.sale_price || 0) * item.quantity).toFixed(0)}
+                          {memberApplied ? (
+                            <>
+                              <span className="text-[#E84A8A]">
+                                ₴{(memberPrice(item.product?.sale_price) * item.quantity).toFixed(0)}
+                              </span>
+                              <span className="ml-1.5 text-[12px] font-normal text-[#999] line-through">
+                                ₴{((item.product?.sale_price || 0) * item.quantity).toFixed(0)}
+                              </span>
+                            </>
+                          ) : (
+                            <>₴{((item.product?.sale_price || 0) * item.quantity).toFixed(0)}</>
+                          )}
                         </span>
                       </div>
                     </div>
@@ -188,6 +209,12 @@ export default function CartDropdown() {
 
               {/* Footer */}
               <div className="p-4 bg-[#F8F7FB]">
+                {memberApplied && (
+                  <div className="flex items-center justify-between mb-2 text-[13px] font-semibold text-[#E84A8A]">
+                    <span>{MEMBER_DISCOUNT_LABEL}</span>
+                    <span>−₴{memberDiscount.toFixed(0)}</span>
+                  </div>
+                )}
                 {promoActive && (
                   <div className="flex items-center justify-between mb-2 text-[13px] font-semibold text-[#E84A8A]">
                     <span>Знижка за тест шкіри −10%</span>

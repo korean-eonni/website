@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { CartProvider } from '@/contexts/CartContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
 import Header from '@/components/layout/Header'
@@ -197,15 +198,17 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <MicrosoftClarity />
-        <CartProvider>
-          <WishlistProvider>
-            <LenisProvider />
-            <Header />
-            <div className="h-[86px]" />
-            {children}
-            <SupportFAB />
-          </WishlistProvider>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <LenisProvider />
+              <Header />
+              <div className="h-[86px]" />
+              {children}
+              <SupportFAB />
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   )

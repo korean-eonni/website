@@ -1,14 +1,6 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { isAuthed } from '@/lib/adminAuth'
-import {
-  getAllOrders,
-  getOrderItems,
-  updateOrderStatus,
-  updatePaymentStatus,
-  type Order,
-  type OrderItem,
-} from '@/lib/userStore'
+import { getAllOrders, getAllUsers, type Order, type User } from '@/lib/userStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,268 +12,390 @@ const STATUS_LABELS: Record<Order['status'], string> = {
   delivered: 'Доставлено',
   cancelled: 'Скасовано',
 }
-const STATUS_ORDER: Order['status'][] = [
-  'pending',
-  'confirmed',
-  'processing',
-  'shipped',
-  'delivered',
-  'cancelled',
-]
+const STATUS_COLORS: Record<Order['status'], string> = {
+  pending: 'bg-[#FEF3C7] text-[#92400E]',
+  confirmed: 'bg-[#E0E7FF] text-[#3730A3]',
+  processing: 'bg-[#EDE9FE] text-[#6D28D9]',
+  shipped: 'bg-[#E2F9FF] text-[#0E7490]',
+  delivered: 'bg-[#D1FAE5] text-[#065F46]',
+  cancelled: 'bg-[#FEE2E2] text-[#B91C1C]',
+}
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash_on_delivery: 'Накладений платіж',
   platon: 'Карткою онлайн',
   card: 'Переказ на картку',
 }
-const SHIPPING_LABELS: Record<string, string> = {
-  nova_poshta: 'Нова Пошта',
-  ukrposhta: 'Укрпошта',
-}
-const PAYMENT_STATUS_LABELS: Record<Order['payment_status'], string> = {
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: 'Очікує оплати',
   paid: 'Оплачено',
   failed: 'Помилка',
   refunded: 'Повернено',
 }
-
-async function setStatusAction(formData: FormData) {
-  'use server'
-  if (!isAuthed()) redirect('/admin')
-  const id = String(formData.get('orderId') || '')
-  const status = String(formData.get('status') || '') as Order['status']
-  if (id && STATUS_ORDER.includes(status)) {
-    await updateOrderStatus(id, status)
-  }
-  redirect('/admin/orders')
+const SHIPPING_LABELS: Record<string, string> = {
+  nova_poshta: 'Нова Пошта',
+  ukrposhta: 'Укрпошта',
 }
 
-async function setPaymentAction(formData: FormData) {
-  'use server'
-  if (!isAuthed()) redirect('/admin')
-  const id = String(formData.get('orderId') || '')
-  const paymentStatus = String(formData.get('paymentStatus') || '') as Order['payment_status']
-  if (id && ['pending', 'paid', 'failed', 'refunded'].includes(paymentStatus)) {
-    await updatePaymentStatus(id, paymentStatus)
-  }
-  redirect('/admin/orders')
+// Per-day background tints, cycled by calendar day — colours pulled from the
+// site's promo gradient (soft lavender / blue / cyan / lilac / purple / pink).
+const DAY_TINTS = [
+  { bg: '#EFECFB', accent: '#7C6FD6' },
+  { bg: '#E8F1FC', accent: '#5E8BDD' },
+  { bg: '#E7F8FD', accent: '#3EB4D0' },
+  { bg: '#FBEEFB', accent: '#C56FC8' },
+  { bg: '#F4EBFC', accent: '#9B6FD2' },
+  { bg: '#FEEDF6', accent: '#DB6FA8' },
+]
+
+const money = (n: number) => `₴${Math.round(Number(n) || 0)}`
+const normPhone = (p: string | null | undefined) => (p || '').replace(/\D/g, '')
+
+function kyivDayKey(iso: string) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(iso))
+}
+function dayLabel(iso: string) {
+  return new Intl.DateTimeFormat('uk-UA', {
+    timeZone: 'Europe/Kyiv', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+  }).format(new Date(iso))
+}
+function timeLabel(iso: string) {
+  return new Intl.DateTimeFormat('uk-UA', {
+    timeZone: 'Europe/Kyiv', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(iso))
 }
 
-function money(n: number) {
-  return `₴${Math.round(Number(n) || 0)}`
-}
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('uk-UA', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  } catch {
-    return iso
-  }
-}
-
-export default async function AdminOrdersPage() {
-  if (!isAuthed()) {
-    return (
-      <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center p-6">
-        <div className="text-center">
-          <h1 className="font-bebas text-[40px] text-black mb-4">Потрібен вхід</h1>
-          <p className="text-[#666] mb-6">Увійдіть в адмін-панель, щоб переглядати замовлення.</p>
-          <Link
-            href="/admin"
-            className="inline-block px-6 py-3 bg-[#4348AE] text-white rounded-lg font-semibold"
-          >
-            Перейти до входу
-          </Link>
-        </div>
-      </main>
-    )
-  }
-
-  const orders = await getAllOrders(100)
-  const itemsByOrder = new Map<string, OrderItem[]>()
-  await Promise.all(
-    orders.map(async (o) => {
-      itemsByOrder.set(o.id, await getOrderItems(o.id))
-    })
+function RegisteredBadge({ registered }: { registered: boolean }) {
+  return registered ? (
+    <span className="inline-block text-[12px] font-medium px-2 py-[2px] rounded-full bg-[#FDE68A] text-[#92400E]">
+      Зареєстрований
+    </span>
+  ) : (
+    <span className="inline-block text-[12px] font-medium px-2 py-[2px] rounded-full bg-[#FBCFE8] text-[#9D174D]">
+      Не зареєстрований
+    </span>
   )
+}
+
+function LoginGate() {
+  return (
+    <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center p-6">
+      <div className="text-center">
+        <h1 className="font-bebas text-[40px] text-black mb-4">Потрібен вхід</h1>
+        <p className="text-[#666] mb-6">Увійдіть в адмін-панель, щоб переглядати замовлення.</p>
+        <Link href="/admin" className="inline-block px-6 py-3 bg-[#4348AE] text-white rounded-lg font-semibold">
+          Перейти до входу
+        </Link>
+      </div>
+    </main>
+  )
+}
+
+type Customer = {
+  key: string
+  name: string
+  phone: string
+  email: string
+  registered: boolean
+  count: number
+  total: number
+  orders: Order[]
+  lastIso: string
+}
+
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams?: { tab?: string }
+}) {
+  if (!isAuthed()) return <LoginGate />
+
+  const tab = searchParams?.tab === 'customers' ? 'customers' : 'orders'
+  const [orders, users] = await Promise.all([getAllOrders(500), getAllUsers()])
+
+  // Registration lookup — an order is "registered" if it's linked to an account
+  // or its email/phone matches a registered user.
+  const regEmails = new Set(users.map((u) => (u.email || '').toLowerCase()))
+  const regPhones = new Set(users.map((u) => normPhone(u.phone)).filter(Boolean))
+  const isRegistered = (o: Order) =>
+    !!o.user_id ||
+    regEmails.has((o.email || '').toLowerCase()) ||
+    (!!normPhone(o.phone) && regPhones.has(normPhone(o.phone)))
 
   const newCount = orders.filter((o) => o.status === 'pending').length
-  const unpaidCard = orders.filter(
-    (o) => o.payment_method === 'card' && o.payment_status !== 'paid'
-  ).length
 
   return (
-    <main className="min-h-screen bg-[#F8F7FB] py-10">
+    <main className="min-h-screen bg-[#F8F7FB] py-8">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h1 className="font-bebas text-[40px] leading-none text-black">Замовлення</h1>
+            <h1 className="font-bebas text-[40px] leading-none text-black">Адмін</h1>
             <p className="text-[14px] text-[#666] mt-1">
-              Усього: {orders.length} · Нових: {newCount}
-              {unpaidCard > 0 ? ` · Очікують оплати на картку: ${unpaidCard}` : ''}
+              Замовлень: {orders.length} · Нових: {newCount} · Покупців у базі: {users.length}
             </p>
           </div>
-          <div className="flex gap-3">
-            <Link
-              href="/admin"
-              className="h-10 px-4 inline-flex items-center rounded-lg border border-black text-black uppercase text-[14px] hover:bg-black hover:text-white transition-colors"
-            >
-              Товари
-            </Link>
-          </div>
+          <Link
+            href="/admin"
+            className="h-10 px-4 inline-flex items-center rounded-lg border border-black text-black uppercase text-[14px] hover:bg-black hover:text-white transition-colors"
+          >
+            Товари
+          </Link>
         </div>
 
-        {orders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-10 text-center text-[#666]">
-            Замовлень ще немає.
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 border-b border-[#E5E5E5]">
+          <Link
+            href="/admin/orders?tab=orders"
+            className={`px-4 py-2.5 text-[15px] font-medium border-b-2 -mb-px transition-colors ${
+              tab === 'orders' ? 'border-[#4348AE] text-[#4348AE]' : 'border-transparent text-[#666] hover:text-black'
+            }`}
+          >
+            Замовлення
+          </Link>
+          <Link
+            href="/admin/orders?tab=customers"
+            className={`px-4 py-2.5 text-[15px] font-medium border-b-2 -mb-px transition-colors ${
+              tab === 'customers' ? 'border-[#4348AE] text-[#4348AE]' : 'border-transparent text-[#666] hover:text-black'
+            }`}
+          >
+            База покупців
+          </Link>
+        </div>
+
+        {tab === 'orders' ? (
+          <OrdersByDay orders={orders} isRegistered={isRegistered} />
         ) : (
-          <div className="space-y-5">
-            {orders.map((o) => {
-              const items = itemsByOrder.get(o.id) || []
-              const shipLine = [o.shipping_city, o.shipping_warehouse || o.shipping_address]
-                .filter(Boolean)
-                .join(', ')
-              const isCardUnpaid = o.payment_method === 'card' && o.payment_status !== 'paid'
-              return (
-                <div
-                  key={o.id}
-                  className={`bg-white rounded-2xl border p-5 sm:p-6 ${
-                    o.status === 'pending' ? 'border-[#4348AE]' : 'border-[#E5E5E5]'
-                  }`}
-                >
-                  {/* Top row */}
-                  <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                    <div>
-                      <p className="font-mono text-[15px] font-semibold text-black">{o.id}</p>
-                      <p className="text-[13px] text-[#999]">{formatDate(o.created_at)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bebas text-[26px] leading-none">{money(o.total_amount)}</p>
-                      <span
-                        className={`inline-block mt-1 text-[12px] px-2 py-[2px] rounded-full ${
-                          o.payment_status === 'paid'
-                            ? 'bg-[#D1FAE5] text-[#065F46]'
-                            : isCardUnpaid
-                            ? 'bg-[#FEF3C7] text-[#92400E]'
-                            : 'bg-[#F1F1F1] text-[#666]'
-                        }`}
-                      >
-                        {PAYMENT_METHOD_LABELS[o.payment_method] || o.payment_method} ·{' '}
-                        {PAYMENT_STATUS_LABELS[o.payment_status] || o.payment_status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Body grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-[12px] uppercase tracking-wider text-[#999] mb-1">Клієнт</p>
-                      <p className="text-[14px] text-black">
-                        {o.first_name} {o.last_name}
-                      </p>
-                      <p className="text-[14px] text-[#444]">
-                        <a href={`tel:${o.phone}`} className="hover:underline">
-                          {o.phone}
-                        </a>
-                      </p>
-                      <p className="text-[14px] text-[#444]">
-                        <a href={`mailto:${o.email}`} className="hover:underline">
-                          {o.email}
-                        </a>
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[12px] uppercase tracking-wider text-[#999] mb-1">Доставка</p>
-                      <p className="text-[14px] text-black">
-                        {SHIPPING_LABELS[o.shipping_method] || o.shipping_method}
-                      </p>
-                      {shipLine && <p className="text-[14px] text-[#444]">{shipLine}</p>}
-                      {o.notes && (
-                        <p className="text-[13px] text-[#666] mt-1">Коментар: {o.notes}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Items */}
-                  <div className="border-t border-[#EEE] pt-3 mb-4">
-                    {items.length === 0 ? (
-                      <p className="text-[13px] text-[#999]">Позиції недоступні</p>
-                    ) : (
-                      <ul className="space-y-1">
-                        {items.map((it) => (
-                          <li key={it.id} className="flex justify-between text-[14px]">
-                            <span className="text-[#333]">
-                              {it.product_name} <span className="text-[#999]">× {it.quantity}</span>
-                            </span>
-                            <span className="text-[#333] whitespace-nowrap">
-                              {money(it.price * it.quantity)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-3 border-t border-[#EEE] pt-4">
-                    <form action={setStatusAction} className="flex items-center gap-2">
-                      <input type="hidden" name="orderId" value={o.id} />
-                      <select
-                        name="status"
-                        defaultValue={o.status}
-                        className="h-9 rounded-lg border border-[#CCC] px-2 text-[14px] bg-white"
-                      >
-                        {STATUS_ORDER.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_LABELS[s]}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="submit"
-                        className="h-9 px-3 rounded-lg bg-[#4348AE] text-white text-[14px] hover:bg-[#373B8A] transition-colors"
-                      >
-                        Зберегти статус
-                      </button>
-                    </form>
-
-                    {o.payment_status !== 'paid' ? (
-                      <form action={setPaymentAction}>
-                        <input type="hidden" name="orderId" value={o.id} />
-                        <input type="hidden" name="paymentStatus" value="paid" />
-                        <button
-                          type="submit"
-                          className="h-9 px-3 rounded-lg border border-[#059669] text-[#059669] text-[14px] hover:bg-[#059669] hover:text-white transition-colors"
-                        >
-                          Позначити оплаченим
-                        </button>
-                      </form>
-                    ) : (
-                      <form action={setPaymentAction}>
-                        <input type="hidden" name="orderId" value={o.id} />
-                        <input type="hidden" name="paymentStatus" value="pending" />
-                        <button
-                          type="submit"
-                          className="h-9 px-3 rounded-lg border border-[#CCC] text-[#666] text-[14px] hover:bg-[#F1F1F1] transition-colors"
-                        >
-                          Скасувати оплату
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <CustomersView orders={orders} users={users} isRegistered={isRegistered} />
         )}
       </div>
     </main>
+  )
+}
+
+function OrdersByDay({
+  orders,
+  isRegistered,
+}: {
+  orders: Order[]
+  isRegistered: (o: Order) => boolean
+}) {
+  if (orders.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#E5E5E5] p-10 text-center text-[#666]">
+        Замовлень ще немає.
+      </div>
+    )
+  }
+
+  // Group consecutive (already date-desc) orders by Kyiv calendar day.
+  const groups: { key: string; iso: string; orders: Order[] }[] = []
+  for (const o of orders) {
+    const k = kyivDayKey(o.created_at)
+    const last = groups[groups.length - 1]
+    if (!last || last.key !== k) groups.push({ key: k, iso: o.created_at, orders: [o] })
+    else last.orders.push(o)
+  }
+
+  return (
+    <div className="space-y-6">
+      {groups.map((g, gi) => {
+        const tint = DAY_TINTS[gi % DAY_TINTS.length]
+        return (
+          <section key={g.key} className="rounded-2xl p-4 sm:p-5" style={{ backgroundColor: tint.bg }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[15px] font-semibold capitalize" style={{ color: tint.accent }}>
+                {dayLabel(g.iso)}
+              </h2>
+              <span className="text-[13px] font-medium" style={{ color: tint.accent }}>
+                {g.orders.length} замовл.
+              </span>
+            </div>
+            <div className="space-y-3">
+              {g.orders.map((o) => (
+                <OrderCard key={o.id} o={o} registered={isRegistered(o)} />
+              ))}
+            </div>
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+function OrderCard({ o, registered }: { o: Order; registered: boolean }) {
+  const shipLine = [o.shipping_city, o.shipping_warehouse || o.shipping_address].filter(Boolean).join(', ')
+  return (
+    <a
+      href={`/admin/orders/${o.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-white/80 hover:bg-white rounded-xl border border-white p-4 transition-colors shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        {/* left: order # + client */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-[14px] font-semibold text-black">{o.id}</span>
+            <span className="text-[12px] text-[#999]">{timeLabel(o.created_at)}</span>
+            <RegisteredBadge registered={registered} />
+          </div>
+          <p className="text-[14px] text-black mt-2">
+            {o.first_name} {o.last_name}
+          </p>
+          <p className="text-[13px] text-[#555]">{o.phone}</p>
+          <p className="text-[13px] text-[#555]">{o.email}</p>
+          <p className="text-[13px] text-[#777] mt-1">
+            {SHIPPING_LABELS[o.shipping_method] || o.shipping_method}
+            {shipLine ? ` — ${shipLine}` : ''}
+          </p>
+        </div>
+        {/* right: sum + payment + status */}
+        <div className="text-right shrink-0">
+          <p className="font-bebas text-[26px] leading-none text-black">{money(o.total_amount)}</p>
+          <p className="text-[12px] text-[#666] mt-1">
+            {PAYMENT_METHOD_LABELS[o.payment_method] || o.payment_method}
+          </p>
+          <p className="text-[12px] text-[#666]">
+            {PAYMENT_STATUS_LABELS[o.payment_status] || o.payment_status}
+          </p>
+          <span
+            className={`inline-block mt-2 text-[12px] font-medium px-2 py-[2px] rounded-full ${
+              STATUS_COLORS[o.status] || 'bg-[#F1F1F1] text-[#666]'
+            }`}
+          >
+            {STATUS_LABELS[o.status] || o.status}
+          </span>
+        </div>
+      </div>
+    </a>
+  )
+}
+
+function CustomersView({
+  orders,
+  users,
+  isRegistered,
+}: {
+  orders: Order[]
+  users: User[]
+  isRegistered: (o: Order) => boolean
+}) {
+  // Group orders into customers (by phone; fall back to email).
+  const byKey = new Map<string, Order[]>()
+  for (const o of orders) {
+    const key = normPhone(o.phone) || `e:${(o.email || '').toLowerCase()}` || o.id
+    if (!byKey.has(key)) byKey.set(key, [])
+    byKey.get(key)!.push(o)
+  }
+
+  const customers: Customer[] = Array.from(byKey.values()).map((list) => {
+    const latest = list[0]
+    return {
+      key: normPhone(latest.phone) || (latest.email || '').toLowerCase() || latest.id,
+      name: `${latest.first_name} ${latest.last_name}`.trim(),
+      phone: latest.phone,
+      email: latest.email,
+      registered: list.some(isRegistered),
+      count: list.length,
+      total: list.reduce((s, o) => s + Number(o.total_amount || 0), 0),
+      orders: list,
+      lastIso: latest.created_at,
+    }
+  })
+
+  // Add registered users who have not ordered yet.
+  const orderPhones = new Set(orders.map((o) => normPhone(o.phone)).filter(Boolean))
+  const orderEmails = new Set(orders.map((o) => (o.email || '').toLowerCase()).filter(Boolean))
+  for (const u of users) {
+    const covered =
+      (!!normPhone(u.phone) && orderPhones.has(normPhone(u.phone))) ||
+      (!!u.email && orderEmails.has(u.email.toLowerCase()))
+    if (!covered) {
+      customers.push({
+        key: `u:${u.id}`,
+        name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+        phone: u.phone || '',
+        email: u.email,
+        registered: true,
+        count: 0,
+        total: 0,
+        orders: [],
+        lastIso: u.created_at,
+      })
+    }
+  }
+
+  customers.sort((a, b) => new Date(b.lastIso).getTime() - new Date(a.lastIso).getTime())
+
+  if (customers.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#E5E5E5] p-10 text-center text-[#666]">
+        Покупців ще немає.
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {customers.map((c) => (
+        <div key={c.key} className="bg-white rounded-2xl border border-[#E5E5E5] p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-[16px] font-semibold text-black">{c.name || '—'}</p>
+                <RegisteredBadge registered={c.registered} />
+              </div>
+              {c.phone && (
+                <p className="text-[14px] text-[#444]">
+                  <a href={`tel:${c.phone}`} className="hover:underline">{c.phone}</a>
+                </p>
+              )}
+              {c.email && (
+                <p className="text-[14px] text-[#444]">
+                  <a href={`mailto:${c.email}`} className="hover:underline">{c.email}</a>
+                </p>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-[13px] text-[#999]">Замовлень</p>
+              <p className="font-bebas text-[26px] leading-none">{c.count}</p>
+              {c.total > 0 && <p className="text-[13px] text-[#666] mt-1">на {money(c.total)}</p>}
+            </div>
+          </div>
+
+          {c.orders.length > 0 && (
+            <div className="border-t border-[#EEE] pt-3">
+              <p className="text-[12px] uppercase tracking-wider text-[#999] mb-2">Історія замовлень</p>
+              <div className="space-y-1.5">
+                {c.orders.map((o) => (
+                  <a
+                    key={o.id}
+                    href={`/admin/orders/${o.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 text-[14px] px-3 py-2 rounded-lg hover:bg-[#F8F7FB] transition-colors"
+                  >
+                    <span className="font-mono text-[13px] text-[#444] truncate">{o.id}</span>
+                    <span className="text-[13px] text-[#999] whitespace-nowrap">
+                      {new Intl.DateTimeFormat('uk-UA', { timeZone: 'Europe/Kyiv', day: '2-digit', month: '2-digit', year: '2-digit' }).format(new Date(o.created_at))}
+                    </span>
+                    <span
+                      className={`text-[11px] px-2 py-[1px] rounded-full whitespace-nowrap ${
+                        STATUS_COLORS[o.status] || 'bg-[#F1F1F1] text-[#666]'
+                      }`}
+                    >
+                      {STATUS_LABELS[o.status] || o.status}
+                    </span>
+                    <span className="text-[14px] font-medium whitespace-nowrap">{money(o.total_amount)}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   )
 }

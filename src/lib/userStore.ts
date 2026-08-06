@@ -358,6 +358,12 @@ export async function getAllOrders(limit = 100): Promise<Order[]> {
   return rows
 }
 
+export async function getAllUsers(): Promise<User[]> {
+  await ensureUserSchema()
+  const { rows } = await sql<User>`SELECT * FROM users ORDER BY created_at DESC`
+  return rows
+}
+
 export async function getUserOrders(userId: string): Promise<Order[]> {
   await ensureUserSchema()
   const { rows } = await sql<Order>`SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC`

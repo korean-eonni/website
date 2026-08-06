@@ -11,6 +11,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { memberPrice } from '@/lib/memberDiscount'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
 
@@ -205,6 +207,7 @@ function VolumeButton({ label, selected, onClick }: { label: string; selected: b
 
 function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (productId: string) => void }) {
   const router = useRouter()
+  const { isMember } = useAuth()
   const [adding, setAdding] = useState(false)
   const comingSoon = isComingSoon(product)
   const [notifyOpen, setNotifyOpen] = useState(false)
@@ -417,13 +420,26 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
           )}
 
           <div className="flex items-center gap-2 mt-auto">
-            <span className={`font-gilroy font-semibold text-[15px] sm:text-[18px] leading-[22px] ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
-              ₴{product.sale_price ?? 0}
-            </span>
-            {product.original_price && product.original_price > (product.sale_price ?? 0) && (
-              <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">
-                ₴{product.original_price}
-              </span>
+            {isMember ? (
+              <>
+                <span className="font-gilroy font-semibold text-[15px] sm:text-[18px] leading-[22px] text-[#E84A8A]">
+                  ₴{memberPrice(product.sale_price)}
+                </span>
+                <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">
+                  ₴{product.sale_price ?? 0}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className={`font-gilroy font-semibold text-[15px] sm:text-[18px] leading-[22px] ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
+                  ₴{product.sale_price ?? 0}
+                </span>
+                {product.original_price && product.original_price > (product.sale_price ?? 0) && (
+                  <span className="font-gilroy text-[12px] sm:text-[14px] text-[#999999] line-through">
+                    ₴{product.original_price}
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>

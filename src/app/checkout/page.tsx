@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -67,6 +69,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, subtotal, clearCart } = useCart()
+  const { isMember } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
   // Skin-test bundle promo (10% off) — activated from /skin-test "add full routine".
   const [promo, setPromo] = useState<string | null>(null)
@@ -149,9 +152,17 @@ export default function CheckoutPage() {
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
-  const promoActive = promo === 'SKINTEST10' && bundlePresent && subtotal > 0
-  const promoDiscount = promoActive ? Math.round(subtotal * 0.1) : 0
-  const total = subtotal - promoDiscount
+  const promoEligible = promo === 'SKINTEST10' && bundlePresent && subtotal > 0
+  const promoDiscount = promoEligible ? Math.round(subtotal * 0.1) : 0
+
+  // Registered-customer discount. Must mirror the order API exactly — that's what
+  // decides the amount actually charged. The two discounts never stack.
+  const memberDiscount = isMember
+    ? memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))
+    : 0
+  const memberApplied = memberDiscount >= promoDiscount && memberDiscount > 0
+  const promoActive = promoEligible && !memberApplied && promoDiscount > 0
+  const total = subtotal - Math.max(memberDiscount, promoDiscount)
 
   // Search cities (Nova Poshta API)
   useEffect(() => {
@@ -932,6 +943,12 @@ export default function CheckoutPage() {
                     <span className="text-[#666]">Товари</span>
                     <span>₴{subtotal.toFixed(0)}</span>
                   </div>
+                  {memberApplied && (
+                    <div className="flex justify-between text-[14px] font-semibold text-[#E84A8A]">
+                      <span>{MEMBER_DISCOUNT_LABEL}</span>
+                      <span>−₴{memberDiscount.toFixed(0)}</span>
+                    </div>
+                  )}
                   {promoActive && (
                     <div className="flex justify-between text-[14px] font-semibold text-[#E84A8A]">
                       <span>Знижка за тест шкіри −10%</span>

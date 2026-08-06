@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { memberPrice } from '@/lib/memberDiscount'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
@@ -30,6 +32,7 @@ function ProductCard({ product, addingId, onAddToCart }: {
   addingId: string | null
   onAddToCart: (id: string) => void
 }) {
+  const { isMember } = useAuth()
   const allImages = product.images && product.images.length > 1 ? product.images : [product.image]
   const [hoveredIndex, setHoveredIndex] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -142,6 +145,16 @@ function ProductCard({ product, addingId, onAddToCart }: {
 
           <div className="flex items-center gap-2 mt-auto">
             {product.price > 0 ? (
+              isMember ? (
+                <>
+                  <span className="text-[15px] sm:text-[17px] font-semibold text-[#E84A8A]">
+                    ₴{memberPrice(product.price)}
+                  </span>
+                  <span className="text-[#999999] line-through text-[12px] sm:text-[14px]">
+                    ₴{product.price}
+                  </span>
+                </>
+              ) : (
               <>
                 <span className={`text-[15px] sm:text-[17px] font-semibold ${product.originalPrice ? 'text-[#E84A8A]' : 'text-black'}`}>
                   ₴{product.price}
@@ -152,6 +165,7 @@ function ProductCard({ product, addingId, onAddToCart }: {
                   </span>
                 )}
               </>
+              )
             ) : (
               <span className="text-[#666] text-[13px] sm:text-[14px] font-medium">
                 Уточнюйте ціну

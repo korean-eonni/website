@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createOrder, addOrderItem, getSessionByToken, clearCart } from '@/lib/userStore'
 import { getProduct, tryDecrementStock } from '@/lib/productStore'
 import { decrementSheetStock } from '@/lib/sheetStock'
+import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,14 +85,32 @@ export async function POST(request: Request) {
       totalAmount += price * quantity
     }
 
-    // Skin-test bundle promo: 10% off the whole order. Validated server-side
-    // (fixed rule), so a tampered client can't invent arbitrary discounts.
+    // Identify user (if any). Needed before discounts — being logged in is itself
+    // one, so the order total depends on it.
+    const cookieStore = await cookies()
+    const token = cookieStore.get('session_token')?.value
+    let userId: string | null = null
+    if (token) {
+      const session = await getSessionByToken(token)
+      if (session) userId = session.user_id
+    }
+
+    // Discounts are decided here, from the session and a fixed rule set — never
+    // from anything the client sends, so a tampered request can't invent its own.
+    // They do NOT stack: the customer simply gets whichever one is worth more.
     const promoCode = typeof data.promoCode === 'string' ? data.promoCode.trim() : ''
+    const memberDiscount = userId ? memberDiscountForLines(lines) : 0
+    const promoDiscount =
+      promoCode === 'SKINTEST10' && totalAmount > 0 ? Math.round(totalAmount * 0.1) : 0
+
     let promoNote = ''
-    if (promoCode === 'SKINTEST10' && totalAmount > 0) {
-      const discount = Math.round(totalAmount * 0.1)
+    const discount = Math.max(memberDiscount, promoDiscount)
+    if (discount > 0) {
       totalAmount = totalAmount - discount
-      promoNote = ` | Промокод SKINTEST10: −10% (−₴${discount})`
+      promoNote =
+        memberDiscount >= promoDiscount
+          ? ` | ${MEMBER_DISCOUNT_LABEL} (−₴${discount})`
+          : ` | Промокод SKINTEST10: −10% (−₴${discount})`
     }
 
     // Reserve stock atomically. If we fail half-way, roll back what we took.
@@ -109,15 +128,6 @@ export async function POST(request: Request) {
         )
       }
       reserved.push({ productId: line.productId, quantity: line.quantity })
-    }
-
-    // Identify user (if any).
-    const cookieStore = await cookies()
-    const token = cookieStore.get('session_token')?.value
-    let userId: string | null = null
-    if (token) {
-      const session = await getSessionByToken(token)
-      if (session) userId = session.user_id
     }
 
     const order = await createOrder({
