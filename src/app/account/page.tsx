@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
@@ -805,7 +806,8 @@ function AccountContent() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  
+  const { refresh: refreshAuth } = useAuth()
+
   useEffect(() => {
     checkAuth()
   }, [])
@@ -822,12 +824,16 @@ function AccountContent() {
     } finally {
       setLoading(false)
     }
+    // Keep the app-wide auth context in step, so member prices switch over
+    // immediately instead of waiting for a full page load.
+    await refreshAuth()
   }
   
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
       setUser(null)
+      await refreshAuth()
       router.refresh()
     } catch (error) {
       console.error('Logout failed:', error)
