@@ -17,12 +17,18 @@ git repo tracking **`github.com/korean-eonni/website`** (branch `main`), kept in
    data, `vercel env pull .env.local --environment=production` then run dev (delete `.env.local` after).
 7. `data/shop.db` is deliberately **untracked** (local SQLite fallback; may hold real customer data).
 
-## Content (products)
-Name / price / images / product-page tabs come from the **Google Sheet** (tab `Загальний`) and reach
-the DB via **`/api/sync-sheet`** (daily cron + manual trigger). To remove a product, delete its sheet
-row then re-sync. `replaceAllProducts` does DELETE-all + re-insert: if you touch the schema/INSERT,
-keep the column list and VALUES list identical in count/order or the catalog gets wiped. Full details +
-the manual-sync command (admin-cookie auth via `ADMIN_SECRET`) are in `DEPLOY.md`.
+## Content (products) — the DATABASE is the source of truth
+Products live in Postgres and are managed entirely in the **admin panel** (`/admin`):
+add, edit and delete products, upload/remove photos. Photos are stored in **our own
+Vercel Blob storage** under `products/<product id>/<Назва товару> (N).<ext>`.
+
+The old Google Sheet + Drive pipeline is **retired**. `/api/sync-sheet` now refuses to
+run (409) unless called with `?allowReplaceAll=1`, because a sheet sync does
+DELETE-ALL + re-insert and would wipe every admin edit. The daily cron is removed.
+Do not re-enable it without a very good reason.
+
+Write path: `saveProduct()` in `productStore.ts` — a single upsert covering all 51
+columns, shared by the add and edit screens via `productForm.ts`.
 
 ## Stack
 Next.js App Router · Vercel Postgres (`POSTGRES_URL`; local fallback SQLite `data/shop.db`) ·

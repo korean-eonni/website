@@ -39,8 +39,9 @@ blog, and an admin panel. Owner: ФОП Людвічук Катерина Мик
  Customers (orders, accounts, reviews, cart) ── write directly ──▶ Postgres   ──▶  React pages
                                                 (NOT in the Sheet)
 ```
-**Key consequence:** products are **owned by the Sheet** — anything you write to the `products` table
-directly is wiped on the next sync. Orders / users / reviews / cart are **real runtime data** that lives
+**UPDATE (2026-08): the Sheet is retired.** Products are now owned by the **database** and managed in
+the admin panel; photos live in our own Blob storage. `/api/sync-sheet` is disabled (409) unless
+explicitly forced with `?allowReplaceAll=1`, and its cron is removed. Orders / users / reviews / cart are **real runtime data** that lives
 only in Postgres — never truncate or "reset" those. (Details + safety rules in DATABASE.md.)
 
 ## Repo map (what lives where)

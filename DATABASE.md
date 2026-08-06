@@ -21,7 +21,7 @@ const usePostgres = !!process.env.POSTGRES_URL   // true on Vercel
 ## 🔑 The golden rule: who owns each table
 | Ownership | Tables | Rule |
 |-----------|--------|------|
-| **Google Sheet owns it** | `products` | Rebuilt from the Sheet on every sync (`replaceAllProducts` = DELETE all + re-insert). **Never** edit `products` directly expecting persistence — the next `/api/sync-sheet` overwrites it. Change products in the Sheet (`Загальний`), then sync. |
+| **Admin panel owns it** (was: Google Sheet) | `products` | Managed in `/admin` via `saveProduct()` (upsert of all 51 columns). Photos live in our own Blob storage. The Sheet pipeline is retired — `/api/sync-sheet` returns 409 unless forced with `?allowReplaceAll=1` (it would DELETE-ALL and wipe admin edits). |
 | **Real runtime data** | `orders`, `order_items`, `users`, `user_sessions`, `wishlist`, `cart_items`, `reviews`, `app_oauth_tokens` | Customer/operational data that exists **only** in Postgres. **Never** truncate, "reset", or bulk-delete. Treat as production data. |
 
 ---
