@@ -26,9 +26,9 @@ export default function CartPage() {
     }
   }, [])
 
-  // Delivery is free over 1500 UAH; below that it's paid by the carrier's tariff
+  // Delivery is free over 2500 UAH; below that it's paid by the carrier's tariff
   // on receipt, so we don't add a fixed fee to the cart total.
-  const freeShipping = subtotal >= 1500
+  const freeShipping = subtotal >= 2500
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
@@ -295,10 +295,10 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {subtotal < 1500 && (
+                  {subtotal < 2500 && (
                     <div className="mt-4 p-4 bg-[#FEF3C7] rounded-lg">
                       <p className="text-[14px] text-[#B45309]">
-                        Додайте товарів ще на ₴{(1500 - subtotal).toFixed(0)} для безкоштовної доставки!
+                        Додайте товарів ще на ₴{(2500 - subtotal).toFixed(0)} для безкоштовної доставки!
                       </p>
                     </div>
                   )}

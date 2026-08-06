@@ -134,7 +134,7 @@ export default function CheckoutPage() {
   }, [])
 
   // Shipping cost
-  // Free for carts over 1500 UAH; otherwise paid by the carrier's
+  // Free for carts over 2500 UAH; otherwise paid by the carrier's
   // tariff on receipt, so we don't add a fixed fee to the order total.
   // Pick up the skin-test promo flag + bundle items set when the routine was added.
   useEffect(() => {
@@ -148,7 +148,7 @@ export default function CheckoutPage() {
     }
   }, [])
 
-  const freeShipping = subtotal >= 1500
+  const freeShipping = subtotal >= 2500
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
@@ -538,7 +538,7 @@ export default function CheckoutPage() {
                           <p className="text-[13px] text-[#666]">Відділення або поштомат</p>
                         </div>
                         <span className="text-[14px] text-[#666]">
-                          {subtotal >= 1500 ? 'Безкоштовно' : 'За тарифами перевізника'}
+                          {subtotal >= 2500 ? 'Безкоштовно' : 'За тарифами перевізника'}
                         </span>
                       </label>
 
@@ -561,7 +561,7 @@ export default function CheckoutPage() {
                           <p className="text-[13px] text-[#666]">Відділення</p>
                         </div>
                         <span className="text-[14px] text-[#666]">
-                          {subtotal >= 1500 ? 'Безкоштовно' : 'За тарифами перевізника'}
+                          {subtotal >= 2500 ? 'Безкоштовно' : 'За тарифами перевізника'}
                         </span>
                       </label>
                     </div>

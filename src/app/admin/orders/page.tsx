@@ -376,6 +376,52 @@ function CustomersView({
             </div>
           </div>
 
+          {/* Actions — edit & delete */}
+          <div className="flex flex-wrap items-start gap-2 mb-4">
+            <details className="flex-1 min-w-[220px]">
+              <summary className="inline-flex items-center cursor-pointer list-none select-none h-9 px-4 rounded-lg bg-[#4348AE] text-white text-[14px] font-medium w-fit hover:opacity-90">
+                Редагувати дані
+              </summary>
+              <form action={updateCustomerAction} className="mt-3 grid sm:grid-cols-2 gap-2 bg-[#F8F7FB] rounded-xl p-3">
+                <input type="hidden" name="userId" value={c.userId} />
+                <input type="hidden" name="orderIds" value={c.orders.map((o) => o.id).join(',')} />
+                <input
+                  name="first_name"
+                  defaultValue={c.firstName}
+                  placeholder="Ім'я"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px] bg-white"
+                />
+                <input
+                  name="last_name"
+                  defaultValue={c.lastName}
+                  placeholder="Прізвище"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px] bg-white"
+                />
+                <input
+                  name="phone"
+                  defaultValue={c.phone}
+                  placeholder="Телефон"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px] bg-white"
+                />
+                <input
+                  name="email"
+                  defaultValue={c.email}
+                  placeholder="Email"
+                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px] bg-white"
+                />
+                <button className="h-10 px-6 bg-[#4348AE] text-white rounded-lg text-[14px] font-medium sm:col-span-2 sm:justify-self-start">
+                  Зберегти зміни
+                </button>
+              </form>
+            </details>
+            <ConfirmDeleteButton
+              action={deleteCustomerAction}
+              userId={c.userId}
+              orderIds={c.orders.map((o) => o.id).join(',')}
+              name={c.name}
+            />
+          </div>
+
           {c.orders.length > 0 && (
             <div className="border-t border-[#EEE] pt-3">
               <p className="text-[12px] uppercase tracking-wider text-[#999] mb-2">Історія замовлень</p>
@@ -405,52 +451,6 @@ function CustomersView({
               </div>
             </div>
           )}
-
-          {/* Edit / delete */}
-          <div className="border-t border-[#EEE] mt-3 pt-3 flex flex-wrap items-start gap-3">
-            <details className="group flex-1 min-w-[240px]">
-              <summary className="cursor-pointer list-none text-[13px] text-[#4348AE] hover:underline select-none">
-                Редагувати дані
-              </summary>
-              <form action={updateCustomerAction} className="mt-3 grid sm:grid-cols-2 gap-2">
-                <input type="hidden" name="userId" value={c.userId} />
-                <input type="hidden" name="orderIds" value={c.orders.map((o) => o.id).join(',')} />
-                <input
-                  name="first_name"
-                  defaultValue={c.firstName}
-                  placeholder="Ім'я"
-                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
-                />
-                <input
-                  name="last_name"
-                  defaultValue={c.lastName}
-                  placeholder="Прізвище"
-                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
-                />
-                <input
-                  name="phone"
-                  defaultValue={c.phone}
-                  placeholder="Телефон"
-                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
-                />
-                <input
-                  name="email"
-                  defaultValue={c.email}
-                  placeholder="Email"
-                  className="h-10 px-3 border border-[#DDD] rounded-lg text-[14px]"
-                />
-                <button className="h-10 px-4 bg-[#4348AE] text-white rounded-lg text-[14px] font-medium sm:col-span-2 sm:justify-self-start sm:px-6">
-                  Зберегти
-                </button>
-              </form>
-            </details>
-            <ConfirmDeleteButton
-              action={deleteCustomerAction}
-              userId={c.userId}
-              orderIds={c.orders.map((o) => o.id).join(',')}
-              name={c.name}
-            />
-          </div>
         </div>
       ))}
     </div>
