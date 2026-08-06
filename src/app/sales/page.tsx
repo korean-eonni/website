@@ -22,11 +22,11 @@ export const metadata: Metadata = {
 const currentOffers = [
   {
     title: 'Безкоштовна доставка',
-    description: 'При замовленні від 2500₴ доставка Новою Поштою до відділення — безкоштовна!',
+    description: `При замовленні від ${FREE_SHIPPING_THRESHOLD}₴ доставка Новою Поштою до відділення — безкоштовна!`,
     badge: 'Постійна акція',
     tone: '#F6F1FF',
     icon: '🚚',
-    conditions: 'Діє на всі замовлення від 2500₴',
+    conditions: `Діє на всі замовлення від ${FREE_SHIPPING_THRESHOLD}₴`,
   },
   {
     title: 'Подарунок до замовлення',
@@ -84,8 +84,8 @@ const savingTips = [
     icon: '📦',
   },
   {
-    title: 'Замовляйте від 2500₴',
-    description: 'Економте на доставці — вона безкоштовна від 2500₴.',
+    title: `Замовляйте від ${FREE_SHIPPING_THRESHOLD}₴`,
+    description: `Економте на доставці — вона безкоштовна від ${FREE_SHIPPING_THRESHOLD}₴.`,
     icon: '💰',
   },
 ]

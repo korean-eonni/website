@@ -9,6 +9,8 @@ import Logo from '@/components/ui/Logo'
 import CartDropdown from '@/components/cart/CartDropdown'
 import Magnetic from '@/components/ui/Magnetic'
 import { brands } from '@/data/brands'
+import { useAuth } from '@/contexts/AuthContext'
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 const PAPER = 'rgba(255, 252, 245, 0.85)'
 const PAPER_BORDER = 'rgba(0, 0, 0, 0.06)'
@@ -42,6 +44,7 @@ const DEFAULT_CATALOG_TREE: CatalogNode[] = [
 
 export default function Header() {
   const router = useRouter()
+  const { user } = useAuth()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedMobileItem, setExpandedMobileItem] = useState<string | null>(null)
@@ -526,11 +529,19 @@ export default function Header() {
                 onMouseLeave={scheduleCloseDD}
               >
                 <Magnetic strength={10}>
-                  <Link href="/account" className={iconButtonClass} aria-label="Профіль">
+                  <Link
+                    href="/account"
+                    className={`${iconButtonClass} relative`}
+                    aria-label={user ? `Профіль — ви увійшли як ${user.first_name || user.email}` : 'Профіль'}
+                  >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
+                    {/* Signed-in marker — otherwise the icon looks identical either way. */}
+                    {user && (
+                      <span className="absolute top-1 right-1 w-[9px] h-[9px] rounded-full bg-[#22C55E] ring-2 ring-[#FFFCF5]" />
+                    )}
                   </Link>
                 </Magnetic>
                 <div
@@ -546,6 +557,14 @@ export default function Header() {
                       boxShadow: PAPER_SHADOW,
                     }}
                   >
+                    {user && (
+                      <div className="px-4 pb-2 mb-1 border-b border-black/10">
+                        <p className="text-[12px] text-black/55 uppercase tracking-[0.15em]">Ви увійшли як</p>
+                        <p className="text-[15px] text-black font-semibold truncate">
+                          {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.email}
+                        </p>
+                      </div>
+                    )}
                     <Link href="/account" onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[15px] text-black hover:text-[#4348AE] hover:translate-x-1 transition-all duration-200">Профіль</Link>
                     <Link href="/account?tab=orders" onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[15px] text-black hover:text-[#4348AE] hover:translate-x-1 transition-all duration-200">Мої замовлення</Link>
                     <Link href="/account?tab=wishlist" onClick={() => setOpenDropdown(null)} className="block px-4 py-2 text-[15px] text-black hover:text-[#4348AE] hover:translate-x-1 transition-all duration-200">Список бажань</Link>
@@ -726,6 +745,14 @@ export default function Header() {
                 transition={{ delay: 0.45, duration: 0.55, ease: EXPO_OUT }}
                 className="mt-12 pt-8 border-t border-black/20 flex flex-col gap-2"
               >
+                {user && (
+                  <p className="font-gilroy text-[14px] text-black/60 -mb-1">
+                    Ви увійшли як{' '}
+                    <span className="text-black font-semibold">
+                      {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.email}
+                    </span>
+                  </p>
+                )}
                 <Link
                   href="/account"
                   onClick={() => setMobileMenuOpen(false)}
@@ -757,7 +784,7 @@ function PromoStrip({ promoRef }: { promoRef: React.RefObject<HTMLDivElement> })
   const promoItems = [
     '10% ЗНИЖКИ НА ПЕРШЕ ЗАМОВЛЕННЯ',
     'ДО КОЖНОЇ 1000грн. МАСКА MEDICUBE В ПОДАРУНОК',
-    'БЕЗКОШТОВНА ДОСТАВКА ВІД 2500грн',
+    `БЕЗКОШТОВНА ДОСТАВКА ВІД ${FREE_SHIPPING_THRESHOLD}грн`,
     'ОРИГІНАЛЬНА КОРЕЙСЬКА КОСМЕТИКА',
   ]
 

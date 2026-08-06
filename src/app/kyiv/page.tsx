@@ -58,7 +58,7 @@ const cityFaq = {
       acceptedAnswer: {
         '@type': 'Answer',
         text:
-          'Доставка Новою Поштою по Києву — від 70 ₴. Кур\'єр до дверей — від 100 ₴. Безкоштовна доставка від суми замовлення 2500 ₴.',
+          `Доставка Новою Поштою по Києву — від 70 ₴. Кур'єр до дверей — від 100 ₴. Безкоштовна доставка від суми замовлення ${FREE_SHIPPING_THRESHOLD} ₴.`,
       },
     },
     {
@@ -163,7 +163,7 @@ export default function KyivPage() {
             <p className="mt-2 font-gilroy text-[15px] leading-[22px] text-[#4A5061]">
               Кур&apos;єр у день замовлення<br />
               Нова Пошта від 70 ₴<br />
-              Безкоштовно від 2500 ₴
+              Безкоштовно від {FREE_SHIPPING_THRESHOLD} ₴
             </p>
           </div>
         </div>

@@ -210,7 +210,7 @@ export default function ContactsPage() {
                 <div className="p-4 rounded-[12px] bg-[#E2F9FF] border border-[#E2F9FF]">
                   <p className="text-[14px] text-[#444444]">
                     <strong>Доставка:</strong> Нова Пошта та кур&apos;єр по всій Україні.
-                    Безкоштовно від суми замовлення 2500&nbsp;₴.
+                    Безкоштовно від суми замовлення {FREE_SHIPPING_THRESHOLD}&nbsp;₴.
                   </p>
                 </div>
               </div>
