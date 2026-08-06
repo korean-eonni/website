@@ -17,6 +17,7 @@ export interface Product {
   image: string
   images?: string[]
   isNew: boolean
+  comingSoon?: boolean
   slug: string
 }
 
@@ -70,7 +71,7 @@ function ProductCard({ product, addingId, onAddToCart }: {
             src={allImages[hoveredIndex]}
             alt={product.name}
             fill
-            className="product-image object-contain p-3 transition-opacity duration-300"
+            className={`product-image object-contain p-3 transition-opacity duration-300 ${product.comingSoon ? 'opacity-50' : ''}`}
             sizes="(min-width: 1024px) 360px, (min-width: 640px) 320px, 50vw"
             loading="lazy"
             placeholder="blur"
@@ -95,6 +96,17 @@ function ProductCard({ product, addingId, onAddToCart }: {
             </div>
           )}
 
+          {product.comingSoon ? (
+            <span
+              className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 rounded-lg p-2 sm:p-2.5 bg-white text-[#4348AE] shadow-md z-[4]"
+              aria-hidden="true"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </span>
+          ) : (
           <button
             onClick={(e) => {
               e.preventDefault()
@@ -130,18 +142,19 @@ function ProductCard({ product, addingId, onAddToCart }: {
               </svg>
             )}
           </button>
+          )}
         </div>
 
         {/* Product Info — sits inside the gradient frame, below the photo cradle */}
         <div className="relative z-[1] flex-1 flex flex-col px-3 sm:px-4 pt-3 pb-3 sm:pt-3.5 sm:pb-4">
-          <h3 className="text-black text-[13px] sm:text-[15px] leading-[18px] sm:leading-[20px] font-medium mb-1.5 min-h-[36px] sm:min-h-[40px]">
+          <h3 className={`text-black text-[13px] sm:text-[15px] leading-[18px] sm:leading-[20px] font-medium mb-1.5 min-h-[36px] sm:min-h-[40px] ${product.comingSoon ? 'opacity-60' : ''}`}>
             {product.name}
           </h3>
 
-          <div className="flex items-center gap-2 mt-auto">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-auto">
             {product.price > 0 ? (
               <>
-                <span className={`text-[15px] sm:text-[17px] font-semibold ${product.originalPrice ? 'text-[#E84A8A]' : 'text-black'}`}>
+                <span className={`text-[15px] sm:text-[17px] font-semibold ${product.comingSoon ? 'opacity-60' : ''} ${product.originalPrice ? 'text-[#E84A8A]' : 'text-black'}`}>
                   ₴{product.price}
                 </span>
                 {product.originalPrice && (
@@ -153,6 +166,11 @@ function ProductCard({ product, addingId, onAddToCart }: {
             ) : (
               <span className="text-[#666] text-[13px] sm:text-[14px] font-medium">
                 Уточнюйте ціну
+              </span>
+            )}
+            {product.comingSoon && (
+              <span className="inline-flex items-center rounded-full bg-[#4348AE] text-white text-[10px] sm:text-[11px] font-semibold px-2 py-1 whitespace-nowrap">
+                Скоро в наявності
               </span>
             )}
           </div>

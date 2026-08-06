@@ -20,10 +20,41 @@ function isAuthorized(request: NextRequest): boolean {
   return false
 }
 
+/**
+ * The database is now the source of truth for products — they are created and
+ * edited in the admin panel, and photos live in our own Blob storage.
+ *
+ * A sheet sync does DELETE-ALL + re-insert, so running it would destroy every
+ * admin edit and point photos back at Google. It is therefore disabled unless
+ * the caller explicitly opts in with `?allowReplaceAll=1`, which nothing does
+ * automatically. The legacy Apps Script and any stray cron get a harmless 409.
+ */
+function replaceAllAllowed(request: NextRequest): boolean {
+  return new URL(request.url).searchParams.get('allowReplaceAll') === '1'
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
+
+  if (!replaceAllAllowed(request)) {
+    console.warn('[sync-sheet] Refused: DB is the source of truth; sheet sync would wipe admin edits.')
+    return NextResponse.json(
+      {
+        ok: false,
+        disabled: true,
+        error:
+          'Синхронізація з Google Sheet вимкнена: база даних тепер є джерелом правди. ' +
+          'Товари редагуються в адмінці, фото зберігаються у власному сховищі. ' +
+          'Цей запит нічого не змінив.',
+        hint: 'Якщо ви справді хочете ПЕРЕЗАПИСАТИ всі товари з таблиці, додайте ?allowReplaceAll=1',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 409 }
+    )
+  }
+
   const startTime = Date.now()
 
   try {

@@ -352,6 +352,83 @@ export async function upsertProducts(products: ProductRecord[]) {
   }
 }
 
+/**
+ * Every column of `products`, in one place. `saveProduct` writes ALL of them,
+ * so creating and editing a product can never drift apart the way the old
+ * separate createProduct/updateProduct pair did (the old update silently
+ * dropped photos 2-12 and every "rich" field, because the Google Sheet was
+ * expected to fill them back in on the next sync).
+ */
+export const PRODUCT_COLUMNS = [
+  'id', 'name',
+  'image_url', 'image_path',
+  'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5', 'image_url_6', 'image_url_7',
+  'image_url_8', 'image_url_9', 'image_url_10', 'image_url_11', 'image_url_12',
+  'short_description', 'long_description',
+  'supplier', 'cost_price', 'sale_price', 'original_price', 'discount_amount',
+  'stock_quantity', 'category', 'subcategory', 'subcategory_2', 'weight_grams',
+  'tags', 'sku', 'barcode', 'brand',
+  'volume_options', 'rating', 'review_count',
+  'age_group', 'ingredients', 'skin_type', 'series', 'classification',
+  'usage_instructions', 'clinical_proof', 'solves_problems', 'key_ingredients',
+  'fit_skin', 'compatibility',
+  'is_active', 'is_new', 'is_exclusive', 'coming_soon',
+  'created_at', 'updated_at',
+] as const
+
+/**
+ * Create-or-update a product with every field. This is the single write path
+ * used by the admin panel now that the database (not the Google Sheet) is the
+ * source of truth for products.
+ */
+export async function saveProduct(product: ProductRecord): Promise<void> {
+  const now = new Date().toISOString()
+  const record: Record<string, unknown> = {
+    ...product,
+    id: product.id || randomUUID(),
+    created_at: product.created_at || now,
+    updated_at: now,
+  }
+
+  if (usePostgres) {
+    await ensurePostgresSchema()
+
+    const cols = [...PRODUCT_COLUMNS]
+    const values = cols.map((c) => record[c] ?? null)
+    const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ')
+    // On conflict every column except id/created_at is refreshed.
+    const updateSet = cols
+      .filter((c) => c !== 'id' && c !== 'created_at')
+      .map((c) => `${c} = EXCLUDED.${c}`)
+      .join(', ')
+
+    await sql.query(
+      `INSERT INTO products (${cols.join(', ')}) VALUES (${placeholders})
+       ON CONFLICT (id) DO UPDATE SET ${updateSet}`,
+      values
+    )
+    return
+  }
+
+  // Local SQLite fallback — same contract, narrower column set.
+  const db = getDb()
+  const sqliteCols = [
+    'id', 'name', 'image_url', 'image_path', 'short_description', 'long_description',
+    'supplier', 'cost_price', 'sale_price', 'original_price', 'discount_amount',
+    'stock_quantity', 'category', 'subcategory', 'weight_grams', 'tags', 'sku',
+    'barcode', 'brand', 'is_active', 'is_new', 'is_exclusive', 'created_at', 'updated_at',
+  ]
+  const stmt = db.prepare(`
+    INSERT INTO products (${sqliteCols.join(', ')})
+    VALUES (${sqliteCols.map((c) => '@' + c).join(', ')})
+    ON CONFLICT(id) DO UPDATE SET
+      ${sqliteCols.filter((c) => c !== 'id' && c !== 'created_at').map((c) => `${c} = excluded.${c}`).join(', ')}
+  `)
+  const params: Record<string, unknown> = {}
+  for (const c of sqliteCols) params[c] = record[c] ?? null
+  stmt.run(params)
+}
+
 export async function getProduct(id: string) {
   if (usePostgres) {
     await ensurePostgresSchema()
@@ -615,11 +692,21 @@ export async function deleteProduct(id: string) {
 
   if (usePostgres) {
     await sql`DELETE FROM products WHERE id = ${id}`
-    if (product.image_url && product.image_url.includes('.blob.vercel-storage.com')) {
-      try {
-        await del(product.image_url)
-      } catch {
-        // ignore blob delete errors
+    // Remove the whole gallery from our storage, not just the main photo,
+    // so deleting a product never leaves orphaned files behind.
+    const record = product as unknown as Record<string, unknown>
+    const galleryColumns = [
+      'image_url', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5', 'image_url_6',
+      'image_url_7', 'image_url_8', 'image_url_9', 'image_url_10', 'image_url_11', 'image_url_12',
+    ]
+    for (const col of galleryColumns) {
+      const url = record[col]
+      if (typeof url === 'string' && url.includes('.blob.vercel-storage.com')) {
+        try {
+          await del(url)
+        } catch {
+          // ignore blob delete errors
+        }
       }
     }
     return

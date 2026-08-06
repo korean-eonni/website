@@ -8,15 +8,11 @@ import {
   isAuthed,
   makeAdminToken,
 } from '@/lib/adminAuth'
-import { createProduct, deleteProduct, listProducts } from '@/lib/productStore'
+import { deleteProduct, listProducts, saveProduct } from '@/lib/productStore'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import { brands } from '@/data/brands'
-import { syncSheetToDatabase } from '@/lib/sheetSync'
-import {
-  appendProductToSheet,
-  getLinkedDriveAccount,
-  uploadImagesToDrive,
-} from '@/lib/productCreate'
+import { productFromForm } from '@/lib/productForm'
+import { compactGallery, uploadProductImage, MAX_PRODUCT_IMAGES } from '@/lib/productImages'
 import AdminFlash from '@/components/admin/AdminFlash'
 
 type ProductRow = {
@@ -52,144 +48,47 @@ async function addProductAction(formData: FormData) {
     redirect('/admin')
   }
 
-  const now = new Date().toISOString()
-  const toNumber = (value: FormDataEntryValue | null) => {
-    if (!value) return null
-    const num = Number(value)
-    return Number.isFinite(num) ? num : null
-  }
-  const text = (key: string, max?: number): string | null => {
-    const raw = String(formData.get(key) || '').trim()
-    if (!raw) return null
-    return max ? raw.slice(0, max) : raw
-  }
-
   const name = String(formData.get('name') || '').trim()
   if (!name) {
     redirect('/admin?error=name-required')
   }
 
-  // Collect up to 10 photo files from the multi-file <input name="images">.
+  // Photos go straight into our own Blob storage — no Google Drive, no Sheet.
   const rawFiles = formData.getAll('images') as File[]
   const photoFiles: File[] = rawFiles
     .filter((f) => f && typeof f === 'object' && f.size > 0)
-    .slice(0, 10)
+    .slice(0, MAX_PRODUCT_IMAGES)
 
   if (photoFiles.length === 0) {
     redirect('/admin?error=image-required')
   }
 
-  let photoUrls: string[] = []
+  const id = randomUUID()
+  const photoUrls: string[] = []
   try {
-    photoUrls = await uploadImagesToDrive(photoFiles, name)
+    for (let i = 0; i < photoFiles.length; i++) {
+      const url = await uploadProductImage({
+        data: photoFiles[i],
+        productId: id,
+        productName: name,
+        slot: i + 1,
+      })
+      photoUrls.push(url)
+    }
   } catch (err) {
-    console.error('[admin/addProduct] Drive upload failed:', err)
-    redirect('/admin?error=drive-upload-failed')
+    console.error('[admin/addProduct] image upload failed:', err)
+    redirect('/admin?error=image-upload-failed')
   }
 
-  // Build product input shared by sheet-append and DB-insert paths.
-  const ratingNum = toNumber(formData.get('rating'))
-  const reviewCountNum = toNumber(formData.get('review_count'))
-  const sharedInput = {
-    name,
-    supplier: text('supplier', 80),
-    category: text('category', 80),
-    subcategory: text('subcategory', 80),
-    brand: text('brand', 80),
-    sku: text('sku', 40),
-    weight_grams: toNumber(formData.get('weight_grams')),
-    cost_price: toNumber(formData.get('cost_price')),
-    sale_price: toNumber(formData.get('sale_price')),
-    original_price: toNumber(formData.get('original_price')),
-    discount_amount: toNumber(formData.get('discount_amount')),
-    tags: text('tags', 200),
-    short_description: text('short_description', 160),
-    long_description: text('long_description', 5000),
-    usage_instructions: text('usage_instructions', 2000),
-    clinical_proof: text('clinical_proof', 2000),
-    solves_problems: text('solves_problems', 2000),
-    key_ingredients: text('key_ingredients', 2000),
-    fit_skin: text('fit_skin', 500),
-    compatibility: text('compatibility', 2000),
-    is_active: !!formData.get('is_active'),
-    is_new: !!formData.get('is_new'),
-    is_exclusive: !!formData.get('is_exclusive'),
-    volume_options: text('volume_options', 200),
-    rating: ratingNum,
-    review_count: reviewCountNum,
-    age_group: text('age_group', 40),
-    ingredients: text('ingredients', 3000),
-    skin_type: text('skin_type', 100),
-    series: text('series', 100),
-    classification: text('classification', 100),
-  }
-
-  // 1) Append the row to the sheet so the source of truth (Google Sheet) is
-  //    kept in sync. If this fails, we abort before writing to DB so the two
-  //    don't diverge — the admin can retry.
-  try {
-    await appendProductToSheet({ ...sharedInput, photoUrls })
-  } catch (err) {
-    console.error('[admin/addProduct] sheet append failed:', err)
-    redirect('/admin?error=sheet-append-failed')
-  }
-
-  // 2) Insert into DB immediately so the product shows on site without
-  //    waiting for the next scheduled sync.
-  const product = {
-    id: randomUUID(),
-    name,
-    image_url: photoUrls[0] ?? null,
-    image_path: null,
-    image_url_2: photoUrls[1] ?? null,
-    image_url_3: photoUrls[2] ?? null,
-    image_url_4: photoUrls[3] ?? null,
-    image_url_5: photoUrls[4] ?? null,
-    image_url_6: photoUrls[5] ?? null,
-    image_url_7: photoUrls[6] ?? null,
-    image_url_8: photoUrls[7] ?? null,
-    image_url_9: photoUrls[8] ?? null,
-    image_url_10: photoUrls[9] ?? null,
-    image_url_11: null,
-    image_url_12: null,
-    short_description: sharedInput.short_description,
-    long_description: sharedInput.long_description,
-    supplier: sharedInput.supplier,
-    cost_price: sharedInput.cost_price,
-    sale_price: sharedInput.sale_price,
-    original_price: sharedInput.original_price,
-    discount_amount: sharedInput.discount_amount,
-    stock_quantity: toNumber(formData.get('stock_quantity')),
-    category: sharedInput.category,
-    subcategory: sharedInput.subcategory,
-    weight_grams: sharedInput.weight_grams,
-    tags: sharedInput.tags,
-    sku: sharedInput.sku,
-    barcode: text('barcode', 40),
-    brand: sharedInput.brand,
-    volume_options: sharedInput.volume_options,
-    rating: sharedInput.rating,
-    review_count: sharedInput.review_count,
-    age_group: sharedInput.age_group,
-    ingredients: sharedInput.ingredients,
-    skin_type: sharedInput.skin_type,
-    series: sharedInput.series,
-    classification: sharedInput.classification,
-    usage_instructions: sharedInput.usage_instructions,
-    clinical_proof: sharedInput.clinical_proof,
-    solves_problems: sharedInput.solves_problems,
-    key_ingredients: sharedInput.key_ingredients,
-    fit_skin: sharedInput.fit_skin,
-    compatibility: sharedInput.compatibility,
-    is_active: sharedInput.is_active ? 1 : 0,
-    is_new: sharedInput.is_new ? 1 : 0,
-    is_exclusive: sharedInput.is_exclusive ? 1 : 0,
-    created_at: now,
-    updated_at: now,
-  }
+  // Everything the form knows about the product, written in one place.
+  const product = productFromForm(formData, {
+    id,
+    gallery: compactGallery(photoUrls),
+    existing: null,
+  })
 
   try {
-    await createProduct(product)
+    await saveProduct(product)
   } catch (err) {
     console.error('[admin/addProduct] DB insert failed:', err)
     redirect('/admin?error=db-insert-failed')
@@ -207,21 +106,6 @@ async function deleteProductAction(formData: FormData) {
   if (!id) redirect('/admin')
   await deleteProduct(id)
   redirect('/admin')
-}
-
-async function syncSheetAction() {
-  'use server'
-  if (!isAuthed()) {
-    redirect('/admin')
-  }
-  try {
-    const result = await syncSheetToDatabase()
-    redirect(`/admin?sync=ok&imported=${result?.imported ?? 0}`)
-  } catch (e) {
-    console.error('Sheet sync failed', e)
-    const message = e instanceof Error ? e.message : 'sync_failed'
-    redirect(`/admin?sync=error&reason=${encodeURIComponent(message)}`)
-  }
 }
 
 export default async function AdminPage({
@@ -268,7 +152,6 @@ export default async function AdminPage({
   }
 
   const products = (await listProducts()) as ProductRow[]
-  const linkedDriveAccount = await getLinkedDriveAccount()
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
@@ -278,51 +161,21 @@ export default async function AdminPage({
         reason={searchParams?.reason}
       />
       <div className="max-w-[1200px] mx-auto">
-        {searchParams?.oauth === 'ok' && (
+        {searchParams?.error === 'image-upload-failed' && (
+          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
+            ✗ Не вдалося завантажити фото. Спробуй ще раз.
+          </div>
+        )}
+        {searchParams?.error === 'db-insert-failed' && (
+          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
+            ✗ Не вдалося зберегти товар у базу.
+          </div>
+        )}
+        {searchParams?.success === 'product-added' && (
           <div className="mb-6 rounded-lg border border-[#0D7E2F] bg-[#E6F7EA] px-4 py-3 text-[14px] text-[#0D7E2F]">
-            ✓ Google Drive під'єднано як {linkedDriveAccount ?? 'обраний акаунт'}.
-            Фото товарів тепер завантажуватимуться в Drive.
+            ✓ Товар додано.
           </div>
         )}
-        {searchParams?.oauth === 'error' && (
-          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
-            ✗ Помилка під&apos;єднання Google: {searchParams.reason ?? 'unknown'}
-          </div>
-        )}
-        {searchParams?.error === 'drive-upload-failed' && (
-          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
-            ✗ Фото не вдалося завантажити в Drive. Перевір під&apos;єднання нижче.
-          </div>
-        )}
-
-        {/* Google Drive connection status */}
-        <div className="mb-8 rounded-2xl border border-[#E5E5E5] bg-white px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-[14px] font-semibold text-black">Google Drive</p>
-            <p className="text-[13px] text-[#666] mt-1">
-              {linkedDriveAccount ? (
-                <>
-                  Під&apos;єднано: <span className="font-mono">{linkedDriveAccount}</span>. Фото
-                  товарів зберігаються в обрану папку.
-                </>
-              ) : (
-                <>
-                  Не під&apos;єднано. Без цього адмінка не зможе зберігати фото в Drive.
-                </>
-              )}
-            </p>
-          </div>
-          <a
-            href="/api/admin/oauth/start"
-            className={`h-10 px-4 rounded-lg uppercase text-[14px] flex items-center transition-colors ${
-              linkedDriveAccount
-                ? 'border border-black text-black hover:bg-black hover:text-white'
-                : 'bg-[#4348AE] text-white hover:bg-[#373B8A]'
-            }`}
-          >
-            {linkedDriveAccount ? 'Перепід’єднати' : 'Під’єднати Google Drive'}
-          </a>
-        </div>
 
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-bebas uppercase text-black">
@@ -341,14 +194,6 @@ export default async function AdminPage({
             >
               Запити на товар
             </a>
-            <form action={syncSheetAction}>
-              <button
-                type="submit"
-                className="h-10 px-4 rounded-lg border border-black text-black uppercase text-[14px] hover:bg-black hover:text-white transition-colors"
-              >
-                Імпорт із Google Sheet
-              </button>
-            </form>
             <form action={logoutAction}>
               <button
                 type="submit"
@@ -394,8 +239,8 @@ export default async function AdminPage({
                 className="w-full"
               />
               <p className="mt-1 text-xs text-[#666]">
-                Перший файл — головне фото. Файли збережуться в Google Drive за шаблоном
-                «Назва товару_1.jpg», «..._2.jpg», і т.д. Посилання автоматично потраплять у Sheet.
+                Перший файл — головне фото. До {MAX_PRODUCT_IMAGES} фото. Зберігаються у власному
+                сховищі сайту за шаблоном «Назва товару.jpg», «Назва товару (2).jpg», і т.д.
               </p>
             </div>
             <div>
@@ -418,6 +263,14 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Субкатегорія</label>
               <input
                 name="subcategory"
+                maxLength={80}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Субкатегорія 2</label>
+              <input
+                name="subcategory_2"
                 maxLength={80}
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
@@ -647,6 +500,10 @@ export default async function AdminPage({
               <label className="flex items-center gap-2 text-sm">
                 <input name="is_exclusive" type="checkbox" />
                 Позначити як ексклюзив
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input name="coming_soon" type="checkbox" />
+                Скоро в наявності
               </label>
             </div>
             <div className="md:col-span-2">

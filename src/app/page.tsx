@@ -9,6 +9,7 @@ import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { listProducts } from '@/lib/productStore'
+import { isOutOfStock } from '@/lib/stock'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,7 @@ type ProductCard = {
   image: string
   images: string[]
   isNew: boolean
+  comingSoon: boolean
   slug: string
 }
 
@@ -38,6 +40,7 @@ export default async function Home() {
     image_url_4: string | null
     image_url_5: string | null
     is_new: number
+    stock_quantity: number | null
   }
 
   const mapRow = (row: RawRow): ProductCard => {
@@ -52,6 +55,7 @@ export default async function Home() {
       image: mainImage,
       images: allImages,
       isNew: row.is_new === 1,
+      comingSoon: isOutOfStock(row.stock_quantity),
       slug: row.id,
     }
   }

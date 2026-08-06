@@ -13,6 +13,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
+import { isOutOfStock } from '@/lib/stock'
 
 // Pre-computed dominant packaging colour per product id (see
 // scripts/compute-product-colors.mjs). Used for the default "by colour" order:
@@ -123,8 +124,7 @@ type Product = {
 // non-numeric. Such products still appear in the catalogue, but dimmed and with
 // a "Скоро в наявності" badge instead of the add-to-cart button.
 function isComingSoon(p: Product): boolean {
-  const n = typeof p.stock_quantity === 'number' ? p.stock_quantity : Number(p.stock_quantity)
-  return !(Number.isFinite(n) && n >= 1)
+  return isOutOfStock(p.stock_quantity)
 }
 
 const PRODUCTS_PER_PAGE = 20
@@ -550,6 +550,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         discount: p.discount_amount ?? undefined,
         image: p.image_url || p.image_path || '/products/product-1.png',
         isNew: p.is_new === 1,
+        comingSoon: isComingSoon(p),
         slug: p.id,
       }))
   }, [products])
