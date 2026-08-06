@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
+import { hasFreeShipping } from '@/lib/shipping'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -148,7 +149,7 @@ export default function CheckoutPage() {
     }
   }, [])
 
-  const freeShipping = subtotal >= 2500
+  const freeShipping = hasFreeShipping(subtotal)
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
@@ -538,7 +539,7 @@ export default function CheckoutPage() {
                           <p className="text-[13px] text-[#666]">Відділення або поштомат</p>
                         </div>
                         <span className="text-[14px] text-[#666]">
-                          {subtotal >= 2500 ? 'Безкоштовно' : 'За тарифами перевізника'}
+                          {hasFreeShipping(subtotal) ? 'Безкоштовно' : 'За тарифами перевізника'}
                         </span>
                       </label>
 
@@ -561,7 +562,7 @@ export default function CheckoutPage() {
                           <p className="text-[13px] text-[#666]">Відділення</p>
                         </div>
                         <span className="text-[14px] text-[#666]">
-                          {subtotal >= 2500 ? 'Безкоштовно' : 'За тарифами перевізника'}
+                          {hasFreeShipping(subtotal) ? 'Безкоштовно' : 'За тарифами перевізника'}
                         </span>
                       </label>
                     </div>

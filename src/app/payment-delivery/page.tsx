@@ -2,11 +2,12 @@ import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 export const metadata: Metadata = {
   title: 'Доставка та оплата | Eonni — Умови доставки корейської косметики',
   description:
-    'Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від 2500₴. Оплата онлайн або при отриманні. Відправка в день замовлення до 18:00.',
+    `Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD}₴. Оплата онлайн або при отриманні. Відправка в день замовлення до 18:00.`,
   keywords: 'доставка косметики, Нова Пошта, Укрпошта, оплата онлайн, накладений платіж, Eonni',
   openGraph: {
     title: 'Доставка та оплата | Eonni',

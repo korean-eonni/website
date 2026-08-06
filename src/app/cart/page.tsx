@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines, memberPrice } from '@/lib/memberDiscount'
+import { FREE_SHIPPING_THRESHOLD, hasFreeShipping } from '@/lib/shipping'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -26,9 +27,9 @@ export default function CartPage() {
     }
   }, [])
 
-  // Delivery is free over 2500 UAH; below that it's paid by the carrier's tariff
-  // on receipt, so we don't add a fixed fee to the cart total.
-  const freeShipping = subtotal >= 2500
+  // Delivery is free over FREE_SHIPPING_THRESHOLD; below that it's paid by the
+  // carrier's tariff on receipt, so we don't add a fixed fee to the cart total.
+  const freeShipping = hasFreeShipping(subtotal)
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
@@ -295,10 +296,10 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {subtotal < 2500 && (
+                  {subtotal < FREE_SHIPPING_THRESHOLD && (
                     <div className="mt-4 p-4 bg-[#FEF3C7] rounded-lg">
                       <p className="text-[14px] text-[#B45309]">
-                        Додайте товарів ще на ₴{(2500 - subtotal).toFixed(0)} для безкоштовної доставки!
+                        Додайте товарів ще на ₴{(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(0)} для безкоштовної доставки!
                       </p>
                     </div>
                   )}

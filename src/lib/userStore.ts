@@ -290,12 +290,19 @@ export async function updatePassword(id: string, newPassword: string): Promise<v
 }
 
 // Session functions
+/**
+ * How long a session stays valid. It is pushed forward again on activity (see
+ * `touchSession`), so someone who keeps using the site stays signed in until they
+ * log out themselves; the window only matters for accounts left untouched.
+ */
+export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
+
 export async function createSession(userId: string): Promise<UserSession> {
   await ensureUserSchema()
   const now = new Date().toISOString()
   const id = randomUUID()
   const token = randomUUID() + '-' + randomUUID()
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString()
 
   await sql`
     INSERT INTO user_sessions (id, user_id, token, expires_at, created_at)
@@ -312,6 +319,21 @@ export async function getSessionByToken(token: string): Promise<UserSession | nu
     WHERE token = ${token} AND expires_at > ${new Date().toISOString()}
   `
   return rows[0] || null
+}
+
+/**
+ * Push a session's expiry back out to the full TTL. Called while the customer is
+ * active so the login keeps renewing itself instead of running out on a fixed
+ * date. Returns the new expiry (to re-stamp the cookie), or null if the token is
+ * unknown — e.g. already logged out.
+ */
+export async function touchSession(token: string): Promise<string | null> {
+  await ensureUserSchema()
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString()
+  const result = await sql`
+    UPDATE user_sessions SET expires_at = ${expiresAt} WHERE token = ${token}
+  `
+  return result.rowCount ? expiresAt : null
 }
 
 export async function deleteSession(token: string): Promise<void> {

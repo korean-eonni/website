@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { getSessionByToken, getUserById } from '@/lib/userStore'
+import { SESSION_TTL_MS, getSessionByToken, getUserById, touchSession } from '@/lib/userStore'
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * Renew the session once a day of its life has passed, rather than on every
+ * request — enough to keep an active customer signed in indefinitely without a
+ * database write on every page view.
+ */
+const RENEW_AFTER_MS = 24 * 60 * 60 * 1000
 
 /**
  * Who-am-I answers are per-session and must never be reused. Without this the
@@ -33,7 +40,7 @@ export async function GET() {
       return NextResponse.json({ user: null }, { status: 401, headers: NO_STORE })
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         user: {
           id: user.id,
@@ -45,6 +52,25 @@ export async function GET() {
       },
       { headers: NO_STORE }
     )
+
+    // Keep the login alive. Both the row and the cookie carry an expiry date, so
+    // renewing one without the other would still sign the customer out — the
+    // cookie is re-stamped with the same new date.
+    const expiresAt = new Date(session.expires_at).getTime()
+    if (Number.isFinite(expiresAt) && expiresAt - Date.now() < SESSION_TTL_MS - RENEW_AFTER_MS) {
+      const renewed = await touchSession(token)
+      if (renewed) {
+        response.cookies.set('session_token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          expires: new Date(renewed),
+          path: '/',
+        })
+      }
+    }
+
+    return response
   } catch (error: any) {
     console.error('Auth check error:', error)
     return NextResponse.json({ user: null }, { status: 500, headers: NO_STORE })
