@@ -151,7 +151,19 @@ export default async function AdminPage({
     )
   }
 
-  const products = (await listProducts()) as ProductRow[]
+  // The table below renders nine fields — fetching the full record (including
+  // every description and section) would move ~1 MB instead of ~45 KB.
+  const products = (await listProducts(undefined, [
+    'id',
+    'name',
+    'category',
+    'sale_price',
+    'stock_quantity',
+    'is_active',
+    'is_new',
+    'is_exclusive',
+    'created_at',
+  ])) as ProductRow[]
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">

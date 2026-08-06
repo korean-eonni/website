@@ -64,7 +64,26 @@ export type ProductRecord = {
 
 const usePostgres = !!process.env.POSTGRES_URL
 
-async function ensurePostgresSchema() {
+/**
+ * Schema setup is idempotent DDL (CREATE TABLE IF NOT EXISTS + ~34 ALTER … IF NOT
+ * EXISTS). It used to run on EVERY query, adding 35 sequential database
+ * round-trips — several seconds — to every page and API call on the whole site.
+ *
+ * Run it once per server process instead and cache the promise. On failure the
+ * cache is cleared so the next call retries rather than sticking to a broken state.
+ */
+let schemaReady: Promise<void> | null = null
+function ensurePostgresSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = runSchemaSetup().catch((err) => {
+      schemaReady = null
+      throw err
+    })
+  }
+  return schemaReady
+}
+
+async function runSchemaSetup() {
   await sql`
     CREATE TABLE IF NOT EXISTS products (
       id TEXT PRIMARY KEY,
@@ -227,11 +246,47 @@ export async function replaceAllProducts(products: ProductRecord[]) {
   }
 }
 
-export async function listProducts(where?: string) {
+/**
+ * Every column of `products`, in one place. `saveProduct` writes ALL of them,
+ * so creating and editing a product can never drift apart the way the old
+ * separate createProduct/updateProduct pair did (the old update silently
+ * dropped photos 2-12 and every "rich" field, because the Google Sheet was
+ * expected to fill them back in on the next sync).
+ */
+export const PRODUCT_COLUMNS = [
+  'id', 'name',
+  'image_url', 'image_path',
+  'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5', 'image_url_6', 'image_url_7',
+  'image_url_8', 'image_url_9', 'image_url_10', 'image_url_11', 'image_url_12',
+  'short_description', 'long_description',
+  'supplier', 'cost_price', 'sale_price', 'original_price', 'discount_amount',
+  'stock_quantity', 'category', 'subcategory', 'subcategory_2', 'weight_grams',
+  'tags', 'sku', 'barcode', 'brand',
+  'volume_options', 'rating', 'review_count',
+  'age_group', 'ingredients', 'skin_type', 'series', 'classification',
+  'usage_instructions', 'clinical_proof', 'solves_problems', 'key_ingredients',
+  'fit_skin', 'compatibility',
+  'is_active', 'is_new', 'is_exclusive', 'coming_soon',
+  'created_at', 'updated_at',
+] as const
+
+/**
+ * List products.
+ *
+ * `columns` limits the SELECT to the fields the caller actually renders. The
+ * product table carries very large text fields (descriptions, the six product
+ * page sections, full ingredient lists), so `SELECT *` moves ~1 MB for 144
+ * products — 20× more than a listing screen needs. Only column names from
+ * PRODUCT_COLUMNS are accepted, so this can never become an injection point.
+ */
+export async function listProducts(where?: string, columns?: readonly string[]) {
+  const allowed = columns?.filter((c) => (PRODUCT_COLUMNS as readonly string[]).includes(c))
+  const select = allowed && allowed.length ? allowed.join(', ') : '*'
+
   if (usePostgres) {
     await ensurePostgresSchema()
     const query = `
-      SELECT * FROM products
+      SELECT ${select} FROM products
       ${where ? `WHERE ${where}` : ''}
       ORDER BY created_at DESC
     `
@@ -242,7 +297,7 @@ export async function listProducts(where?: string) {
   const db = getDb()
   const stmt = db.prepare(
     `
-    SELECT * FROM products
+    SELECT ${select} FROM products
     ${where ? `WHERE ${where}` : ''}
     ORDER BY created_at DESC
   `
@@ -352,29 +407,6 @@ export async function upsertProducts(products: ProductRecord[]) {
   }
 }
 
-/**
- * Every column of `products`, in one place. `saveProduct` writes ALL of them,
- * so creating and editing a product can never drift apart the way the old
- * separate createProduct/updateProduct pair did (the old update silently
- * dropped photos 2-12 and every "rich" field, because the Google Sheet was
- * expected to fill them back in on the next sync).
- */
-export const PRODUCT_COLUMNS = [
-  'id', 'name',
-  'image_url', 'image_path',
-  'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5', 'image_url_6', 'image_url_7',
-  'image_url_8', 'image_url_9', 'image_url_10', 'image_url_11', 'image_url_12',
-  'short_description', 'long_description',
-  'supplier', 'cost_price', 'sale_price', 'original_price', 'discount_amount',
-  'stock_quantity', 'category', 'subcategory', 'subcategory_2', 'weight_grams',
-  'tags', 'sku', 'barcode', 'brand',
-  'volume_options', 'rating', 'review_count',
-  'age_group', 'ingredients', 'skin_type', 'series', 'classification',
-  'usage_instructions', 'clinical_proof', 'solves_problems', 'key_ingredients',
-  'fit_skin', 'compatibility',
-  'is_active', 'is_new', 'is_exclusive', 'coming_soon',
-  'created_at', 'updated_at',
-] as const
 
 /**
  * Create-or-update a product with every field. This is the single write path
