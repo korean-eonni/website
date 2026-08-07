@@ -234,11 +234,13 @@ export default async function AdminPage({
           >
             <div className="md:col-span-2">
               <label className="block text-sm mb-2">Назва *</label>
-              <input
+              <textarea
                 name="name"
                 required
                 maxLength={120}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={2}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div className="md:col-span-2">
@@ -276,18 +278,22 @@ export default async function AdminPage({
             </div>
             <div>
               <label className="block text-sm mb-2">SKU</label>
-              <input
+              <textarea
                 name="sku"
                 maxLength={40}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-sm mb-2">Штрихкод</label>
-              <input
+              <textarea
                 name="barcode"
                 maxLength={40}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div>
@@ -316,10 +322,12 @@ export default async function AdminPage({
             </div>
             <div>
               <label className="block text-sm mb-2">Теги (через кому)</label>
-              <input
+              <textarea
                 name="tags"
                 maxLength={200}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div className="md:col-span-2">
@@ -398,46 +406,56 @@ export default async function AdminPage({
             {/* Extended attributes */}
             <div>
               <label className="block text-sm mb-2">Об'єм / Варіанти</label>
-              <input
+              <textarea
                 name="volume_options"
                 maxLength={200}
                 placeholder="20 мл, 40 мл, 80 мл"
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-sm mb-2">Серія</label>
-              <input
+              <textarea
                 name="series"
                 maxLength={100}
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-sm mb-2">Вік</label>
-              <input
+              <textarea
                 name="age_group"
                 maxLength={40}
                 placeholder="18+ / 25+ / Всі віки"
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-sm mb-2">Тип шкіри</label>
-              <input
+              <textarea
                 name="skin_type"
                 maxLength={100}
                 placeholder="Жирна / Суха / Усі типи"
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-sm mb-2">Класифікація</label>
-              <input
+              <textarea
                 name="classification"
                 maxLength={100}
                 placeholder="Натуральна / Професійна"
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              
+                rows={1}
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div className="md:col-span-2">

@@ -213,7 +213,11 @@ export default async function AdminEditPage({
             <input type="hidden" name="id" value={product.id} />
 
             <Field label="Назва *" wide>
-              <input name="name" required defaultValue={product.name} maxLength={200} className={inputCls} />
+              <textarea
+                name="name" required defaultValue={product.name} maxLength={200} 
+                rows={2}
+                className={areaCls}
+              />
             </Field>
 
             <ProductPhotos initial={gallery.filter(Boolean) as string[]} max={MAX_PRODUCT_IMAGES} />
@@ -240,13 +244,25 @@ export default async function AdminEditPage({
               </select>
             </Field>
             <Field label="SKU">
-              <input name="sku" defaultValue={product.sku || ''} maxLength={40} className={inputCls} />
+              <textarea
+                name="sku" defaultValue={product.sku || ''} maxLength={40} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
             <Field label="Штрихкод">
-              <input name="barcode" defaultValue={product.barcode || ''} maxLength={40} className={inputCls} />
+              <textarea
+                name="barcode" defaultValue={product.barcode || ''} maxLength={40} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
             <Field label="Серія">
-              <input name="series" defaultValue={product.series || ''} maxLength={100} className={inputCls} />
+              <textarea
+                name="series" defaultValue={product.series || ''} maxLength={100} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
 
             {/* ---------- ЦІНИ / СКЛАД ---------- */}
@@ -269,21 +285,41 @@ export default async function AdminEditPage({
               <input name="weight_grams" type="number" step="0.01" defaultValue={product.weight_grams ?? ''} className={inputCls} />
             </Field>
             <Field label="Об'єм / варіанти">
-              <input name="volume_options" defaultValue={product.volume_options || ''} maxLength={200} className={inputCls} />
+              <textarea
+                name="volume_options" defaultValue={product.volume_options || ''} maxLength={200} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
             <Field label="Теги (через кому)">
-              <input name="tags" defaultValue={product.tags || ''} maxLength={400} className={inputCls} />
+              <textarea
+                name="tags" defaultValue={product.tags || ''} maxLength={400} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
 
             {/* ---------- ХАРАКТЕРИСТИКИ ---------- */}
             <Field label="Вік">
-              <input name="age_group" defaultValue={product.age_group || ''} maxLength={40} className={inputCls} />
+              <textarea
+                name="age_group" defaultValue={product.age_group || ''} maxLength={40} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
             <Field label="Тип шкіри">
-              <input name="skin_type" defaultValue={product.skin_type || ''} maxLength={100} className={inputCls} />
+              <textarea
+                name="skin_type" defaultValue={product.skin_type || ''} maxLength={100} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
             <Field label="Класифікація">
-              <input name="classification" defaultValue={product.classification || ''} maxLength={100} className={inputCls} />
+              <textarea
+                name="classification" defaultValue={product.classification || ''} maxLength={100} 
+                rows={1}
+                className={areaCls}
+              />
             </Field>
             <Field label="Рейтинг">
               <input name="rating" type="number" step="0.1" min="0" max="5" defaultValue={product.rating ?? ''} className={inputCls} />
