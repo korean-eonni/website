@@ -15,6 +15,7 @@ import { productFromForm } from '@/lib/productForm'
 import { compactGallery, uploadProductImage, MAX_PRODUCT_IMAGES } from '@/lib/productImages'
 import AdminFlash from '@/components/admin/AdminFlash'
 import TaxonomyFields from '@/components/admin/TaxonomyFields'
+import ProductPhotos from '@/components/admin/ProductPhotos'
 import { getProductTaxonomy } from '@/lib/taxonomy'
 
 type ProductRow = {
@@ -243,23 +244,7 @@ export default async function AdminPage({
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm mb-2">
-                Фото товару (до 10 файлів, JPG/PNG/WEBP, кожне до ~5MB)
-              </label>
-              <input
-                name="images"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                multiple
-                required
-                className="w-full"
-              />
-              <p className="mt-1 text-xs text-[#666]">
-                Перший файл — головне фото. До {MAX_PRODUCT_IMAGES} фото. Зберігаються у власному
-                сховищі сайту за шаблоном «Назва товару.jpg», «Назва товару (2).jpg», і т.д.
-              </p>
-            </div>
+            <ProductPhotos initial={[]} max={MAX_PRODUCT_IMAGES} required />
             <TaxonomyFields taxonomy={taxonomy} />
             <div>
               <label className="block text-sm mb-2">Бренд</label>

@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 
 type Props = {
-  /** Current gallery in slot order (slot 1 first). */
+  /** Current gallery in slot order (slot 1 first). Empty when creating a product. */
   initial: string[]
   max: number
+  /** Creating a product requires at least one photo. */
+  required?: boolean
 }
 
 type Pending = { file: File; preview: string }
@@ -32,7 +34,7 @@ function thumb(url: string, width = 256): string {
  * rebuilt from the kept list so the form submits exactly what is on screen.
  * They are uploaded when the product is saved.
  */
-export default function ProductPhotos({ initial, max }: Props) {
+export default function ProductPhotos({ initial, max, required }: Props) {
   const [urls, setUrls] = useState<string[]>(initial)
   const [removed, setRemoved] = useState<string[]>([])
   const [pending, setPending] = useState<Pending[]>([])
@@ -83,6 +85,15 @@ export default function ProductPhotos({ initial, max }: Props) {
     if (!gone) return
     setUrls((prev) => prev.filter((_, i) => i !== index))
     setRemoved((prev) => (prev.includes(gone) ? prev : [...prev, gone]))
+  }
+
+  const movePending = (from: number, to: number) => {
+    if (to < 0 || to >= pending.length || from === to) return
+    const next = pending.slice()
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    setPending(next)
+    syncInput(next)
   }
 
   const removePending = (index: number) => {
@@ -195,7 +206,7 @@ export default function ProductPhotos({ initial, max }: Props) {
             className="relative rounded-lg border border-dashed border-[#0D7E2F] p-2 bg-[#F3FBF5]"
           >
             <span className="absolute top-1 left-1 z-[2] rounded px-1.5 py-0.5 text-[10px] font-semibold bg-[#0D7E2F] text-white">
-              нове
+              {urls.length === 0 && i === 0 ? 'Головне · нове' : 'нове'}
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -203,7 +214,27 @@ export default function ProductPhotos({ initial, max }: Props) {
               alt={p.file.name}
               className="w-full aspect-square object-contain bg-white"
             />
-            <div className="mt-2 flex items-center justify-end">
+            <div className="mt-2 flex items-center justify-between gap-1">
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => movePending(i, i - 1)}
+                  disabled={i === 0}
+                  title="Лівіше"
+                  className="w-6 h-6 rounded border border-[#CCCCCC] text-[12px] leading-none disabled:opacity-30 hover:bg-[#F5F3FF]"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={() => movePending(i, i + 1)}
+                  disabled={i === pending.length - 1}
+                  title="Правіше"
+                  className="w-6 h-6 rounded border border-[#CCCCCC] text-[12px] leading-none disabled:opacity-30 hover:bg-[#F5F3FF]"
+                >
+                  →
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={() => removePending(i)}
@@ -236,6 +267,7 @@ export default function ProductPhotos({ initial, max }: Props) {
           type="file"
           accept="image/png,image/jpeg,image/webp,image/avif"
           multiple
+          required={required && total === 0}
           disabled={room <= 0}
           onChange={onPick}
           className="w-full"
