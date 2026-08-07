@@ -386,9 +386,16 @@ function ProductTabs({ product }: { product: Product }) {
         ))}
       </div>
 
-      {/* Tab content — preserves the sheet's line breaks / bullet formatting */}
+      {/* Tab content — each Enter (new line) becomes its own paragraph with spacing;
+          runs of blank lines collapse into a single gap. */}
       <div className="p-6 sm:p-[40px_60px] min-h-[200px] lg:min-h-[280px] text-[15px] sm:text-[16px] leading-[1.65] text-black">
-        <p className="whitespace-pre-line">{active.content}</p>
+        {active.content
+          .split(/\n+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((para, i) => (
+            <p key={i} className={i > 0 ? 'mt-3' : ''}>{para}</p>
+          ))}
       </div>
     </div>
   )
