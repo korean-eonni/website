@@ -169,7 +169,7 @@ export default async function AdminPage({
   ])) as ProductRow[]
 
   return (
-    <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
+    <main className="min-h-screen bg-[#F8F7FB] px-4 sm:px-6 py-6 sm:py-10">
       <AdminFlash
         status={searchParams?.sync === 'ok' ? 'ok' : searchParams?.sync === 'error' ? 'error' : undefined}
         imported={searchParams?.imported}
@@ -192,11 +192,11 @@ export default async function AdminPage({
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-10">
-          <h1 className="text-4xl font-bebas uppercase text-black">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-10">
+          <h1 className="text-[28px] sm:text-4xl font-bebas uppercase text-black break-words">
             Admin панель
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
               href="/admin/orders"
               className="h-10 px-4 rounded-lg bg-[#4348AE] text-white uppercase text-[14px] flex items-center hover:bg-[#373B8A] transition-colors"
@@ -220,7 +220,7 @@ export default async function AdminPage({
           </div>
         </div>
 
-        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8 mb-10">
+        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-4 sm:p-8 mb-8 sm:mb-10">
           <h2 className="text-2xl font-bebas uppercase text-black mb-6">
             Додати товар
           </h2>
@@ -378,11 +378,11 @@ export default async function AdminPage({
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm mb-2">Для якої шкіри підходить</label>
-              <input
+              <textarea
                 name="fit_skin"
-                maxLength={300}
+                rows={3}
                 placeholder="Усі типи / Чутлива / Жирна / Суха / Комбінована"
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+                className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
             <div className="md:col-span-2">
@@ -509,7 +509,7 @@ export default async function AdminPage({
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="text-black">
-                  <th className="py-2 pr-4">Назва</th>
+                  <th className="py-2 pr-4 whitespace-nowrap">Назва</th>
                   <th className="py-2 pr-4">Категорія</th>
                   <th className="py-2 pr-4">Ціна</th>
                   <th className="py-2 pr-4">Склад</th>
@@ -522,7 +522,7 @@ export default async function AdminPage({
               <tbody>
                 {products.map((product) => (
                   <tr key={product.id} className="border-t border-[#EFEFEF]">
-                    <td className="py-3 pr-4">{product.name}</td>
+                    <td className="py-3 pr-4 max-w-[280px] break-words">{product.name}</td>
                     <td className="py-3 pr-4">{product.category || '—'}</td>
                     <td className="py-3 pr-4">
                       {product.sale_price !== null ? `₴${product.sale_price}` : '—'}
@@ -534,7 +534,7 @@ export default async function AdminPage({
                     <td className="py-3 pr-4">{product.is_new ? 'Так' : 'Ні'}</td>
                     <td className="py-3 pr-4">{product.is_exclusive ? 'Так' : 'Ні'}</td>
                     <td className="py-3 pr-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <a
                           href={`/admin/${product.id}`}
                           className="text-black underline"

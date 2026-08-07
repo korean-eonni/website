@@ -109,6 +109,8 @@ type Product = {
   subcategory: string | null
   /** Optional second subcategory — the product belongs to both. */
   subcategory_2: string | null
+  /** Optional third subcategory. */
+  subcategory_3: string | null
   brand: string | null
   tags: string | null
   volume_options: string | null
@@ -602,6 +604,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
       const inTargetBucket = !targetBucket || norm === targetBucket
       if (p.subcategory && inTargetBucket) subcategories.add(p.subcategory)
       if (p.subcategory_2 && inTargetBucket) subcategories.add(p.subcategory_2)
+      if (p.subcategory_3 && inTargetBucket) subcategories.add(p.subcategory_3)
       if (p.skin_type) {
         p.skin_type.split(',').forEach(st => {
           const trimmed = st.trim()
@@ -661,6 +664,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
             p.category,
             p.subcategory,
             p.subcategory_2,
+            p.subcategory_3,
             p.ingredients,
           ]
             .filter(Boolean)
@@ -681,7 +685,8 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         result = result.filter(p =>
           p.category?.toLowerCase().includes(categoryParam.toLowerCase()) ||
           p.subcategory?.toLowerCase().includes(categoryParam.toLowerCase()) ||
-          p.subcategory_2?.toLowerCase().includes(categoryParam.toLowerCase())
+          p.subcategory_2?.toLowerCase().includes(categoryParam.toLowerCase()) ||
+          p.subcategory_3?.toLowerCase().includes(categoryParam.toLowerCase())
         )
       }
     }
@@ -734,7 +739,8 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
       result = result.filter(
         p =>
           selectedSubcategories.includes(p.subcategory || '') ||
-          selectedSubcategories.includes(p.subcategory_2 || '')
+          selectedSubcategories.includes(p.subcategory_2 || '') ||
+          selectedSubcategories.includes(p.subcategory_3 || '')
       )
     }
 
@@ -763,7 +769,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
           const productTypes = p.skin_type.split(',').map(s => s.trim())
           if (selectedSkinTypes.some(st => productTypes.some(pt => pt.includes(st)))) return true
         }
-        const hay = [p.name, p.short_description, p.tags, p.ingredients, p.subcategory, p.subcategory_2]
+        const hay = [p.name, p.short_description, p.tags, p.ingredients, p.subcategory, p.subcategory_2, p.subcategory_3]
           .filter(Boolean).join(' ').toLowerCase()
         return selectedSkinTypes.some(label => (SKIN_TYPE_KEYWORDS[label] ?? []).some(k => hay.includes(k)))
       })

@@ -10,6 +10,7 @@ type Props = {
     category?: string | null
     subcategory?: string | null
     subcategory_2?: string | null
+    subcategory_3?: string | null
   }
 }
 
@@ -101,8 +102,15 @@ function PickOrAdd({
 export default function TaxonomyFields({ taxonomy, defaults }: Props) {
   const [supplier, setSupplier] = useState(defaults?.supplier ?? '')
   const [category, setCategory] = useState(defaults?.category ?? '')
-  const [subcategory, setSubcategory] = useState(defaults?.subcategory ?? '')
-  const [subcategory2, setSubcategory2] = useState(defaults?.subcategory_2 ?? '')
+  // Three optional subcategory slots — a product can sit in up to three of them.
+  const [subs, setSubs] = useState<string[]>([
+    defaults?.subcategory ?? '',
+    defaults?.subcategory_2 ?? '',
+    defaults?.subcategory_3 ?? '',
+  ])
+
+  const setSub = (i: number, v: string) =>
+    setSubs((prev) => prev.map((s, idx) => (idx === i ? v : s)))
 
   // Subcategories are a tree under the category: pick a category and only its
   // subcategories are offered. With no category chosen we show all of them
@@ -111,6 +119,12 @@ export default function TaxonomyFields({ taxonomy, defaults }: Props) {
     if (!category) return taxonomy.allSubcategories
     return taxonomy.subcategoriesByCategory[category] ?? []
   }, [category, taxonomy])
+
+  const SUB_FIELDS = [
+    { name: 'subcategory', label: 'Субкатегорія' },
+    { name: 'subcategory_2', label: 'Субкатегорія 2' },
+    { name: 'subcategory_3', label: 'Субкатегорія 3' },
+  ]
 
   return (
     <>
@@ -131,32 +145,27 @@ export default function TaxonomyFields({ taxonomy, defaults }: Props) {
           setCategory(v)
           // Keep subcategories that still belong to the new category, clear the rest.
           const allowed = v ? taxonomy.subcategoriesByCategory[v] ?? [] : taxonomy.allSubcategories
-          if (subcategory && !allowed.includes(subcategory)) setSubcategory('')
-          if (subcategory2 && !allowed.includes(subcategory2)) setSubcategory2('')
+          setSubs((prev) => prev.map((s) => (s && !allowed.includes(s) ? '' : s)))
         }}
       />
 
-      <PickOrAdd
-        name="subcategory"
-        label="Субкатегорія"
-        options={subOptions}
-        value={subcategory}
-        onChange={setSubcategory}
-        hint={
-          category
-            ? `Субкатегорії категорії «${category}»`
-            : 'Оберіть категорію, щоб звузити список'
-        }
-      />
-
-      <PickOrAdd
-        name="subcategory_2"
-        label="Субкатегорія 2"
-        options={subOptions}
-        value={subcategory2}
-        onChange={setSubcategory2}
-        hint="Необовʼязково — товар буде і в цій субкатегорії"
-      />
+      {SUB_FIELDS.map((f, i) => (
+        <PickOrAdd
+          key={f.name}
+          name={f.name}
+          label={f.label}
+          options={subOptions}
+          value={subs[i]}
+          onChange={(v) => setSub(i, v)}
+          hint={
+            i === 0
+              ? category
+                ? `Субкатегорії категорії «${category}»`
+                : 'Оберіть категорію, щоб звузити список'
+              : 'Необовʼязково — товар буде і в цій субкатегорії'
+          }
+        />
+      ))}
     </>
   )
 }

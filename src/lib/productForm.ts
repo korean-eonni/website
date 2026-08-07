@@ -78,6 +78,7 @@ export function productFromForm(
     category: textOf(formData, 'category', 80),
     subcategory: textOf(formData, 'subcategory', 80),
     subcategory_2: textOf(formData, 'subcategory_2', 80),
+    subcategory_3: textOf(formData, 'subcategory_3', 80),
     weight_grams: numberOf(formData, 'weight_grams'),
     tags: textOf(formData, 'tags', 400),
     sku: textOf(formData, 'sku', 40),

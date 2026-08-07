@@ -31,8 +31,10 @@ export type ProductRecord = {
   stock_quantity: number | null
   category: string | null
   subcategory: string | null
-  /** Optional second subcategory — a product listed under two of them (sheet column «Субкатегрія 2»). */
+  /** Optional second subcategory — a product listed under two of them. */
   subcategory_2?: string | null
+  /** Optional third subcategory. */
+  subcategory_3?: string | null
   weight_grams: number | null
   tags: string | null
   sku: string | null
@@ -143,6 +145,7 @@ async function runSchemaSetup() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_exclusive INTEGER NOT NULL DEFAULT 0;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS coming_soon INTEGER NOT NULL DEFAULT 0;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory_2 TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory_3 TEXT;`
   
   // Additional image columns (Фото 2-12)
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_2 TEXT;`
@@ -281,7 +284,7 @@ export const PRODUCT_COLUMNS = [
   'image_url_8', 'image_url_9', 'image_url_10', 'image_url_11', 'image_url_12',
   'short_description', 'long_description',
   'supplier', 'cost_price', 'sale_price', 'original_price', 'discount_amount',
-  'stock_quantity', 'category', 'subcategory', 'subcategory_2', 'weight_grams',
+  'stock_quantity', 'category', 'subcategory', 'subcategory_2', 'subcategory_3', 'weight_grams',
   'tags', 'sku', 'barcode', 'brand',
   'volume_options', 'rating', 'review_count',
   'age_group', 'ingredients', 'skin_type', 'series', 'classification',

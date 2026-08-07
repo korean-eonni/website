@@ -65,6 +65,7 @@ type CatalogProduct = {
   category: string | null
   subcategory: string | null
   subcategory_2: string | null
+  subcategory_3: string | null
   brand: string | null
   tags: string | null
   volume_options: string | null
@@ -97,6 +98,7 @@ export default async function CatalogPage() {
       category: p.category,
       subcategory: p.subcategory,
       subcategory_2: p.subcategory_2 ?? null,
+      subcategory_3: p.subcategory_3 ?? null,
       brand: p.brand,
       tags: p.tags,
       volume_options: p.volume_options,

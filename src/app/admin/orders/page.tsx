@@ -136,7 +136,7 @@ export default async function AdminOrdersPage({
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h1 className="font-bebas text-[40px] leading-none text-black">Адмін</h1>
+            <h1 className="font-bebas text-[28px] sm:text-[40px] leading-none text-black">Адмін</h1>
             <p className="text-[14px] text-[#666] mt-1">
               Замовлень: {orders.length} · Нових: {newCount} · Покупців у базі: {users.length}
             </p>

@@ -16,6 +16,16 @@ type Props = {
  * The resulting order and the removals are submitted as hidden fields, so the
  * server action gets the exact gallery the admin sees — no guessing from slots.
  */
+/**
+ * Admin thumbnails go through Next's image optimizer. The stored originals can
+ * be several megabytes each, and a gallery of them made the edit page crawl —
+ * especially on mobile. The full-size file is still what gets saved.
+ */
+function thumb(url: string, width = 256): string {
+  if (!/^https?:\/\//.test(url)) return url
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=60`
+}
+
 export default function ProductPhotos({ initial, max }: Props) {
   const [urls, setUrls] = useState<string[]>(initial)
   const [removed, setRemoved] = useState<string[]>([])
@@ -57,7 +67,7 @@ export default function ProductPhotos({ initial, max }: Props) {
 
       {urls.length === 0 && <p className="text-xs text-[#666] mb-3">Фото ще немає.</p>}
 
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
         {urls.map((url, i) => (
           <div
             key={url}
@@ -94,9 +104,10 @@ export default function ProductPhotos({ initial, max }: Props) {
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={url}
+              src={thumb(url)}
               alt={`Фото ${i + 1}`}
               draggable={false}
+              loading="lazy"
               className="w-full aspect-square object-contain bg-white pointer-events-none"
             />
 

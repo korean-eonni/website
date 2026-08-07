@@ -46,7 +46,7 @@ export async function GET() {
       bucketHasProducts.add(bucket)
       // Count both subcategories — a product listed under two of them should make
       // each one appear in the menu.
-      const subs = [p.subcategory, p.subcategory_2]
+      const subs = [p.subcategory, p.subcategory_2, p.subcategory_3]
         .map((s) => (s ?? '').trim())
         .filter(Boolean)
       if (subs.length === 0) continue

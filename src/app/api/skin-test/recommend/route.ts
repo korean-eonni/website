@@ -143,9 +143,10 @@ export async function POST(request: Request) {
     const results: ReturnType<typeof pack>[] = []
     // A product can sit in two subcategories («Субкатегрія 2»), so a slot matches
     // if EITHER of them is the one this routine step is looking for.
-    const matchesSlot = (p: { subcategory: string | null; subcategory_2?: string | null }, def: { sub: string[] }) =>
+    const matchesSlot = (p: { subcategory: string | null; subcategory_2?: string | null; subcategory_3?: string | null }, def: { sub: string[] }) =>
       def.sub.includes((p.subcategory ?? '').toLowerCase()) ||
-      def.sub.includes((p.subcategory_2 ?? '').toLowerCase())
+      def.sub.includes((p.subcategory_2 ?? '').toLowerCase()) ||
+      def.sub.includes((p.subcategory_3 ?? '').toLowerCase())
 
     for (const key of slotKeys) {
       const def = SLOT_DEFS[key]

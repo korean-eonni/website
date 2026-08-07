@@ -181,10 +181,10 @@ export default async function AdminEditPage({
   const gallery = galleryFromRecord(product as unknown as Record<string, unknown>)
 
   return (
-    <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
+    <main className="min-h-screen bg-[#F8F7FB] px-4 sm:px-6 py-6 sm:py-10">
       <div className="max-w-[900px] mx-auto">
-        <div className="flex items-center justify-between mb-10">
-          <h1 className="text-4xl font-bebas uppercase text-black">Редагувати товар</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-10">
+          <h1 className="text-[28px] sm:text-4xl font-bebas uppercase text-black break-words">Редагувати товар</h1>
           <a href="/admin" className="text-black underline">
             Назад
           </a>
@@ -201,7 +201,7 @@ export default async function AdminEditPage({
           </div>
         )}
 
-        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8">
+        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-4 sm:p-8">
           <ConfirmableForm
             action={updateProductAction}
             title="Зберегти зміни?"
@@ -226,6 +226,7 @@ export default async function AdminEditPage({
                 category: product.category,
                 subcategory: product.subcategory,
                 subcategory_2: product.subcategory_2,
+                subcategory_3: product.subcategory_3,
               }}
             />
             <Field label="Бренд">

@@ -41,7 +41,7 @@ function build(rows: Array<Record<string, unknown>>): ProductTaxonomy {
     }
     if (supplier) suppliers.add(supplier)
 
-    for (const key of ['subcategory', 'subcategory_2'] as const) {
+    for (const key of ['subcategory', 'subcategory_2', 'subcategory_3'] as const) {
       const sub = clean(row[key])
       if (!sub) continue
       allSubcategories.add(sub)
@@ -64,9 +64,9 @@ function build(rows: Array<Record<string, unknown>>): ProductTaxonomy {
 export async function getProductTaxonomy(): Promise<ProductTaxonomy> {
   if (usePostgres) {
     const result = await sql.query(
-      `SELECT category, subcategory, subcategory_2, supplier
+      `SELECT category, subcategory, subcategory_2, subcategory_3, supplier
        FROM products
-       GROUP BY category, subcategory, subcategory_2, supplier`
+       GROUP BY category, subcategory, subcategory_2, subcategory_3, supplier`
     )
     return build(result.rows as Array<Record<string, unknown>>)
   }
@@ -74,7 +74,7 @@ export async function getProductTaxonomy(): Promise<ProductTaxonomy> {
   const db = getDb()
   const rows = db
     .prepare(
-      `SELECT category, subcategory, NULL AS subcategory_2, supplier
+      `SELECT category, subcategory, NULL AS subcategory_2, NULL AS subcategory_3, supplier
        FROM products
        GROUP BY category, subcategory, supplier`
     )

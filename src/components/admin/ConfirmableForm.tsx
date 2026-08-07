@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import type { ReactNode, FormEvent } from 'react'
+import * as React from 'react'
 
 type ConfirmableFormProps = {
   action: (formData: FormData) => void
@@ -42,6 +43,23 @@ export default function ConfirmableForm({
     setIsOpen(true)
   }
 
+  /**
+   * Enter must never submit this form.
+   *
+   * These are long product forms: pressing Enter while writing a description is
+   * meant to start a new line, not to save. In a textarea we let the key through
+   * (the browser inserts the newline); anywhere else — single-line inputs and
+   * selects, where Enter would otherwise submit — we swallow it. Saving is done
+   * with the button.
+   */
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey) return
+    const target = event.target as HTMLElement | null
+    const tag = target?.tagName?.toLowerCase()
+    if (tag === 'textarea' || tag === 'button') return
+    event.preventDefault()
+  }
+
   const handleConfirm = () => {
     confirmRef.current = true
     setIsOpen(false)
@@ -60,6 +78,7 @@ export default function ConfirmableForm({
         ref={formRef}
         action={action}
         onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
         className={className}
         encType={encType}
       >
