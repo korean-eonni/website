@@ -37,7 +37,7 @@ const DEFAULT_CATALOG_TREE: CatalogNode[] = [
   { label: 'Волосся', href: '/catalog?category=hair' },
   { label: 'Тіло', href: '/catalog?category=body' },
   { label: 'Health & Care', href: '/catalog?category=health' },
-  { label: 'Косметичні девайси', href: '/catalog?category=devices', subcategories: ['Гель-провідник'] },
+  { label: 'Косметичні девайси', href: '/catalog?category=devices' },
   { label: 'Тестери та аксесуари', href: '/catalog?category=testers' },
   STOCK_SHORTCUT,
 ]
@@ -260,7 +260,11 @@ export default function Header() {
         const tree: CatalogNode[] = data.map((c) => ({
           label: c.label,
           href: `/catalog?category=${c.urlSlug}`,
-          ...(c.subcategories && c.subcategories.length ? { subcategories: c.subcategories } : {}),
+          // Devices open straight to their product list (no "+" drill-down) — the
+          // conductor gel shows there alongside the devices via the category filter.
+          ...(c.urlSlug !== 'devices' && c.subcategories && c.subcategories.length
+            ? { subcategories: c.subcategories }
+            : {}),
         }))
         tree.push(STOCK_SHORTCUT)
         setCatalogTree(tree)
