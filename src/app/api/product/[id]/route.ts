@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@vercel/postgres'
 import { unstable_noStore as noStore } from 'next/cache'
+import { decodeRouteId } from '@/lib/routeParams'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -12,7 +13,7 @@ export async function GET(
 ) {
   try {
     noStore()
-    const { id } = params
+    const id = decodeRouteId(params.id)
 
     const result = await sql`
       SELECT * FROM products WHERE id = ${id}

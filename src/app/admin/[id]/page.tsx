@@ -15,6 +15,7 @@ import ProductPhotos from '@/components/admin/ProductPhotos'
 import { getProductTaxonomy } from '@/lib/taxonomy'
 import { productFromForm } from '@/lib/productForm'
 import {
+import { decodeRouteId } from '@/lib/routeParams'
   MAX_PRODUCT_IMAGES,
   compactGallery,
   deleteProductImage,
@@ -172,7 +173,8 @@ export default async function AdminEditPage({
     )
   }
 
-  const product = (await getProduct(params.id)) as ProductRow
+  const productId = decodeRouteId(params.id)
+  const product = (await getProduct(productId)) as ProductRow
   if (!product) {
     redirect('/admin')
   }

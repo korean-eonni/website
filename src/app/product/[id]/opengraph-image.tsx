@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { getProduct } from '@/lib/productStore'
+import { decodeRouteId } from '@/lib/routeParams'
 
 export const runtime = 'nodejs'
 export const alt = 'Товар Eonni'
@@ -13,7 +14,7 @@ export default async function ProductOgImage({ params }: { params: { id: string 
   let image: string | null = null
 
   try {
-    const product = await getProduct(params.id)
+    const product = await getProduct(decodeRouteId(params.id))
     if (product) {
       name = product.name
       brand = product.brand
