@@ -14,8 +14,8 @@ import TaxonomyFields from '@/components/admin/TaxonomyFields'
 import ProductPhotos from '@/components/admin/ProductPhotos'
 import { getProductTaxonomy } from '@/lib/taxonomy'
 import { productFromForm } from '@/lib/productForm'
-import {
 import { decodeRouteId } from '@/lib/routeParams'
+import {
   MAX_PRODUCT_IMAGES,
   compactGallery,
   deleteProductImage,
