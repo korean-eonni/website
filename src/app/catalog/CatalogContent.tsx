@@ -646,7 +646,8 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
   }, [products, categoryParam])
 
   // Filter products
-  const filteredProducts = useMemo(() => {
+  // Everything except the stock tab, so each tab can be counted on its own.
+  const filteredIgnoringStock = useMemo(() => {
     let result = [...products]
     
     // Search filter — word-based AND match, order-independent. Every word in the
@@ -796,33 +797,62 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
       })
     }
 
-    // Stock-status tab filter (Усі / В наявності / Скоро в наявності).
-    // In stock = everything not explicitly flagged "coming soon" (see isComingSoon).
-    if (stockTab === 'in-stock') {
-      result = result.filter(p => !isComingSoon(p))
-    } else if (stockTab === 'coming-soon') {
-      result = result.filter(p => isComingSoon(p))
+    return result
+  }, [products, searchParam, categoryParam, newParam, exclusiveParam, concernParam, saleParam, tagParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, selectedCategories, selectedSubcategories, onSaleOnly, minRating])
+
+  // How many of the current selection sit in each stock tab. Drives both hiding
+  // empty tabs and stepping back from one that would show nothing.
+  const stockCounts = useMemo(() => {
+    let inStock = 0
+    for (const p of filteredIgnoringStock) if (!isComingSoon(p)) inStock++
+    return {
+      all: filteredIgnoringStock.length,
+      'in-stock': inStock,
+      'coming-soon': filteredIgnoringStock.length - inStock,
+    }
+  }, [filteredIgnoringStock])
+
+  // A tab the current selection has nothing in is a dead end — leave it.
+  useEffect(() => {
+    if (stockTab !== 'all' && stockCounts.all > 0 && stockCounts[stockTab] === 0) {
+      setStockTab('all')
+    }
+  }, [stockTab, stockCounts])
+
+  const { items: filteredProducts, relaxedStock } = useMemo(() => {
+    let result = filteredIgnoringStock
+    let relaxed = false
+
+    if (stockTab === 'in-stock') result = result.filter(p => !isComingSoon(p))
+    else if (stockTab === 'coming-soon') result = result.filter(p => isComingSoon(p))
+
+    // The customer picked filters and they do match something — the stock tab
+    // alone should never turn that into an empty page. Show everything the
+    // selection matches instead, and say so above the results.
+    if (result.length === 0 && filteredIgnoringStock.length > 0) {
+      result = filteredIgnoringStock
+      relaxed = true
     }
 
-    // Sort
+    const sorted = [...result]
     switch (sortBy) {
       case 'color':
-        // Default: group by packaging colour (rainbow), vivid → pale within a family.
-        result.sort((a, b) => compareByColor(a.id, b.id))
+        // Default: group by packaging colour (rainbow), vivid to pale within a family.
+        sorted.sort((a, b) => compareByColor(a.id, b.id))
         break
       case 'price-desc':
-        result.sort((a, b) => (b.sale_price ?? 0) - (a.sale_price ?? 0))
+        sorted.sort((a, b) => (b.sale_price ?? 0) - (a.sale_price ?? 0))
         break
       case 'price-asc':
-        result.sort((a, b) => (a.sale_price ?? 0) - (b.sale_price ?? 0))
+        sorted.sort((a, b) => (a.sale_price ?? 0) - (b.sale_price ?? 0))
         break
       case 'newest':
-        result.sort((a, b) => b.is_new - a.is_new)
+        sorted.sort((a, b) => b.is_new - a.is_new)
         break
     }
-    
-    return result
-  }, [products, searchParam, categoryParam, newParam, exclusiveParam, concernParam, saleParam, tagParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, selectedCategories, selectedSubcategories, onSaleOnly, minRating, sortBy, stockTab])
+
+    return { items: sorted, relaxedStock: relaxed }
+  }, [filteredIgnoringStock, stockTab, sortBy])
   
   const displayedProducts = useMemo(() => {
     return filteredProducts.slice(0, displayCount)
@@ -996,7 +1026,12 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
               { v: 'all',         label: 'Усі' },
               { v: 'in-stock',    label: 'В наявності' },
               { v: 'coming-soon', label: 'Скоро в наявності' },
-            ] as const).map(opt => {
+            ] as const)
+              // Hide a tab the current selection has nothing in — it could only
+              // lead to an empty page. When nothing matches at all, keep them
+              // all so the control doesn't vanish entirely.
+              .filter(opt => stockCounts.all === 0 || stockCounts[opt.v] > 0)
+              .map(opt => {
               const active = stockTab === opt.v
               return (
                 <button
@@ -1222,6 +1257,18 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
                 </div>
               </div>
               
+              {/* Said out loud when the stock tab was stepped over, so the list
+                  never silently contradicts the tab that looks selected. */}
+              {relaxedStock && !loading && (
+                <div className="mb-5 rounded-[14px] bg-[#FFE8F0] px-4 py-3">
+                  <p className="font-gilroy text-[14px] text-[#B03060]">
+                    {stockTab === 'coming-soon'
+                      ? 'Серед «Скоро в наявності» за цим фільтром нічого немає — показуємо всі підхожі товари, зокрема ті, що вже в наявності.'
+                      : 'Серед «В наявності» за цим фільтром нічого немає — показуємо всі підхожі товари, зокрема ті, що будуть скоро.'}
+                  </p>
+                </div>
+              )}
+
               {/* Products */}
               {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
