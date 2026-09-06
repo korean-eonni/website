@@ -30,10 +30,13 @@ export async function POST(request: Request) {
       items,
     } = data
 
-    if (!firstName || !lastName || !email || !phone) {
+    if (!firstName || !lastName || !phone) {
       return NextResponse.json({ error: 'Заповніть всі обов\'язкові поля' }, { status: 400 })
     }
-    if (!EMAIL_RE.test(String(email))) {
+    // Email is optional (the checkout form marks it «необов'язково»). Validate the
+    // shape only when the customer actually provided one.
+    const emailNorm = typeof email === 'string' ? email.trim() : ''
+    if (emailNorm && !EMAIL_RE.test(emailNorm)) {
       return NextResponse.json({ error: 'Некоректний email' }, { status: 400 })
     }
     if (!PHONE_RE.test(String(phone))) {
@@ -140,7 +143,7 @@ export async function POST(request: Request) {
 
     const order = await createOrder({
       user_id: userId,
-      guest_email: userId ? null : email,
+      guest_email: userId ? null : (emailNorm || null),
       guest_phone: userId ? null : phone,
       status: 'pending',
       total_amount: totalAmount,
@@ -153,7 +156,7 @@ export async function POST(request: Request) {
       first_name: firstName,
       last_name: lastName,
       phone,
-      email,
+      email: emailNorm,
       notes: `${notes ?? ''}${promoNote}`,
       tracking_number: null,
     })
