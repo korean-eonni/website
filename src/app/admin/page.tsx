@@ -14,6 +14,7 @@ import { brands } from '@/data/brands'
 import { productFromForm } from '@/lib/productForm'
 import { compactGallery, uploadProductImage, MAX_PRODUCT_IMAGES } from '@/lib/productImages'
 import AdminFlash from '@/components/admin/AdminFlash'
+import ProductSearchBox from '@/components/admin/ProductSearchBox'
 import TaxonomyFields from '@/components/admin/TaxonomyFields'
 import ProductPhotos from '@/components/admin/ProductPhotos'
 import { getProductTaxonomy } from '@/lib/taxonomy'
@@ -508,6 +509,7 @@ export default async function AdminPage({
           <h2 className="text-2xl font-bebas uppercase text-black mb-6">
             Товари ({products.length})
           </h2>
+          <ProductSearchBox total={products.length} />
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead>
@@ -524,7 +526,12 @@ export default async function AdminPage({
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product.id} className="border-t border-[#EFEFEF]">
+                  <tr
+                    key={product.id}
+                    className="border-t border-[#EFEFEF]"
+                    data-product-row
+                    data-search={`${product.name} ${product.category || ''} ${product.id}`.toLowerCase()}
+                  >
                     <td className="py-3 pr-4 max-w-[280px] break-words">{product.name}</td>
                     <td className="py-3 pr-4">{product.category || '—'}</td>
                     <td className="py-3 pr-4">
