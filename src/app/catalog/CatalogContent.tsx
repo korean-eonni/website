@@ -851,6 +851,11 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         break
     }
 
+    // "Скоро в наявності" always sinks to the bottom — for the whole catalog and
+    // for any filtered list — while keeping its order within the chosen sort
+    // above (Array.sort is stable, so items with an equal key keep their order).
+    sorted.sort((a, b) => Number(isComingSoon(a)) - Number(isComingSoon(b)))
+
     return { items: sorted, relaxedStock: relaxed }
   }, [filteredIgnoringStock, stockTab, sortBy])
   
