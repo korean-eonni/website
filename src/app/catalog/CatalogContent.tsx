@@ -129,6 +129,13 @@ function isComingSoon(p: Product): boolean {
   return isOutOfStock(p.stock_quantity)
 }
 
+// A set/bundle = two products joined by " + " in the name, e.g. "Крем + Сироватка".
+// The " + " must have a space before it and be followed by a letter — this excludes
+// "SPF50+ PA++++", "100+100 Падів" and "... + 30 мл" (a quantity, not a second item).
+function isBundle(p: Product): boolean {
+  return /\s\+\s+[^\d\s]/.test(p.name || '')
+}
+
 const PRODUCTS_PER_PAGE = 20
 
 function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
@@ -851,10 +858,14 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
         break
     }
 
-    // "Скоро в наявності" always sinks to the bottom — for the whole catalog and
-    // for any filtered list — while keeping its order within the chosen sort
-    // above (Array.sort is stable, so items with an equal key keep their order).
-    sorted.sort((a, b) => Number(isComingSoon(a)) - Number(isComingSoon(b)))
+    // Fixed ordering that overrides the chosen sort for two groups, everywhere
+    // (whole catalog and any filtered list):
+    //   • sets/bundles (крем + сироватка) always FIRST,
+    //   • "скоро в наявності" (out of stock) always LAST — even if it's a bundle,
+    //     since an unavailable item shouldn't sit at the top.
+    // Array.sort is stable, so order within each group follows the chosen sort.
+    const rank = (p: Product) => (isComingSoon(p) ? 2 : isBundle(p) ? 0 : 1)
+    sorted.sort((a, b) => rank(a) - rank(b))
 
     return { items: sorted, relaxedStock: relaxed }
   }, [filteredIgnoringStock, stockTab, sortBy])
