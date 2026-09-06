@@ -22,15 +22,18 @@ Products live in Postgres and are managed entirely in the **admin panel** (`/adm
 add, edit and delete products, upload/remove photos. Photos are stored in **our own
 Vercel Blob storage** under `products/<product id>/<Назва товару> (N).<ext>`.
 
-The old Google Sheet + Drive pipeline is **retired**. `/api/sync-sheet` now refuses to
-run (409) unless called with `?allowReplaceAll=1`, because a sheet sync does
-DELETE-ALL + re-insert and would wipe every admin edit. The daily cron is removed.
-Do not re-enable it without a very good reason.
+The old Google Sheet + Drive pipeline is **removed entirely** (2026‑09). There is **no
+synchronization of any kind** — the sync endpoints (`/api/sync-sheet`,
+`/api/update-sheet-data`) and their libraries (`sheetSync`, `sheetStock`, `googleAuth`)
+are deleted, there is no cron, and orders no longer write stock back to any sheet.
+The database is the only source of truth. **Do NOT re-add any sync, cron, or sheet
+write-back, and never run a sync yourself.** The site changes ONLY when the owner
+explicitly asks for a specific change — nothing automatic.
 
 Write path: `saveProduct()` in `productStore.ts` — a single upsert covering all 51
 columns, shared by the add and edit screens via `productForm.ts`.
 
 ## Stack
 Next.js App Router · Vercel Postgres (`POSTGRES_URL`; local fallback SQLite `data/shop.db`) ·
-Vercel Blob + Google Drive for images · **Platon** payments (LiqPay code is legacy).
+Vercel Blob for images · **Platon** payments (LiqPay code is legacy).
 `.env*.local` is gitignored — never commit secrets.
