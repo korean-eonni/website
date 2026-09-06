@@ -852,28 +852,6 @@ export default function CheckoutPage() {
                           <p className="text-[13px] text-[#666]">Visa, Mastercard, Apple Pay, Google Pay, Privat24, оплата частинами</p>
                         </div>
                       </label>
-
-                      {/* Card */}
-                      <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
-                        paymentMethod === 'card' ? 'border-[#4348AE] bg-[#F5F3FF]' : 'border-[#E5E5E5] hover:border-[#BBBBBB]'
-                      }`}>
-                        <input
-                          type="radio"
-                          name="payment"
-                          checked={paymentMethod === 'card'}
-                          onChange={() => setPaymentMethod('card')}
-                          className="w-5 h-5 accent-[#4348AE]"
-                        />
-                        <div className="w-10 h-10 bg-[#E2F9FF] rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-5 h-5 text-[#1D4ED8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                          </svg>
-                        </div>
-                        <div className="flex-grow">
-                          <p className="font-medium">Оплата на картку</p>
-                          <p className="text-[13px] text-[#666]">Переказ на картку ПриватБанку</p>
-                        </div>
-                      </label>
                     </div>
 
                     {/* Notes */}
