@@ -81,36 +81,46 @@ const animations = ['animate-float-gentle', 'animate-float-slow', 'animate-float
 
 // All possible icon placements — each section picks a slice via count + offset
 const allConfigs = [
-  { icon: 0, top: '10%', left: '5%',   size: 44, opacity: 0.55, anim: 0, delay: '0s',   rotate: 12  },
-  { icon: 3, top: '18%', left: '30%',  size: 36, opacity: 0.65, anim: 1, delay: '2s',   rotate: -20 },
-  { icon: 4, top: '12%', left: '58%',  size: 40, opacity: 0.60, anim: 2, delay: '0.8s', rotate: 15  },
-  { icon: 6, top: '22%', left: '85%',  size: 34, opacity: 0.70, anim: 0, delay: '3.5s', rotate: -8  },
-  { icon: 1, top: '40%', left: '8%',   size: 48, opacity: 0.55, anim: 2, delay: '1.2s', rotate: 6   },
-  { icon: 5, top: '55%', left: '42%',  size: 42, opacity: 0.65, anim: 0, delay: '4s',   rotate: -14 },
-  { icon: 2, top: '45%', left: '72%',  size: 38, opacity: 0.60, anim: 1, delay: '2.5s', rotate: 22  },
-  { icon: 7, top: '65%', left: '3%',   size: 46, opacity: 0.60, anim: 1, delay: '1.8s', rotate: -18 },
-  { icon: 0, top: '70%', left: '25%',  size: 34, opacity: 0.70, anim: 2, delay: '3s',   rotate: 10  },
-  { icon: 3, top: '75%', left: '52%',  size: 46, opacity: 0.55, anim: 0, delay: '0.5s', rotate: -25 },
-  { icon: 4, top: '68%', left: '78%',  size: 40, opacity: 0.65, anim: 1, delay: '4.5s', rotate: 18  },
-  { icon: 6, top: '85%', left: '15%',  size: 42, opacity: 0.60, anim: 0, delay: '2.2s', rotate: -12 },
-  { icon: 2, top: '88%', left: '40%',  size: 36, opacity: 0.70, anim: 2, delay: '1s',   rotate: 8   },
-  { icon: 5, top: '82%', left: '65%',  size: 44, opacity: 0.55, anim: 1, delay: '3.8s', rotate: -22 },
-  { icon: 1, top: '90%', left: '90%',  size: 38, opacity: 0.65, anim: 0, delay: '0.3s', rotate: 16  },
-  { icon: 7, top: '30%', left: '92%',  size: 40, opacity: 0.60, anim: 2, delay: '2.8s', rotate: -6  },
-  { icon: 0, top: '50%', left: '18%',  size: 46, opacity: 0.55, anim: 1, delay: '1.5s', rotate: 20  },
-  { icon: 3, top: '35%', left: '55%',  size: 34, opacity: 0.70, anim: 0, delay: '4.2s', rotate: -16 },
-  { icon: 4, top: '58%', left: '82%',  size: 42, opacity: 0.60, anim: 2, delay: '0.7s', rotate: 11  },
-  { icon: 6, top: '15%', left: '48%',  size: 38, opacity: 0.65, anim: 1, delay: '3.2s', rotate: -10 },
+  { icon: 0, top: '6%',  left: '4%',   size: 44, opacity: 0.55, anim: 0, delay: '0s',   rotate: 12  },
+  { icon: 3, top: '14%', left: '22%',  size: 36, opacity: 0.65, anim: 1, delay: '2s',   rotate: -20 },
+  { icon: 4, top: '10%', left: '46%',  size: 40, opacity: 0.60, anim: 2, delay: '0.8s', rotate: 15  },
+  { icon: 6, top: '18%', left: '68%',  size: 34, opacity: 0.70, anim: 0, delay: '3.5s', rotate: -8  },
+  { icon: 7, top: '8%',  left: '88%',  size: 40, opacity: 0.60, anim: 2, delay: '1.4s', rotate: 9   },
+  { icon: 1, top: '28%', left: '12%',  size: 48, opacity: 0.55, anim: 2, delay: '1.2s', rotate: 6   },
+  { icon: 2, top: '32%', left: '34%',  size: 38, opacity: 0.60, anim: 0, delay: '0.6s', rotate: -14 },
+  { icon: 5, top: '30%', left: '56%',  size: 42, opacity: 0.65, anim: 1, delay: '4s',   rotate: -14 },
+  { icon: 0, top: '26%', left: '78%',  size: 36, opacity: 0.70, anim: 2, delay: '2.4s', rotate: 18  },
+  { icon: 3, top: '34%', left: '92%',  size: 34, opacity: 0.55, anim: 1, delay: '3.6s', rotate: -22 },
+  { icon: 7, top: '46%', left: '6%',   size: 46, opacity: 0.60, anim: 1, delay: '1.8s', rotate: -18 },
+  { icon: 4, top: '50%', left: '24%',  size: 38, opacity: 0.65, anim: 0, delay: '4.6s', rotate: 14  },
+  { icon: 6, top: '48%', left: '46%',  size: 42, opacity: 0.60, anim: 2, delay: '2.1s', rotate: -7  },
+  { icon: 2, top: '52%', left: '66%',  size: 38, opacity: 0.65, anim: 1, delay: '2.5s', rotate: 22  },
+  { icon: 1, top: '46%', left: '84%',  size: 44, opacity: 0.55, anim: 0, delay: '5s',   rotate: -10 },
+  { icon: 0, top: '64%', left: '14%',  size: 34, opacity: 0.70, anim: 2, delay: '3s',   rotate: 10  },
+  { icon: 5, top: '68%', left: '34%',  size: 40, opacity: 0.55, anim: 1, delay: '0.9s', rotate: -16 },
+  { icon: 3, top: '64%', left: '52%',  size: 46, opacity: 0.55, anim: 0, delay: '0.5s', rotate: -25 },
+  { icon: 4, top: '70%', left: '74%',  size: 40, opacity: 0.65, anim: 1, delay: '4.5s', rotate: 18  },
+  { icon: 7, top: '66%', left: '90%',  size: 36, opacity: 0.70, anim: 2, delay: '5.2s', rotate: 7   },
+  { icon: 6, top: '82%', left: '8%',   size: 42, opacity: 0.60, anim: 0, delay: '2.2s', rotate: -12 },
+  { icon: 2, top: '86%', left: '28%',  size: 36, opacity: 0.70, anim: 2, delay: '1s',   rotate: 8   },
+  { icon: 5, top: '80%', left: '48%',  size: 44, opacity: 0.55, anim: 1, delay: '3.8s', rotate: -22 },
+  { icon: 0, top: '88%', left: '68%',  size: 38, opacity: 0.60, anim: 0, delay: '5.5s', rotate: 14  },
+  { icon: 1, top: '84%', left: '88%',  size: 40, opacity: 0.65, anim: 2, delay: '0.3s', rotate: 16  },
+  { icon: 7, top: '38%', left: '42%',  size: 32, opacity: 0.55, anim: 0, delay: '6s',   rotate: 5   },
+  { icon: 4, top: '20%', left: '36%',  size: 30, opacity: 0.65, anim: 1, delay: '2.8s', rotate: -6  },
+  { icon: 3, top: '54%', left: '14%',  size: 32, opacity: 0.70, anim: 2, delay: '4.2s', rotate: -16 },
+  { icon: 2, top: '76%', left: '60%',  size: 34, opacity: 0.60, anim: 0, delay: '0.7s', rotate: 11  },
+  { icon: 6, top: '40%', left: '70%',  size: 30, opacity: 0.65, anim: 1, delay: '3.2s', rotate: -10 },
 ]
 
 type FloatingIconsProps = {
-  /** Number of icons to render (default: 6) */
+  /** Number of icons to render (default: 7) */
   count?: number
   /** Offset into the configs array so each section gets different icons (default: 0) */
   offset?: number
 }
 
-export default function FloatingIcons({ count = 6, offset = 0 }: FloatingIconsProps) {
+export default function FloatingIcons({ count = 7, offset = 0 }: FloatingIconsProps) {
   const configs = []
   for (let i = 0; i < count; i++) {
     configs.push(allConfigs[(offset + i) % allConfigs.length])
@@ -133,7 +143,7 @@ export default function FloatingIcons({ count = 6, offset = 0 }: FloatingIconsPr
               width: config.size,
               height: config.size,
               opacity: config.opacity,
-              transform: `rotate(${config.rotate}deg)`,
+              ['--rotate' as string]: `${config.rotate}deg`,
               animationDelay: config.delay,
               color: '#B8B5D8',
             }}

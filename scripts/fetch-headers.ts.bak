@@ -1,0 +1,31 @@
+import { google } from 'googleapis'
+
+async function main() {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!
+  const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY!
+  const key = rawKey.replace(/\\n/g, '\n')
+  const auth = new google.auth.JWT({
+    email,
+    key,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
+  })
+  const sheets = google.sheets({ version: 'v4', auth })
+  const id = process.env.GOOGLE_SHEETS_ID!
+  // First, get sheet metadata
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: id })
+  console.log('Sheets:', meta.data.sheets?.map(s => s.properties?.title).join(', '))
+  
+  const sheetName = meta.data.sheets?.[0].properties?.title
+  const r = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${sheetName}!1:1`,
+  })
+  const headers = r.data.values?.[0] || []
+  headers.forEach((h, i) => {
+    const col = String.fromCharCode(65 + (i % 26)) // A..Z, then AA logic ignored for ≤26
+    const colStr = i < 26 ? String.fromCharCode(65 + i) : `A${String.fromCharCode(65 + i - 26)}`
+    console.log(`  ${colStr.padEnd(3)} ${JSON.stringify(h)}`)
+  })
+  console.log(`Total columns: ${headers.length}`)
+}
+main().catch(e => { console.error(e.message); process.exit(1) })

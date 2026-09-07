@@ -7,11 +7,15 @@ const API_KEY = process.env.NOVA_POSHTA_API_KEY || ''
 
 export async function POST(request: Request) {
   try {
-    const { cityRef, type } = await request.json()
+    const { cityRef, search } = await request.json()
 
     if (!cityRef) {
       return NextResponse.json({ warehouses: [] })
     }
+
+    // FindByString does server-side search across ALL warehouses of the city
+    // (name or number), so even huge cities (Kyiv) return complete matches.
+    const findByString = typeof search === 'string' ? search.trim() : ''
 
     const response = await fetch(NOVA_POSHTA_API, {
       method: 'POST',
@@ -22,11 +26,9 @@ export async function POST(request: Request) {
         calledMethod: 'getWarehouses',
         methodProperties: {
           CityRef: cityRef,
-          Limit: 500,
+          ...(findByString ? { FindByString: findByString } : {}),
+          Limit: 50,
           Page: 1,
-          // TypeOfWarehouseRef for filtering (optional)
-          // Поштомат: '95dc212d-479c-4ffb-a8ab-8c1b9073d0bc'
-          // Відділення: '6f8c7162-4b72-4b0a-88e5-906948c6a92f'
         },
       }),
     })
@@ -43,6 +45,8 @@ export async function POST(request: Request) {
       Description: w.Description,
       Number: w.Number,
       TypeOfWarehouse: w.TypeOfWarehouse,
+      // "Branch" (відділення) | "Postomat" (поштомат) — used to split the list by type.
+      CategoryOfWarehouse: w.CategoryOfWarehouse,
     })) || []
 
     // Sort by number

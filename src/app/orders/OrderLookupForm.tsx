@@ -18,7 +18,7 @@ export default function OrderLookupForm() {
   }
 
   return (
-    <div className="mt-10 rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+    <div className="mt-10 rounded-[20px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
       <form onSubmit={handleSubmit} className="grid gap-4">
         <input
           type="email"
@@ -26,7 +26,7 @@ export default function OrderLookupForm() {
           value={email}
           onChange={(e) => { setEmail(e.target.value); setStatus('idle') }}
           placeholder="Email"
-          className="h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+          className="h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
           required
         />
         <input
@@ -35,7 +35,7 @@ export default function OrderLookupForm() {
           value={orderNumber}
           onChange={(e) => { setOrderNumber(e.target.value); setStatus('idle') }}
           placeholder="Номер замовлення"
-          className="h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+          className="h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
           required
         />
         <button
@@ -53,10 +53,10 @@ export default function OrderLookupForm() {
             Замовлення не знайдено. Перевірте правильність даних або зв&apos;яжіться з нами:
           </p>
           <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <a href="mailto:support@eonni.com.ua" className="font-gilroy text-[15px] text-[#6046A3] hover:underline">
-              support@eonni.com.ua
+            <a href="mailto:eonnisupport@gmail.com" className="font-gilroy text-[15px] text-[#4348AE] hover:underline">
+              eonnisupport@gmail.com
             </a>
-            <a href="tel:+380732737330" className="font-gilroy text-[15px] text-[#6046A3] hover:underline">
+            <a href="tel:+380732737330" className="font-gilroy text-[15px] text-[#4348AE] hover:underline">
               +380 73 273 73 30
             </a>
           </div>

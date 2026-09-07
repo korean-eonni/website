@@ -1,15 +1,16 @@
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Доставка та оплата | Eonni — Умови доставки корейської косметики',
   description:
-    'Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від 1500₴. Оплата онлайн або при отриманні. Відправка в день замовлення до 18:00.',
+    'Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від 2000₴. Оплата онлайн або при отриманні. Відправка в день замовлення до 18:00.',
   keywords: 'доставка косметики, Нова Пошта, Укрпошта, оплата онлайн, накладений платіж, Eonni',
   openGraph: {
     title: 'Доставка та оплата | Eonni',
-    description: 'Швидка доставка по всій Україні. Безкоштовно від 1500₴. Відправка в день замовлення.',
+    description: 'Швидка доставка по всій Україні. Безкоштовно від 2000₴. Відправка в день замовлення.',
     type: 'website',
     locale: 'uk_UA',
   },
@@ -35,16 +36,7 @@ const deliveryMethods = [
       { type: 'До відділення', time: '3-7 днів', price: 'від 35₴' },
       { type: 'Кур\'єр до дверей', time: '3-7 днів', price: 'від 50₴' },
     ],
-    tone: '#F2FBFF',
-  },
-  {
-    name: 'Самовивіз',
-    icon: '📍',
-    description: 'Київ, за попереднім узгодженням',
-    options: [
-      { type: 'м. Київ, Оболонь', time: 'За домовленістю', price: 'Безкоштовно' },
-    ],
-    tone: '#FFF8E9',
+    tone: '#E2F9FF',
   },
 ]
 
@@ -52,7 +44,7 @@ const paymentMethods = [
   {
     name: 'Онлайн-оплата',
     icon: '💳',
-    description: 'Visa, Mastercard через LiqPay',
+    description: 'Visa, Mastercard, Apple Pay, Google Pay через Platon',
     benefits: ['Миттєва обробка замовлення', 'Безпечний платіж', 'Без комісії'],
     tone: '#F6F1FF',
   },
@@ -60,7 +52,7 @@ const paymentMethods = [
     name: 'Накладений платіж',
     icon: '💵',
     description: 'Оплата при отриманні',
-    benefits: ['Оплата готівкою або карткою', 'Комісія перевізника ~20₴ + 2%', 'Передоплата 100₴'],
+    benefits: ['Оплата готівкою або карткою', 'Комісія перевізника ~20₴ + 2%', 'Передоплата 300₴'],
     tone: '#FFF8E9',
   },
   {
@@ -68,7 +60,7 @@ const paymentMethods = [
     icon: '📱',
     description: 'Переказ на картку ПриватБанку',
     benefits: ['Реквізити надсилаємо після оформлення', 'Для великих замовлень', 'Без комісії'],
-    tone: '#F2FBFF',
+    tone: '#E2F9FF',
   },
 ]
 
@@ -80,21 +72,16 @@ const processSteps = [
   },
   {
     step: '2',
-    title: 'Підтвердження',
-    description: 'Ми зв\'яжемось для підтвердження замовлення та уточнення деталей доставки.',
-  },
-  {
-    step: '3',
     title: 'Пакування',
     description: 'Дбайливо пакуємо ваше замовлення з захистом та приємними бонусами.',
   },
   {
-    step: '4',
+    step: '3',
     title: 'Відправка',
     description: 'Передаємо посилку перевізнику та надсилаємо вам ТТН для відстеження.',
   },
   {
-    step: '5',
+    step: '4',
     title: 'Отримання',
     description: 'Отримуйте посилку у зручному місці та насолоджуйтесь покупками!',
   },
@@ -107,7 +94,7 @@ const faqItems = [
   },
   {
     question: 'Чи є безкоштовна доставка?',
-    answer: 'Так! При замовленні від 1500₴ доставка Новою Поштою до відділення — безкоштовна. Слідкуйте за акціями — іноді знижуємо поріг безкоштовної доставки.',
+    answer: 'Так! При замовленні від 2000₴ доставка Новою Поштою до відділення — безкоштовна. Слідкуйте за акціями — іноді знижуємо поріг безкоштовної доставки.',
   },
   {
     question: 'Як відстежити посилку?',
@@ -115,7 +102,7 @@ const faqItems = [
   },
   {
     question: 'Що таке передоплата при накладеному платежі?',
-    answer: 'При оплаті накладеним платежем ми просимо передоплату 100₴ для підтвердження серйозності намірів. Це захищає нас від невикупу посилок.',
+    answer: 'При оплаті накладеним платежем ми просимо передоплату 300₴ для підтвердження серйозності намірів. Це захищає нас від невикупу посилок.',
   },
   {
     question: 'Чи можна змінити адресу доставки?',
@@ -123,17 +110,17 @@ const faqItems = [
   },
   {
     question: 'Як пакуєте замовлення?',
-    answer: 'Кожен товар загортаємо в захисну плівку, використовуємо бабл-пакети та міцні коробки. Скляні флакони додатково захищаємо. Додаємо пробники та листівку з інструкціями.',
+    answer: 'Кожен товар загортаємо в захисний папір та пакуємо в міцні коробки з турботою про ваші продукти догляду.',
   },
 ]
 
 export default function PaymentDeliveryPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-10 lg:grid-cols-[1.1fr,0.9fr] items-center">
             <div>
               <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Доставка та оплата</p>
@@ -143,7 +130,7 @@ export default function PaymentDeliveryPage() {
               <p className="mt-6 text-black font-gilroy text-[16px] leading-[24px] sm:text-[18px] sm:leading-[28px]">
                 Доставляємо по всій Україні Новою Поштою та Укрпоштою. 
                 Замовлення до 18:00 відправляємо в той же день. 
-                Безкоштовна доставка від 1500₴.
+                Безкоштовна доставка від 2000₴.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link
@@ -162,15 +149,15 @@ export default function PaymentDeliveryPage() {
               </div>
               <div className="rounded-[20px] bg-[#F6F1FF] p-6 text-center">
                 <div className="text-4xl mb-3">🎁</div>
-                <p className="font-bebas uppercase text-[24px] text-black">Від 1500₴</p>
+                <p className="font-bebas uppercase text-[24px] text-black">Від 2000₴</p>
                 <p className="text-[13px] text-[#666666]">безкоштовна доставка</p>
               </div>
               <div className="rounded-[20px] bg-[#FFF8E9] p-6 text-center">
                 <div className="text-4xl mb-3">📦</div>
                 <p className="font-bebas uppercase text-[24px] text-black">Дбайливо</p>
-                <p className="text-[13px] text-[#666666]">пакуємо з любов\'ю</p>
+                <p className="text-[13px] text-[#666666]">пакуємо з любовʼю</p>
               </div>
-              <div className="rounded-[20px] bg-[#F2FBFF] p-6 text-center">
+              <div className="rounded-[20px] bg-[#E2F9FF] p-6 text-center">
                 <div className="text-4xl mb-3">🇺🇦</div>
                 <p className="font-bebas uppercase text-[24px] text-black">Вся Україна</p>
                 <p className="text-[13px] text-[#666666]">доставляємо скрізь</p>
@@ -181,7 +168,7 @@ export default function PaymentDeliveryPage() {
       </section>
 
       {/* Delivery Methods */}
-      <section className="py-16 sm:py-20 bg-[#F8F7FB]">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="text-center max-w-[600px] mx-auto mb-12">
             <p className="text-[12px] uppercase tracking-[0.2em] text-[#999999]">Доставка</p>
@@ -189,11 +176,11 @@ export default function PaymentDeliveryPage() {
               Способи доставки
             </h2>
           </div>
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 max-w-[860px] mx-auto">
             {deliveryMethods.map((method) => (
               <div
                 key={method.name}
-                className="rounded-[28px] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-[#E5E5E5]"
+                className="rounded-[28px] bg-[#E2F9FF] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-[#E5E5E5]"
               >
                 <div
                   className="w-16 h-16 rounded-[16px] flex items-center justify-center text-3xl mb-5"
@@ -301,7 +288,7 @@ export default function PaymentDeliveryPage() {
             {faqItems.map((item) => (
               <div
                 key={item.question}
-                className="rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+                className="rounded-[20px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
               >
                 <h3 className="font-gilroy text-[18px] font-semibold text-black">{item.question}</h3>
                 <p className="mt-3 font-gilroy text-[15px] leading-[24px] text-[#666666]">{item.answer}</p>
@@ -319,7 +306,7 @@ export default function PaymentDeliveryPage() {
               Залишились питання?
             </h2>
             <p className="mt-3 font-gilroy text-[16px] text-[#444444] max-w-[500px] mx-auto">
-              Зв\'яжіться з нами — ми з радістю допоможемо з оформленням замовлення та відповімо на всі питання.
+              Звʼяжіться з нами — ми з радістю допоможемо з оформленням замовлення та відповімо на всі питання.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
@@ -330,7 +317,7 @@ export default function PaymentDeliveryPage() {
               </Link>
               <Link
                 href="/catalog"
-                className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-white text-black uppercase font-gilroy text-[15px] font-semibold hover:bg-[#F8F7FB] transition-colors border border-[#E5E5E5]"
+                className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-[#E2F9FF] text-black uppercase font-gilroy text-[15px] font-semibold hover:bg-[#F8F7FB] transition-colors border border-[#E5E5E5]"
               >
                 Перейти до каталогу
               </Link>

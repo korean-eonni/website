@@ -36,7 +36,8 @@ export async function POST(request: Request) {
     }
 
     const cities = data.data?.[0]?.Addresses?.map((addr: any) => ({
-      Ref: addr.DeliveryCity,
+      Ref: addr.DeliveryCity,        // city ref — used by getWarehouses
+      SettlementRef: addr.Ref,       // settlement ref — used by searchSettlementStreets
       Description: addr.Present,
       AreaDescription: addr.Area,
     })) || []

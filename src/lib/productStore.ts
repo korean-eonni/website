@@ -45,9 +45,17 @@ export type ProductRecord = {
   skin_type: string | null       // e.g., "Всі типи", "Жирна", "Суха"
   series: string | null          // Product series/line
   classification: string | null  // e.g., "Натуральна", "Професійна"
+  // Long-description sections — one column per product-page tab
+  usage_instructions: string | null  // Спосіб застосування
+  clinical_proof: string | null      // Клінічно підтверджено
+  solves_problems: string | null     // Які проблеми вирішує
+  key_ingredients: string | null     // Ключові інгредієнти
+  fit_skin: string | null            // Для якої шкіри підходить
+  compatibility: string | null       // Сумісність та застереження
   is_active: number
   is_new: number
   is_exclusive: number
+  coming_soon?: number | null   // 1 = "Скоро в наявності" (from sheet column)
   created_at: string
   updated_at: string
 }
@@ -91,6 +99,7 @@ async function ensurePostgresSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS brand TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_new INTEGER NOT NULL DEFAULT 0;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_exclusive INTEGER NOT NULL DEFAULT 0;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS coming_soon INTEGER NOT NULL DEFAULT 0;`
   
   // Additional image columns (Фото 2-12)
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_2 TEXT;`
@@ -116,6 +125,14 @@ async function ensurePostgresSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS skin_type TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS series TEXT;`
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS classification TEXT;`
+
+  // Long-description sections (one column per product-page tab)
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS usage_instructions TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS clinical_proof TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS solves_problems TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS key_ingredients TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS fit_skin TEXT;`
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS compatibility TEXT;`
 }
 
 // No seed data - all products come from Google Sheets
@@ -152,7 +169,8 @@ export async function replaceAllProducts(products: ProductRecord[]) {
             stock_quantity, category, subcategory, weight_grams, tags, sku, barcode,
             brand, volume_options, rating, review_count,
             age_group, ingredients, skin_type, series, classification,
-            is_active, is_new, is_exclusive, created_at, updated_at
+            usage_instructions, clinical_proof, solves_problems, key_ingredients, fit_skin, compatibility,
+            is_active, is_new, is_exclusive, coming_soon, created_at, updated_at
           ) VALUES (
             ${p.id || randomUUID()}, ${p.name}, ${p.image_url}, ${p.image_path},
             ${p.image_url_2}, ${p.image_url_3}, ${p.image_url_4}, ${p.image_url_5}, ${p.image_url_6},
@@ -163,7 +181,8 @@ export async function replaceAllProducts(products: ProductRecord[]) {
             ${p.tags}, ${p.sku}, ${p.barcode}, ${p.brand},
             ${p.volume_options}, ${p.rating}, ${p.review_count},
             ${p.age_group}, ${p.ingredients}, ${p.skin_type}, ${p.series}, ${p.classification},
-            ${p.is_active}, ${p.is_new}, ${p.is_exclusive}, ${p.created_at || now}, ${now}
+            ${p.usage_instructions}, ${p.clinical_proof}, ${p.solves_problems}, ${p.key_ingredients}, ${p.fit_skin}, ${p.compatibility},
+            ${p.is_active}, ${p.is_new}, ${p.is_exclusive}, ${p.coming_soon ?? 0}, ${p.created_at || now}, ${now}
           )
         `
         inserted++
@@ -555,6 +574,36 @@ export async function updateProduct(product: ProductRecord, includeImage: boolea
     WHERE id = @id
   `
   ).run(product)
+}
+
+/**
+ * Atomically decrement stock if there's enough. Returns the new stock or
+ * `null` if the requested quantity isn't available (either product is gone or
+ * stock < qty). Use this BEFORE confirming an order so we never oversell.
+ */
+export async function tryDecrementStock(productId: string, qty: number): Promise<number | null> {
+  if (qty <= 0) return null
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    const result = await sql`
+      UPDATE products
+      SET stock_quantity = stock_quantity - ${qty}, updated_at = ${new Date().toISOString()}
+      WHERE id = ${productId} AND stock_quantity >= ${qty}
+      RETURNING stock_quantity
+    `
+    if (result.rows.length === 0) return null
+    return result.rows[0].stock_quantity as number
+  }
+  const db = getDb()
+  const row = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get(productId) as
+    | { stock_quantity: number | null }
+    | undefined
+  if (!row || row.stock_quantity == null || row.stock_quantity < qty) return null
+  const next = row.stock_quantity - qty
+  db.prepare(
+    'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ?'
+  ).run(next, new Date().toISOString(), productId)
+  return next
 }
 
 export async function deleteProduct(id: string) {

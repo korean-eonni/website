@@ -2,36 +2,10 @@
 
 import { useState, FormEvent } from 'react'
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 
 const contactMethods = [
-  {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-      </svg>
-    ),
-    title: 'Телефон',
-    value: '+380 73 273 73 30',
-    subtext: 'Дзвінки та Viber',
-    href: 'tel:+380732737330',
-    action: 'Зателефонувати',
-    tone: '#F6F1FF',
-  },
-  {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-        <polyline points="22,6 12,13 2,6"/>
-      </svg>
-    ),
-    title: 'Email',
-    value: 'support@eonni.com.ua',
-    subtext: 'Відповідаємо протягом 2 годин',
-    href: 'mailto:support@eonni.com.ua',
-    action: 'Написати',
-    tone: '#FFF8E9',
-  },
   {
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -54,11 +28,38 @@ const contactMethods = [
       </svg>
     ),
     title: 'Telegram',
-    value: '@eonni.korean.cosmetics',
+    value: '@Eonni_KC',
     subtext: 'Швидкі відповіді',
-    href: 'https://t.me/eonni_korean_cosmetics',
+    href: 'https://t.me/Eonni_KC',
     action: 'Написати',
-    tone: '#F2FBFF',
+    tone: '#E2F9FF',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+      </svg>
+    ),
+    title: 'Телефон',
+    value: '+380 73 273 73 30',
+    subtext: 'Дзвінки',
+    href: 'tel:+380732737330',
+    action: 'Зателефонувати',
+    tone: '#F6F1FF',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg>
+    ),
+    title: 'Email',
+    value: 'eonnisupport@gmail.com',
+    subtext: 'Відповідаємо протягом 2 годин',
+    href: 'mailto:eonnisupport@gmail.com',
+    action: 'Написати',
+    tone: '#FFF8E9',
   },
 ]
 
@@ -79,7 +80,7 @@ const faqItems = [
   },
   {
     question: 'Чи є у вас фізичний магазин?',
-    answer: 'Наразі ми працюємо онлайн з доставкою по всій Україні. Самовивіз можливий за попереднім узгодженням у Києві.',
+    answer: 'Наразі ми працюємо онлайн з доставкою по всій Україні Новою Поштою та кур\'єром.',
   },
   {
     question: 'Як відстежити замовлення?',
@@ -97,19 +98,19 @@ export default function ContactsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(188,194,244,0.55),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="max-w-[800px]">
             <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Контакти</p>
             <h1 className="mt-4 font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
-              Завжди на зв\'язку
+              Завжди на зв&apos;язку
             </h1>
             <p className="mt-6 text-black font-gilroy text-[16px] leading-[24px] sm:text-[18px] sm:leading-[28px]">
               Маєте питання щодо замовлення, доставки чи підбору косметики? Ми завжди раді допомогти! 
-              Оберіть зручний спосіб зв\'язку — відповімо якнайшвидше.
+              Оберіть зручний спосіб зв&apos;язку — відповімо якнайшвидше.
             </p>
           </div>
         </div>
@@ -128,7 +129,7 @@ export default function ContactsPage() {
                 className="group rounded-[24px] border border-[#E5E5E5] p-6 transition-all hover:shadow-[0_15px_40px_rgba(0,0,0,0.1)] hover:-translate-y-1"
                 style={{ backgroundColor: method.tone }}
               >
-                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-black mb-4 shadow-sm">
+                <div className="w-14 h-14 rounded-full bg-[#E2F9FF] flex items-center justify-center text-black mb-4 shadow-sm">
                   {method.icon}
                 </div>
                 <p className="text-[12px] uppercase tracking-[0.2em] text-[#666666]">{method.title}</p>
@@ -147,11 +148,11 @@ export default function ContactsPage() {
       </section>
 
       {/* Working Hours & Location */}
-      <section className="py-16 sm:py-20 bg-[#F8F7FB]">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Working Hours */}
-            <div className="rounded-[28px] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+            <div className="rounded-[28px] bg-[#E2F9FF] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-full bg-[#F6F1FF] flex items-center justify-center">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -183,7 +184,7 @@ export default function ContactsPage() {
             </div>
 
             {/* Location */}
-            <div className="rounded-[28px] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+            <div className="rounded-[28px] bg-[#E2F9FF] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-full bg-[#FFF8E9] flex items-center justify-center">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -193,7 +194,7 @@ export default function ContactsPage() {
                 </div>
                 <div>
                   <p className="font-bebas uppercase text-[28px] text-black">Адреса</p>
-                  <p className="text-[14px] text-[#666666]">Самовивіз за домовленістю</p>
+                  <p className="text-[14px] text-[#666666]">Доставка по всій Україні</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -205,10 +206,10 @@ export default function ContactsPage() {
                     вулиця Левка Лук&apos;яненка, будинок 21
                   </p>
                 </div>
-                <div className="p-4 rounded-[12px] bg-[#F2FBFF] border border-[#D0ECFF]">
+                <div className="p-4 rounded-[12px] bg-[#E2F9FF] border border-[#E2F9FF]">
                   <p className="text-[14px] text-[#444444]">
-                    <strong>Самовивіз:</strong> Доступний за попереднім узгодженням. 
-                    Напишіть нам заздалегідь, щоб ми підготували ваше замовлення.
+                    <strong>Доставка:</strong> Нова Пошта та кур&apos;єр по всій Україні.
+                    Безкоштовно від суми замовлення 1500&nbsp;₴.
                   </p>
                 </div>
               </div>
@@ -237,7 +238,7 @@ export default function ContactsPage() {
             {faqItems.map((item) => (
               <div
                 key={item.question}
-                className="rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+                className="rounded-[20px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
               >
                 <h3 className="font-gilroy text-[18px] font-semibold text-black">{item.question}</h3>
                 <p className="mt-3 font-gilroy text-[15px] leading-[22px] text-[#666666]">{item.answer}</p>
@@ -248,9 +249,9 @@ export default function ContactsPage() {
       </section>
 
       {/* Contact Form */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-[#F8F7FB] to-white">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[720px] mx-auto px-6 sm:px-8">
-          <div className="rounded-[28px] border border-[#E5E5E5] bg-white p-8 sm:p-10 shadow-[0_15px_50px_rgba(0,0,0,0.08)]">
+          <div className="rounded-[28px] border border-[#E5E5E5] bg-[#E2F9FF] p-8 sm:p-10 shadow-[0_15px_50px_rgba(0,0,0,0.08)]">
             <div className="text-center mb-8">
               <h2 className="font-bebas uppercase text-black text-[36px] sm:text-[44px]">Напишіть нам</h2>
               <p className="mt-2 text-[16px] text-[#666666]">
@@ -274,7 +275,7 @@ export default function ContactsPage() {
                       placeholder="Введіть ім'я"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] focus:border-[#6046A3] focus:outline-none transition-colors"
+                      className="w-full h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] focus:border-[#4348AE] focus:outline-none transition-colors"
                       required
                     />
                   </div>
@@ -285,7 +286,7 @@ export default function ContactsPage() {
                       placeholder="your@email.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] focus:border-[#6046A3] focus:outline-none transition-colors"
+                      className="w-full h-[50px] rounded-[12px] border border-[#E5E5E5] px-4 font-gilroy text-[16px] focus:border-[#4348AE] focus:outline-none transition-colors"
                       required
                     />
                   </div>
@@ -296,7 +297,7 @@ export default function ContactsPage() {
                     placeholder="Опишіть ваше питання..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full min-h-[140px] rounded-[12px] border border-[#E5E5E5] px-4 py-3 font-gilroy text-[16px] focus:border-[#6046A3] focus:outline-none transition-colors resize-none"
+                    className="w-full min-h-[140px] rounded-[12px] border border-[#E5E5E5] px-4 py-3 font-gilroy text-[16px] focus:border-[#4348AE] focus:outline-none transition-colors resize-none"
                     required
                   />
                 </div>
@@ -320,25 +321,25 @@ export default function ContactsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Link
                 href="/payment-delivery"
-                className="rounded-[16px] bg-white p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
+                className="rounded-[16px] bg-[#E2F9FF] p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
               >
                 <p className="font-gilroy font-semibold text-[16px] text-black">Доставка та оплата</p>
               </Link>
               <Link
                 href="/returns-exchange"
-                className="rounded-[16px] bg-white p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
+                className="rounded-[16px] bg-[#E2F9FF] p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
               >
                 <p className="font-gilroy font-semibold text-[16px] text-black">Повернення</p>
               </Link>
               <Link
                 href="/catalog"
-                className="rounded-[16px] bg-white p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
+                className="rounded-[16px] bg-[#E2F9FF] p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
               >
                 <p className="font-gilroy font-semibold text-[16px] text-black">Каталог</p>
               </Link>
               <Link
                 href="/blog"
-                className="rounded-[16px] bg-white p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
+                className="rounded-[16px] bg-[#E2F9FF] p-5 text-center hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-shadow"
               >
                 <p className="font-gilroy font-semibold text-[16px] text-black">Блог</p>
               </Link>

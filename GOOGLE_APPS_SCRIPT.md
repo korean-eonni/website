@@ -25,8 +25,8 @@ const CONFIG = {
   WEBSITE_SYNC_URL: 'https://www.eonni.com.ua/api/sync-sheet',
   HEADER_ROWS: 1,
   NAME_COL: 1,        // Column A
-  OUT_START_COL: 20,  // Column T (where photos start)
-  OUT_COUNT: 12,      // 12 photo columns (T through AE)
+  OUT_START_COL: 24,  // Column X (where photos start) — UPDATED 2026-05-06: was 20 (T) before description split into 6 sections
+  OUT_COUNT: 12,      // 12 photo columns (X through AI)
 };
 
 // ============================================
@@ -229,4 +229,23 @@ Make sure your photo folder is either:
 - **Sheet:** Загальний
 - **Photo Folder ID:** 1l0OnOXF3O8W1mGzg0vNz_aY50IH3rrXc
 - **Website URL:** https://www.eonni.com.ua/api/sync-sheet
-- **Photo Columns:** T through AE (12 photos per product)
+- **Photo Columns:** X through AI (12 photos per product) — was T-AE before 2026-05-06 column expansion
+
+## Column Layout (44 cols)
+
+```
+A  Назва                      M  Короткий опис              X-AG  Фото 1..10
+B  Постачальник               N  Довгий опис (intro only)   AH-AI (empty placeholders for Фото 11/12)
+C  Категорія                  O  Спосіб застосування        AJ  Об'єм/Варіанти
+D  Субкатегорія               P  Клінічно підтверджено      AK  Рейтинг
+E  Бренд                      Q  Які проблеми вирішує       AL  Кількість відгуків
+F  SKU                        R  Ключові інгредієнти        AM  Вік
+G  Вага                       S  Для якої шкіри підходить   AN  Інгредієнти
+H  Собівартість               T  Сумісність з іншими комп.  AO  Тип шкіри
+I  Ціна продажу               U  Активний товар             AP  Серія
+J  Стара ціна                 V  Позначити як новинку       AQ  Класифікація
+K  Знижка                     W  Позначити як ексклюзив
+L  Теги
+```
+
+⚠️ **Important:** If you ever rename/insert/delete columns, update `OUT_START_COL` to match the new "Фото 1" position. The script writes 12 photo URLs starting from that column (X = col 24, X..AI = cols 24..35).

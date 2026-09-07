@@ -15,7 +15,7 @@ export default function SalesNewsletter() {
   if (submitted) {
     return (
       <div className="flex flex-col items-center gap-2 py-4">
-        <div className="w-[48px] h-[48px] rounded-full bg-[#6046A3] flex items-center justify-center">
+        <div className="w-[48px] h-[48px] rounded-full bg-[#4348AE] flex items-center justify-center">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 13l4 4L19 7" />
           </svg>
@@ -34,7 +34,7 @@ export default function SalesNewsletter() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Ваш email"
-        className="flex-grow h-[52px] rounded-[12px] border border-[#E5E5E5] px-5 bg-white focus:border-[#BCC2F4] focus:outline-none"
+        className="flex-grow h-[52px] rounded-[12px] border border-[#E5E5E5] px-5 bg-[#E2F9FF] focus:border-[#BCC2F4] focus:outline-none"
         required
       />
       <button

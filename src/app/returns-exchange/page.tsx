@@ -1,4 +1,5 @@
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -19,7 +20,7 @@ const steps = [
   {
     number: '01',
     title: 'Зв\'яжіться з нами',
-    description: 'Напишіть на support@eonni.com.ua або в месенджер. Вкажіть номер замовлення та причину повернення.',
+    description: 'Напишіть на eonnisupport@gmail.com або в месенджер. Вкажіть номер замовлення та причину повернення.',
     icon: '💬',
   },
   {
@@ -49,27 +50,28 @@ const steps = [
 ]
 
 const canReturn = [
-  'Товар належної якості протягом 14 днів',
-  'Товар у оригінальній упаковці без пошкоджень',
-  'Товар без слідів використання',
-  'Товар з усіма етикетками та комплектуючими',
-  'Товар з дефектами або пошкодженнями від виробника',
-  'Товар, що не відповідає опису на сайті',
+  'Товар неналежної якості — заводський брак чи дефект (протягом 14 днів від отримання)',
+  'Магазин надіслав не той товар — помилка магазину',
+  'Товар належної якості (НЕ парфумерно-косметичний) — лише новий, із непорушеними пломбою та заводською плівкою, без жодних слідів використання',
+  'Повністю збережені товарний вигляд, споживчі властивості, оригінальна упаковка, усі етикетки та пломби',
+  'Наявний розрахунковий документ, що підтверджує покупку саме в нас (чек / квитанція)',
 ]
 
 const cannotReturn = [
-  'Косметика з порушеною герметичністю (відкрита)',
-  'Товари з явними слідами використання',
-  'Товари без оригінальної упаковки',
-  'Товари, пошкоджені з вини покупця',
-  'Товари, придбані понад 14 днів тому',
-  'Пробники та подарункові зразки',
+  'Парфумерно-косметичні товари належної якості — згідно з Постановою КМУ №172 обміну та поверненню НЕ підлягають',
+  'Будь-яка косметика з порушеною пломбою, плівкою чи герметичністю (відкрита)',
+  'Товари з будь-якими слідами використання або тестування',
+  'Товари без оригінальної упаковки, без етикеток або з пошкодженою упаковкою',
+  'Товари, пошкоджені після отримання або з вини покупця',
+  'Звернення, подане пізніше ніж через 14 днів від дати отримання',
+  'Відсутній розрахунковий документ про покупку',
+  'Пробники, подарункові зразки та акційні подарунки',
 ]
 
 const faqItems = [
   {
     question: 'Хто оплачує доставку при поверненні?',
-    answer: 'При поверненні товару належної якості (не підійшов, передумали) — доставку оплачує покупець. При поверненні товару з дефектом або помилкою магазину — доставку оплачуємо ми.',
+    answer: 'При поверненні товару належної якості доставку в обидва боки оплачує покупець. Якщо товар неналежної якості (заводський дефект) або сталася помилка магазину — доставку оплачуємо ми.',
   },
   {
     question: 'Як швидко повернуть кошти?',
@@ -77,7 +79,7 @@ const faqItems = [
   },
   {
     question: 'Чи можна обміняти товар на інший?',
-    answer: 'Так, ви можете обміняти товар на інший. Зверніться до нас, і ми допоможемо оформити обмін. Різницю в ціні можна доплатити або отримати повернення.',
+    answer: 'Обмін товару належної якості можливий лише для непарфумерно-косметичних товарів — нових, із непорушеними пломбою та заводською плівкою, без слідів використання, протягом 14 днів і за наявності розрахункового документа. Парфумерно-косметичні товари належної якості обміну не підлягають (Постанова КМУ №172). Товар неналежної якості — замінимо або повернемо кошти.',
   },
   {
     question: 'Що робити, якщо товар прийшов пошкоджений?',
@@ -95,11 +97,11 @@ const faqItems = [
 
 export default function ReturnsExchangePage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Hero */}
       <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,_rgba(188,194,244,0.5),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_85%_18%,_rgba(255,228,237,0.45),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
+        <FloatingIcons count={7} offset={2} />
+                <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="max-w-[800px]">
             <p className="text-[14px] uppercase tracking-[0.2em] text-[#666666]">Повернення та обмін</p>
             <h1 className="mt-4 font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
@@ -114,20 +116,20 @@ export default function ReturnsExchangePage() {
       </section>
 
       {/* Key Guarantees */}
-      <section className="py-8 bg-[#F8F7FB]">
+      <section className="py-8 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-[20px] bg-white p-6 border border-[#E5E5E5] text-center">
+            <div className="rounded-[20px] bg-[#E2F9FF] p-6 border border-[#E5E5E5] text-center">
               <div className="text-4xl mb-3">📅</div>
               <p className="font-bebas uppercase text-[28px] text-black">14 днів</p>
               <p className="text-[14px] text-[#666666]">на повернення товару</p>
             </div>
-            <div className="rounded-[20px] bg-white p-6 border border-[#E5E5E5] text-center">
+            <div className="rounded-[20px] bg-[#E2F9FF] p-6 border border-[#E5E5E5] text-center">
               <div className="text-4xl mb-3">💳</div>
               <p className="font-bebas uppercase text-[28px] text-black">3-5 днів</p>
               <p className="text-[14px] text-[#666666]">повернення коштів</p>
             </div>
-            <div className="rounded-[20px] bg-white p-6 border border-[#E5E5E5] text-center">
+            <div className="rounded-[20px] bg-[#E2F9FF] p-6 border border-[#E5E5E5] text-center">
               <div className="text-4xl mb-3">💬</div>
               <p className="font-bebas uppercase text-[28px] text-black">24 години</p>
               <p className="text-[14px] text-[#666666]">відповідь на запит</p>
@@ -170,11 +172,11 @@ export default function ReturnsExchangePage() {
       </section>
 
       {/* What Can/Cannot Be Returned */}
-      <section className="py-16 sm:py-20 bg-[#F8F7FB]">
+      <section className="py-16 sm:py-20 bg-[#E2F9FF]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Can Return */}
-            <div className="rounded-[28px] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+            <div className="rounded-[28px] bg-[#E2F9FF] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-full bg-[#E8F5E9] flex items-center justify-center text-2xl">
                   ✅
@@ -194,7 +196,7 @@ export default function ReturnsExchangePage() {
             </div>
 
             {/* Cannot Return */}
-            <div className="rounded-[28px] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+            <div className="rounded-[28px] bg-[#E2F9FF] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-full bg-[#FFEBEE] flex items-center justify-center text-2xl">
                   ❌
@@ -213,8 +215,9 @@ export default function ReturnsExchangePage() {
               </ul>
               <div className="mt-6 p-4 rounded-[12px] bg-[#FFF8E9] border border-[#FFE0B2]">
                 <p className="text-[13px] text-[#666666]">
-                  <strong>Важливо:</strong> Згідно з Постановою КМУ №172, косметичні засоби з порушеною 
-                  герметичністю не підлягають поверненню з міркувань гігієни та безпеки.
+                  <strong>Важливо:</strong> Згідно з Постановою КМУ №172, парфумерно-косметичні товари
+                  належної якості обміну та поверненню не підлягають, а будь-яка косметика з порушеною
+                  пломбою чи герметичністю — тим паче (з міркувань гігієни та безпеки).
                 </p>
               </div>
             </div>
@@ -235,7 +238,7 @@ export default function ReturnsExchangePage() {
             {faqItems.map((item) => (
               <div
                 key={item.question}
-                className="rounded-[20px] border border-[#E5E5E5] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+                className="rounded-[20px] border border-[#E5E5E5] bg-[#E2F9FF] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
               >
                 <h3 className="font-gilroy text-[18px] font-semibold text-black">{item.question}</h3>
                 <p className="mt-3 font-gilroy text-[15px] leading-[24px] text-[#666666]">{item.answer}</p>
@@ -255,21 +258,21 @@ export default function ReturnsExchangePage() {
                   Потрібна допомога з поверненням?
                 </h2>
                 <p className="mt-3 font-gilroy text-[16px] text-[#444444] max-w-[500px]">
-                  Зв\'яжіться з нами — ми допоможемо оформити повернення швидко та без зайвих питань.
+                  Зв&apos;яжіться з нами — ми допоможемо оформити повернення швидко та без зайвих питань.
                 </p>
               </div>
               <div className="flex flex-wrap gap-4">
                 <a
-                  href="mailto:support@eonni.com.ua"
+                  href="mailto:eonnisupport@gmail.com"
                   className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-black text-white uppercase font-gilroy text-[15px] font-semibold hover:opacity-80 transition-opacity"
                 >
                   Написати на email
                 </a>
                 <a
-                  href="https://t.me/eonni_korean_cosmetics"
+                  href="https://t.me/Eonni_KC"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-white text-black uppercase font-gilroy text-[15px] font-semibold hover:bg-[#F8F7FB] transition-colors border border-[#E5E5E5]"
+                  className="inline-flex h-[50px] px-8 items-center justify-center rounded-[12px] bg-[#E2F9FF] text-black uppercase font-gilroy text-[15px] font-semibold hover:bg-[#F8F7FB] transition-colors border border-[#E5E5E5]"
                 >
                   Telegram
                 </a>

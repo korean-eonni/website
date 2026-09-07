@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -8,6 +8,7 @@ import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
+import WishlistButton from '@/components/WishlistButton'
 
 type Product = {
   id: string
@@ -40,6 +41,14 @@ type Product = {
   tags?: string | null
   ingredients: string | null
   weight_grams?: number | null
+  skin_type?: string | null
+  // Rich sections — one per product-page tab (synced from the sheet)
+  usage_instructions?: string | null
+  clinical_proof?: string | null
+  solves_problems?: string | null
+  key_ingredients?: string | null
+  fit_skin?: string | null
+  compatibility?: string | null
 }
 
 type SimilarProduct = {
@@ -54,10 +63,9 @@ type SimilarProduct = {
 }
 
 // ============ STAR RATING ============
-function StarRating({ rating, reviewCount }: { rating: number; reviewCount: number }) {
-  const fullStars = Math.floor(rating)
-  const hasHalfStar = rating % 1 >= 0.5
-  
+// Stars are always shown fully filled (5/5) per design — the underlying review
+// data still drives the count link below.
+function StarRating({ reviewCount }: { rating: number; reviewCount: number }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex gap-0.5">
@@ -67,7 +75,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount: numb
             width="20"
             height="20"
             viewBox="0 0 20 20"
-            fill={star <= fullStars ? '#E57373' : (star === fullStars + 1 && hasHalfStar ? '#E57373' : 'none')}
+            fill="#E57373"
             stroke="#E57373"
             strokeWidth="1.5"
           >
@@ -75,7 +83,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount: numb
           </svg>
         ))}
       </div>
-      <span className="text-[16px] font-normal text-black">{rating.toFixed(1)}</span>
+      <span className="text-[16px] font-normal text-black">5.0</span>
       <Link href="#reviews" className="text-[16px] text-[#7C83C9] underline">
         ({reviewCount} відгуків)
       </Link>
@@ -133,7 +141,7 @@ function VolumeSelector({
           className={`h-[40px] px-[25px] py-[11px] border text-[16px] font-normal transition-colors ${
             selected === option 
               ? 'border-black bg-black text-white' 
-              : 'border-[#BBBBBB] bg-white text-black hover:border-black'
+              : 'border-[#BBBBBB] bg-[#E2F9FF] text-black hover:border-black'
           }`}
         >
           {option}
@@ -166,7 +174,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative w-full aspect-square bg-gradient-to-br from-[#E8E6F5] via-[#F5F4FA] to-[#E8E6F5] rounded-[20px] overflow-hidden">
+      <div className="relative w-full aspect-square bg-white rounded-[20px] overflow-hidden border border-[#E5E5E5]">
         <Image
           src={validImages[selectedIndex]}
           alt={productName}
@@ -180,7 +188,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
           <>
             <button
               onClick={goToPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-[48px] h-[48px] bg-white rounded-none flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-[48px] h-[48px] bg-[#E2F9FF] rounded-none flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
               aria-label="Previous image"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -189,7 +197,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-[48px] h-[48px] bg-white rounded-none flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-[48px] h-[48px] bg-[#E2F9FF] rounded-none flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
               aria-label="Next image"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -201,12 +209,15 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
       </div>
 
       {validImages.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+        // Thumbnails stretch to fill the full row width (equal share each) so there's
+        // never empty space to the right — regardless of how many extra photos a
+        // product has. Square via aspect-square; capped at 6 like before.
+        <div className="flex gap-3">
           {validImages.slice(0, 6).map((img, index) => (
             <button
               key={index}
               onClick={() => setSelectedIndex(index)}
-              className={`relative flex-shrink-0 w-[110px] h-[110px] rounded-[8px] overflow-hidden border-2 transition-colors ${
+              className={`relative flex-1 min-w-0 aspect-square rounded-[8px] overflow-hidden border-2 transition-colors ${
                 selectedIndex === index ? 'border-[#7C83C9]' : 'border-transparent'
               }`}
             >
@@ -215,7 +226,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
                 alt={`${productName} - зображення ${index + 1}`}
                 fill
                 className="object-cover"
-                sizes="110px"
+                sizes="(min-width: 1024px) 25vw, 45vw"
                 loading="lazy"
               />
             </button>
@@ -255,88 +266,129 @@ function Breadcrumbs({
         </>
       )}
       {subcategory && (
-        <span className="font-normal text-black">
+        <Link
+          href={`/catalog?subcategory=${encodeURIComponent(subcategory)}`}
+          className="font-normal text-black hover:text-[#7C83C9] transition-colors"
+        >
           {subcategory}
-        </span>
+        </Link>
       )}
     </nav>
   )
 }
 
 // ============ PRODUCT TABS ============
-type TabType = 'characteristics' | 'description' | 'composition'
+// Single bordered box with horizontal tab strip on top and content below.
+// Visual style mirrors the original Характеристики/Опис/Склад tabs — same
+// border, same Bebas typography, same active-color (#4348AE) — just six tabs
+// instead of three. Default: ОПИС selected.
+type TabId =
+  | 'description'
+  | 'ingredients'
+  | 'skin'
+  | 'needs'
+  | 'clinical'
+  | 'usage'
+  | 'compatibility'
 
 function ProductTabs({ product }: { product: Product }) {
-  const [activeTab, setActiveTab] = useState<TabType>('characteristics')
-
-  const tabs = [
-    { id: 'characteristics' as TabType, label: 'ХАРАКТЕРИСТИКИ' },
-    { id: 'description' as TabType, label: 'ОПИС' },
-    { id: 'composition' as TabType, label: 'СКЛАД' },
+  // Each tab maps to its own field synced from the Google Sheet. Only tabs that
+  // actually have content are shown, so products with partial data never render
+  // empty or placeholder tabs. ОПИС always falls back to a short notice.
+  const allSections: Array<{ id: TabId; label: string; content: string }> = [
+    { id: 'description',   label: 'ОПИС',                  content: product.long_description?.trim() || product.short_description?.trim() || 'Опис товару буде доданий найближчим часом.' },
+    { id: 'usage',         label: 'СПОСІБ ЗАСТОСУВАННЯ',   content: product.usage_instructions?.trim() || '' },
+    { id: 'skin',          label: 'ДЛЯ ЯКОЇ ШКІРИ',        content: product.fit_skin?.trim() || product.skin_type?.trim() || '' },
+    { id: 'needs',         label: 'ЯКІ ПОТРЕБИ ВИРІШУЄ',   content: product.solves_problems?.trim() || '' },
+    { id: 'clinical',      label: 'КЛІНІЧНО ПІДТВЕРДЖЕНО', content: product.clinical_proof?.trim() || '' },
+    { id: 'compatibility', label: 'СУМІСНІСТЬ/ЗАСТЕРЕЖЕННЯ', content: product.compatibility?.trim() || '' },
+    { id: 'ingredients',   label: 'СКЛАД',                 content: product.key_ingredients?.trim() || '' },
   ]
+  const sections = allSections.filter((s) => s.content)
 
-  const characteristics = [
-    { label: 'Вік', value: '18+' },
-    { label: 'Бренд', value: product.brand },
-    { label: "Об'єм", value: product.volume_options?.split(',')[0] || (product.weight_grams ? `${product.weight_grams}g` : null) },
-    { label: 'Призначення', value: product.tags?.split(',').slice(0, 2).join(', ') },
-    { label: 'Серія', value: product.subcategory || 'Face Care' },
-    { label: 'Класифікація', value: 'Натуральна' },
-    { label: 'Тип шкіри', value: 'Всі типи' },
-  ].filter(item => item.value)
+  const [activeTab, setActiveTab] = useState<TabId>('description')
+  const active = sections.find((s) => s.id === activeTab) ?? sections[0]
+
+  // Desktop tab strip uses equal-width columns (grid). The base font is 20px, but a
+  // product with all 7 tabs makes the columns narrow enough that the longest label
+  // would wrap. To keep every label on ONE line, measure the widest label against its
+  // column and shrink the font by the minimum amount needed (never below 12px). Only
+  // runs at the lg breakpoint (where the grid is active); below that the strip scrolls.
+  const stripRef = useRef<HTMLDivElement>(null)
+  const [fitFont, setFitFont] = useState<number | null>(null)
+  const labelsKey = sections.map((s) => s.id).join('|')
+  useEffect(() => {
+    const strip = stripRef.current
+    if (!strip) return
+    let raf = 0
+    const fit = () => {
+      if (!strip.isConnected) return
+      // Grid (equal columns) is only active at lg; otherwise the strip scrolls — no shrink.
+      if (typeof window === 'undefined' || !window.matchMedia('(min-width: 1024px)').matches) {
+        setFitFont(null)
+        return
+      }
+      const BASE = 20
+      const MIN = 12
+      const btns = Array.from(strip.children) as HTMLElement[]
+      if (!btns.length) return
+      const cs = getComputedStyle(btns[0])
+      const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)
+      const ctx = document.createElement('canvas').getContext('2d')
+      if (!ctx) return
+      const lsEm = -0.025 // matches tracking-tight
+      let font = BASE
+      btns.forEach((b) => {
+        const label = (b.textContent || '').trim()
+        ctx.font = `${cs.fontWeight} ${BASE}px ${cs.fontFamily}`
+        const textW = ctx.measureText(label).width + lsEm * BASE * label.length
+        const avail = b.clientWidth - padX - 2
+        if (avail > 0 && textW > avail) {
+          font = Math.min(font, Math.floor((BASE * avail) / textW))
+        }
+      })
+      setFitFont(font < BASE ? Math.max(MIN, font) : null)
+    }
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(fit)
+    }
+    schedule()
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule)
+    window.addEventListener('resize', schedule)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [labelsKey])
 
   return (
-    <div className="border border-[#BBBBBB] p-6 sm:p-[40px_60px]">
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-[106px]">
-        {/* Left: Tab Navigation */}
-        <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-visible scrollbar-hide lg:min-w-[224px]">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap lg:w-[224px] h-[32px] font-bebas text-[18px] sm:text-[22px] leading-[32px] text-left transition-colors ${
-                activeTab === tab.id 
-                  ? 'text-[#6046A3]' 
-                  : 'text-[#C1C1C1] hover:text-[#999999]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+    <div className="border border-[#BBBBBB]">
+      {/* Horizontal tab strip — scrolls on small screens; equal-width columns at lg
+          with an auto-fitted font (see effect above) so every label stays on one line. */}
+      <div
+        ref={stripRef}
+        className="flex lg:grid lg:grid-flow-col lg:auto-cols-fr items-stretch overflow-x-auto lg:overflow-visible scrollbar-hide border-b border-[#BBBBBB]"
+      >
+        {sections.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={fitFont ? { fontSize: `${fitFont}px` } : undefined}
+            className={`flex items-center justify-center text-center flex-shrink-0 whitespace-nowrap px-4 sm:px-3 lg:px-3 h-[50px] sm:min-h-[56px] font-bebas text-[15px] sm:text-[17px] lg:text-[20px] leading-none tracking-tight transition-colors ${
+              active.id === tab.id
+                ? 'text-[#4348AE] border-b-2 border-[#4348AE] -mb-px'
+                : 'text-[#C1C1C1] hover:text-[#999999]'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        {/* Vertical Divider */}
-        <div className="hidden lg:block w-px bg-[#BBBBBB] self-stretch" />
-        <div className="lg:hidden h-px bg-[#BBBBBB] w-full" />
-
-        {/* Right: Tab Content */}
-        <div className="flex-1 min-h-[200px] lg:min-h-[339px] overflow-y-auto">
-          {activeTab === 'characteristics' && (
-            <div className="flex flex-col gap-[10px]">
-              {characteristics.map((item, index) => (
-                <div key={index} className="flex gap-[5px]">
-                  <span className="text-[16px] font-semibold text-black">{item.label}:</span>
-                  <span className="text-[16px] text-black">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'description' && (
-            <div className="text-[16px] leading-[1.6] text-black whitespace-pre-line">
-              {product.long_description || product.short_description || 'Опис товару відсутній.'}
-            </div>
-          )}
-
-          {activeTab === 'composition' && (
-            <div className="text-[16px] leading-[1.6] text-black">
-              <p className="font-semibold mb-2">Інгредієнти:</p>
-              <p>
-                {product.ingredients || 'Trehalose, Авокадо, Алантоїн, Бетаїн, Виноградні кісточки, Вітамін E, Гліцерин, Гіалуронова кислота, Колаген, Ламінарія, Лецитин, Сечовина, Сорбітол'}
-              </p>
-            </div>
-          )}
-        </div>
+      {/* Tab content — preserves the sheet's line breaks / bullet formatting */}
+      <div className="p-6 sm:p-[40px_60px] min-h-[200px] lg:min-h-[280px] text-[15px] sm:text-[16px] leading-[1.65] text-black">
+        <p className="whitespace-pre-line">{active.content}</p>
       </div>
     </div>
   )
@@ -348,31 +400,254 @@ type FAQItem = {
   answer: string
 }
 
-function FAQSection() {
+// Build a "коли краще використовувати" answer from the product's usage instructions
+// (column "Спосіб застосування"). Derived live, so it always matches the sheet.
+function whenToUseAnswer(usage?: string | null, name?: string): string {
+  const u = (usage || '').toLowerCase()
+  if (!u.trim()) {
+    return 'Засіб можна використовувати як вранці, так і ввечері — у складі вашої повсякденної рутини догляду. Якщо у формулі є кислоти чи ретиноїди, краще застосовувати ввечері та завершувати ранковий догляд засобом із SPF.'
+  }
+  const n = (name || '').toLowerCase()
+  const has = (...a: string[]) => a.some((s) => u.includes(s))
+  const inName = (...a: string[]) => a.some((s) => n.includes(s))
+
+  const morning = has('вранц', 'зранку', 'ранков', 'ранку', 'вдень')
+  const evening = has('ввечері', 'увечері', 'вечірн', 'на ніч', 'перед сном', 'вночі')
+  const acids = /\b(aha|bha|pha)\b/.test(n + ' ' + u)
+  const isShampoo = has('шампун') || inName('shampoo', 'шампун')
+  const isSpf = inName('spf', 'sun cream', 'sunscreen', 'сонцезахис') || has('сонцезахисний крем')
+  const isExfoliant =
+    acids || has('пілінг', 'ексфоліац', 'відлущ', 'саліцилов', 'гліколев', 'янтарна кислота', 'ретинол', 'ретиноїд') || inName('peeling', 'пілінг', 'retinol', 'ретинол')
+  const isSupplement =
+    inName('gummy', 'jelly stick', 'probiotic', 'collagen 5000') ||
+    has('таблет', 'мармелад', 'натще', 'під час їжі', 'розжув', 'запива', 'добову порцію', 'рекомендована добова', 'дієтична добавка')
+
+  let freq = ''
+  const wk = u.match(/(\d+)\s*[–-]?\s*(\d+)?\s*раз[а-яіїє]*\s*(на|в)\s*тижд/)
+  if (has('щоденн', 'щодня', 'кожен день', 'кожного дня')) freq = 'щодня'
+  else if (wk) freq = wk[2] ? `${wk[1]}–${wk[2]} рази на тиждень` : `${wk[1]} раз(и) на тиждень`
+
+  let timing: string
+  if (isSupplement) timing = evening ? 'ввечері, перед сном' : 'у будь-який зручний час, дотримуючись добової порції'
+  else if (isShampoo) timing = 'під час миття волосся'
+  else if (isSpf) timing = 'вранці, останнім кроком догляду'
+  else if (isExfoliant) timing = 'ввечері'
+  else if (morning && evening) timing = 'і вранці, і ввечері'
+  else if (evening) timing = 'ввечері, у вечірній рутині'
+  else if (morning) timing = 'вранці'
+  else timing = 'як вранці, так і ввечері'
+
+  let ans = `Найкраще використовувати ${timing}${freq ? ' — ' + freq : ''}.`
+  if (isExfoliant) ans += ' У складі активні кислоти/ретиноїди, тож застосовуйте ввечері, а вранці завершуйте догляд засобом із SPF.'
+  else if (isSpf) ans += ' Оновлюйте кожні 2–3 години за активного перебування на сонці.'
+  return ans
+}
+
+// Q "чутлива шкіра" ← column "Для якої шкіри підходить"
+function sensitiveSkinAnswer(fit?: string | null): string {
+  const f = (fit || '').toLowerCase()
+  if (!f.trim()) return 'Засіб делікатний і загалом підходить для чутливої шкіри. Перед першим використанням зробіть тест на невеликій ділянці (наприклад, на згині ліктя) і зачекайте 24 години.'
+  if (f.includes('чутлив')) return 'Так, засіб підходить і для чутливої шкіри.'
+  if (/всі типи|всіх типів|будь-як.{0,5}тип|для всіх типів/.test(f)) return 'Так, підходить для всіх типів шкіри, включно з чутливою. Перед першим застосуванням рекомендуємо тест на невеликій ділянці.'
+  const types: string[] = []
+  if (f.includes('жирн')) types.push('жирної')
+  if (f.includes('сух')) types.push('сухої')
+  if (f.includes('комбінован')) types.push('комбінованої')
+  if (f.includes('нормальн')) types.push('нормальної')
+  if (f.includes('проблемн')) types.push('проблемної')
+  if (f.includes('зріл') || f.includes('віков')) types.push('зрілої')
+  if (f.includes('зневоднен')) types.push('зневодненої')
+  if (types.length) return `Засіб найкраще підходить для ${types.join(', ')} шкіри. Для чутливої шкіри рекомендуємо спершу зробити тест на невеликій ділянці.`
+  return 'Для чутливої шкіри рекомендуємо перед застосуванням зробити тест на невеликій ділянці шкіри й зачекати 24 години.'
+}
+
+// Q "як часто" ← column "Спосіб застосування"
+function frequencyAnswer(usage?: string | null): string {
+  const u = (usage || '').toLowerCase()
+  if (!u.trim()) return 'Користуйтесь засобом згідно з рекомендаціями на упаковці — зазвичай у складі повсякденної рутини догляду.'
+  const perDay = u.match(/(\d+)\s*[–-]?\s*(\d+)?\s*раз[а-яіїє]*\s*(на|в)\s*(день|добу)/)
+  const wk = u.match(/(\d+)\s*[–-]?\s*(\d+)?\s*раз[а-яіїє]*\s*(на|в)\s*тижд/)
+  if (/щоденн|щодня|кожен день|кожного дня/.test(u)) {
+    if (perDay) return `Засіб підходить для щоденного застосування — ${perDay[2] ? perDay[1] + '–' + perDay[2] : perDay[1]} раз(и) на день.`
+    return 'Засіб підходить для щоденного застосування — використовуйте його регулярно у складі своєї рутини догляду.'
+  }
+  if (wk) return `Рекомендована частота — ${wk[2] ? wk[1] + '–' + wk[2] + ' рази' : wk[1] + ' раз(и)'} на тиждень.`
+  if (perDay) return `Використовуйте ${perDay[2] ? perDay[1] + '–' + perDay[2] : perDay[1]} раз(и) на день згідно зі способом застосування.`
+  return 'Користуйтесь засобом регулярно, згідно з рекомендаціями зі способу застосування.'
+}
+
+// Q "час до результату" ← column "Клінічно підтверджено"
+function weekWord(n: number): string {
+  const a = n % 10, b = n % 100
+  if (a === 1 && b !== 11) return 'тиждень'
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return 'тижні'
+  return 'тижнів'
+}
+function resultsTimeAnswer(clinical?: string | null, name?: string, subcategory?: string | null): string {
+  // Masks give an immediate effect — override with a "after first use" answer.
+  const n = (name || '').toLowerCase()
+  const sub = (subcategory || '').toLowerCase()
+  const isMask = (/маск|mask/.test(n) || sub.includes('маск')) && !/applicator|аплікатор|brush|лопатк|щітк/.test(n)
+  if (isMask) return 'Перший результат помітний вже після першого використання.'
+
+  const c = (clinical || '').toLowerCase()
+  if (!c.trim()) return 'Перші результати зазвичай помітні через 2–3 тижні регулярного використання; для максимального ефекту рекомендуємо курс 4–6 тижнів.'
+  const oneUse = /після\s*1\s*використан|з першого застосуванн|вже після першого|після першого використан/.test(c)
+  const weeks = /(?:після|за|через)\s*(\d+)\s*(?:[–-]\s*(\d+)\s*)?тижн/.exec(c)
+  const parts: string[] = []
+  if (oneUse) parts.push('частину ефекту помітно вже після першого застосування')
+  if (weeks) {
+    const w = weeks[2] ? `${weeks[1]}–${weeks[2]} ${weekWord(+weeks[2])}` : `${weeks[1]} ${weekWord(+weeks[1])}`
+    parts.push(`виразніший результат — приблизно за ${w} регулярного застосування`)
+  }
+  if (parts.length) return `За даними виробника, ${parts.join('; ')}.`
+  return 'Засіб має підтверджену ефективність; перші результати зазвичай помітні через 2–3 тижні регулярного застосування, повний ефект — через 4–6 тижнів.'
+}
+
+// ── Product-type aware FAQ ──────────────────────────────────────────────
+// Skincare FAQ (sensitive skin / morning-evening routine / weeks-to-result) is
+// meaningless for ingestible supplements (gummies, collagen sticks, probiotics)
+// or for passive tools (towel, sponge, brush). For those we show a tailored set
+// of questions with correct, researched answers instead of guessed skincare text.
+type FaqProduct = {
+  usage_instructions?: string | null
+  fit_skin?: string | null
+  clinical_proof?: string | null
+  subcategory?: string | null
+  category?: string | null
+  name: string
+}
+
+function asSentence(s: string): string {
+  const t = (s || '').trim()
+  if (!t) return ''
+  const capped = t.charAt(0).toUpperCase() + t.slice(1)
+  return /[.!?…]$/.test(capped) ? capped : capped + '.'
+}
+
+function faqProductType(p: FaqProduct): 'supplement' | 'tool' | 'skincare' {
+  const n = (p.name || '').toLowerCase()
+  const cat = (p.category || '').toLowerCase()
+  // Passive tools / accessories — but NOT treatment pads (those answer skincare Qs well).
+  const isTool = /(towel|рушник|sponge|спонж|brush|пензл|щітк|applicator|аплікатор|spatula|лопатк|шпатель)/.test(n)
+  if (isTool && !/\bpad\b|пади|пад[іиа]/.test(n)) return 'tool'
+  // Ingestible supplements / inner beauty.
+  const ingestible = /gummy|мармелад|jelly stick|желейн.{0,4}стік|probiotic|пробіотик|синбіотик|таблетк|драже|саше|sachet|\binner\b|collagen\s*\d{3,}|колаген\s*\d{3,}/.test(n)
+  const isHealthCare = cat.includes('health') && cat.includes('care')
+  if (isHealthCare || ingestible) {
+    const topical = /крем|cream|сироват|serum|тонер|toner|есенц|essence|лосьйон|lotion|cleansing|очищенн|маск|mask|гель|gel/.test(n)
+    if (!topical) return 'supplement'
+  }
+  return 'skincare'
+}
+
+function supplementKind(n: string): 'sleep' | 'probiotic' | 'glutathione' | 'collagen' | 'generic' {
+  const s = n.toLowerCase()
+  if (/melamate|мелатонін|melatonin|sleep|для сну|\bсну\b|\bсон\b/.test(s)) return 'sleep'
+  if (/probiotic|пробіотик|синбіотик|lactofit|лактоф/.test(s)) return 'probiotic'
+  if (/glutathione|глутатіон/.test(s)) return 'glutathione'
+  if (/collagen|колаген|biotin|біотин/.test(s)) return 'collagen'
+  return 'generic'
+}
+
+function supplementFaqs(p: FaqProduct): FAQItem[] {
+  const kind = supplementKind(p.name || '')
+  const usage = (p.usage_instructions || '').trim()
+  const clinical = (p.clinical_proof || '').trim()
+  let intake: string, freq: string, when: string, results: string
+  switch (kind) {
+    case 'sleep':
+      intake = 'Розжуйте 1 мармеладку — запивати водою не потрібно. Не перевищуйте рекомендовану добову порцію.'
+      freq = '1 мармеладка на день. Засіб призначений для щоденного приймання курсом.'
+      when = 'Найкраще приймати приблизно за 30–60 хвилин до сну.'
+      results = 'Засіб сприяє розслабленню та легшому засинанню — багато хто відчуває ефект уже в перші дні, а стабільніший результат настає за 2–4 тижні регулярного приймання.'
+      break
+    case 'probiotic':
+      intake = 'Висипте вміст 1 стіка безпосередньо в рот або розчиніть у воді кімнатної температури (не гарячій, щоб зберегти живі бактерії).'
+      freq = '1 стік на день. Підходить для щоденного приймання курсом.'
+      when = 'У будь-який зручний час; зручно приймати вранці. Головне — робити це регулярно щодня.'
+      results = 'Для відчутного балансу травлення зазвичай потрібно 1–2 тижні регулярного приймання.'
+      break
+    case 'glutathione':
+      intake = 'Приймайте 1 порцію (саше/стік) на день. Не перевищуйте рекомендовану добову норму.'
+      freq = '1 порція на день, курсом.'
+      when = 'У будь-який зручний час доби, бажано щодня в один і той самий час.'
+      results = 'Для рівнішого тону та сяйва шкіри зазвичай потрібно 4–8 тижнів регулярного приймання.'
+      break
+    case 'collagen':
+      intake = 'Приймайте 1 порцію (стік/желе/напій) на день: желе можна з’їсти безпосередньо, рідкий колаген — випити. Запивати не обов’язково.'
+      freq = '1 порція на день. Підходить для щоденного приймання курсом.'
+      when = 'У будь-який зручний час; для кращого засвоєння можна приймати натще або перед сном. Головне — регулярність.'
+      results = 'Покращення пружності та зволоженості шкіри, стану волосся й нігтів зазвичай помітне за 4–8 тижнів регулярного приймання.'
+      break
+    default:
+      intake = 'Приймайте 1 порцію на день згідно з рекомендаціями на упаковці.'
+      freq = '1 порція на день, курсом.'
+      when = 'У будь-який зручний час доби, бажано щодня в один і той самий час.'
+      results = 'Перші результати зазвичай помітні за кілька тижнів регулярного приймання.'
+  }
+  // Respect explicit sheet data if the owner fills it in later.
+  if (usage) { intake = asSentence(usage); freq = frequencyAnswer(usage); when = whenToUseAnswer(usage, p.name) }
+  if (clinical) results = resultsTimeAnswer(clinical, p.name, p.subcategory)
+  return [
+    { question: 'Як приймати цей засіб?', answer: intake },
+    { question: 'Як часто потрібно приймати цей засіб?', answer: freq },
+    { question: 'Коли краще приймати цей засіб?', answer: when },
+    { question: 'Коли з’явиться результат?', answer: results },
+  ]
+}
+
+function toolFaqs(p: FaqProduct): FAQItem[] {
+  const n = (p.name || '').toLowerCase()
+  const usage = (p.usage_instructions || '').trim()
+  const isTowel = /towel|рушник/.test(n)
+  const isSponge = /sponge|спонж/.test(n)
+  let use: string, sensitive: string, often: string, care: string
+  if (isTowel) {
+    use = 'Змочіть рушник теплою водою, нанесіть гель для душу та м’якими круговими рухами пройдіться по тілу, після чого змийте водою.'
+    sensitive = 'Так. Рушник зроблений з м’якої тканини й делікатно очищує шкіру. Для чутливої шкіри використовуйте легкий натиск і не тріть надто інтенсивно.'
+    often = 'Для делікатного очищення можна користуватися щодня, а для відлущування — 2–3 рази на тиждень.'
+    care = 'Після використання добре прополощіть рушник і повісьте сушитися в провітрюваному місці, щоб уникнути розмноження бактерій.'
+  } else if (isSponge) {
+    use = 'Змочіть спонж водою до м’якості, нанесіть на нього очищувальний засіб і м’якими круговими рухами очистіть обличчя, потім ретельно сполосніть.'
+    sensitive = 'Так. Спонж делікатний і підходить для чутливої шкіри — використовуйте легкі рухи без сильного натиску.'
+    often = 'Можна використовувати щодня під час умивання.'
+    care = 'Після кожного використання ретельно промивайте спонж і просушуйте. Рекомендуємо змінювати його кожні 1–2 місяці.'
+  } else {
+    use = 'Наберіть засіб на аплікатор і рівномірно розподіліть його по шкірі. Інструмент допомагає нанести продукт гігієнічно, не торкаючись його руками.'
+    sensitive = 'Так. Інструмент виготовлений з гладкого делікатного матеріалу й підходить для чутливої шкіри.'
+    often = 'Використовуйте щоразу під час нанесення відповідного засобу.'
+    care = 'Після використання промийте інструмент водою з милом і дайте йому повністю висохнути.'
+  }
+  if (usage) use = asSentence(usage)
+  return [
+    { question: 'Як користуватися цим аксесуаром?', answer: use },
+    { question: 'Чи підходить цей аксесуар для чутливої шкіри?', answer: sensitive },
+    { question: 'Як часто можна використовувати?', answer: often },
+    { question: 'Як доглядати за виробом?', answer: care },
+  ]
+}
+
+function buildFaqs(product: FaqProduct): FAQItem[] {
+  const type = faqProductType(product)
+  if (type === 'supplement') return supplementFaqs(product)
+  if (type === 'tool') return toolFaqs(product)
+  return [
+    { question: 'Чи підходить цей засіб для чутливої шкіри?', answer: sensitiveSkinAnswer(product.fit_skin) },
+    { question: 'Як часто потрібно використовувати цей засіб?', answer: frequencyAnswer(product.usage_instructions) },
+    { question: 'Коли краще використовувати цей засіб?', answer: whenToUseAnswer(product.usage_instructions, product.name) },
+    { question: 'Скільки часу потрібно для видимого результату?', answer: resultsTimeAnswer(product.clinical_proof, product.name, product.subcategory) },
+  ]
+}
+
+function FAQSection({
+  product,
+}: {
+  product: { usage_instructions?: string | null; fit_skin?: string | null; clinical_proof?: string | null; subcategory?: string | null; category?: string | null; name: string }
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
-  const faqs: FAQItem[] = [
-    {
-      question: 'Який термін придатності товару після відкриття?',
-      answer: '12 місяців після відкриття. Рекомендуємо зберігати в прохолодному місці, уникаючи прямих сонячних променів.',
-    },
-    {
-      question: 'Чи підходить цей засіб для чутливої шкіри?',
-      answer: 'Так, продукт гіпоалергенний та підходить для всіх типів шкіри, включаючи чутливу. Рекомендуємо провести тест на невеликій ділянці шкіри перед першим використанням.',
-    },
-    {
-      question: 'Як часто потрібно використовувати цей засіб?',
-      answer: '75 днів.',
-    },
-    {
-      question: 'Чи можна поєднувати з іншими засобами?',
-      answer: 'Так, цей засіб чудово поєднується з іншими продуктами догляду. Рекомендуємо наносити після тоніка та перед кремом.',
-    },
-    {
-      question: 'Скільки часу потрібно для видимого результату?',
-      answer: 'Перші результати помітні вже через 2-3 тижні регулярного використання. Для максимального ефекту рекомендуємо курс 4-6 тижнів.',
-    },
-  ]
+  const faqs: FAQItem[] = buildFaqs(product)
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index)
@@ -524,7 +799,7 @@ function ReviewFormModal({
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-[20px] w-full max-w-[600px] max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+      <div className="relative bg-[#E2F9FF] rounded-[20px] w-full max-w-[600px] max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -676,7 +951,7 @@ function ReviewFormModal({
 }
 
 // ============ PRODUCT REVIEWS SECTION ============
-const REVIEW_BACKGROUNDS = ['#FFE8F0', '#FFFFD5', '#CFECFE']
+const REVIEW_BACKGROUNDS = ['#FFE8F0', '#FFFFD5', '#E2F9FF']
 
 function ProductReviewsSection({ 
   productId, 
@@ -721,7 +996,7 @@ function ProductReviewsSection({
   }
 
   return (
-    <section id="reviews" className="bg-white py-16 sm:py-20">
+    <section id="reviews" className="bg-[#E2F9FF] py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-start sm:items-end justify-between gap-4 sm:gap-6 mb-12 flex-col sm:flex-row">
           <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
@@ -851,6 +1126,192 @@ function ProductReviewsSection({
   )
 }
 
+// ============ FREQUENTLY BOUGHT TOGETHER ============
+// Two complementary picks per product. We have no purchase-history yet, so the
+// pairing is rule-based on the product's attributes:
+//   1) Routine step (cleanser→toner→serum→cream→SPF, plus mask/eye/lip/hair/
+//      body/device/supplement) — we recommend the NEXT logical step(s), the way
+//      a real K-beauty routine is built, not another of the same type.
+//   2) Same brand (people complete a brand's set) — a bonus.
+//   3) Shared active-ingredient tags — a bonus.
+//   4) Shared skin type — a bonus.
+// The 2nd pick prefers a different step than the 1st for variety. Each card
+// shows the dominant reason it was chosen, so the logic is transparent.
+type FbtItem = {
+  id: string
+  name: string
+  sale_price: number | null
+  image_url: string | null
+  image_path: string | null
+  subcategory: string | null
+  brand: string | null
+  tags: string | null
+  skin_type: string | null
+  coming_soon?: number | null
+}
+
+type RoutineStep =
+  | 'cleanser' | 'toner' | 'serum' | 'cream' | 'spf' | 'mask'
+  | 'eye' | 'lip' | 'hair' | 'body' | 'device' | 'supplement' | 'other'
+
+function routineStep(name?: string | null, subcategory?: string | null, tags?: string | null): RoutineStep {
+  const s = `${subcategory || ''} ${name || ''} ${tags || ''}`.toLowerCase()
+  if (/spf|sun ?cream|sunscreen|сонцезахис/.test(s)) return 'spf'
+  if (/шампун|кондиц|волосс|\bhair\b|бальзам для волосся/.test(s)) return 'hair'
+  if (/добавк|gummy|мармелад|probiotic|пробіотик|саше|колаген\s*\d{3,}|jelly stick|\binner\b/.test(s)) return 'supplement'
+  if (/девайс|прилад|пристр|booster|бустер|масажер|device|age-?r/.test(s)) return 'device'
+  if (/тіло|\bbody\b|для рук|для ніг|hand cream|foot/.test(s)) return 'body'
+  if (/очі|\beye\b|навколо очей/.test(s)) return 'eye'
+  if (/губ|\blip\b/.test(s)) return 'lip'
+  if (/маск|\bmask\b/.test(s)) return 'mask'
+  if (/очищенн|cleans|пінк|гель для вмив|демакіяж|гідрофіл|вмиван/.test(s)) return 'cleanser'
+  if (/сироват|serum|ампул|ampoule|шот|\bshot\b/.test(s)) return 'serum'
+  if (/тонер|toner|пади|\bпад/.test(s) || /essence|есенц/.test(s)) return 'toner'
+  if (/крем|cream|молочко|емульс|lotion|гель-крем/.test(s)) return 'cream'
+  return 'other'
+}
+
+const STEP_PAIRS: Record<RoutineStep, RoutineStep[]> = {
+  cleanser: ['toner', 'serum', 'cream'],
+  toner: ['serum', 'cream', 'cleanser'],
+  serum: ['cream', 'toner', 'spf'],
+  cream: ['serum', 'cleanser', 'spf'],
+  spf: ['serum', 'cream', 'cleanser'],
+  mask: ['serum', 'cream', 'toner'],
+  eye: ['serum', 'cream'],
+  lip: ['cream', 'serum'],
+  hair: ['hair'],
+  body: ['body'],
+  device: ['serum', 'cream', 'device'],
+  supplement: ['supplement', 'serum'],
+  other: ['serum', 'cream', 'cleanser'],
+}
+
+function tagSet(s?: string | null) {
+  return new Set((s || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean))
+}
+
+function recommendTwo(
+  current: { id: string; name: string; subcategory: string | null; brand: string | null; tags?: string | null; skin_type?: string | null },
+  pool: FbtItem[]
+): { item: FbtItem; reason: string; step: RoutineStep }[] {
+  const curStep = routineStep(current.name, current.subcategory, current.tags)
+  const curTags = tagSet(current.tags)
+  const curSkin = tagSet(current.skin_type)
+  const partners = STEP_PAIRS[curStep] || []
+  const sameTypeOk = curStep === 'hair' || curStep === 'body' || curStep === 'supplement'
+
+  const scored = pool
+    .filter(p => p.id !== current.id && !(p.coming_soon && p.coming_soon > 0) && (p.sale_price ?? 0) > 0)
+    .map(p => {
+      const step = routineStep(p.name, p.subcategory, p.tags)
+      const reasons: { w: number; text: string }[] = []
+      let score = 0
+      const pi = partners.indexOf(step)
+      if (pi >= 0) { const w = 6 - pi; score += w; reasons.push({ w, text: 'Доповнює догляд (наступний крок)' }) }
+      if (step === curStep && !sameTypeOk) score -= 2
+      if (p.brand && current.brand && p.brand.toLowerCase() === current.brand.toLowerCase()) {
+        score += 2.5; reasons.push({ w: 2.5, text: `Той самий бренд` })
+      }
+      const sharedTags = Array.from(tagSet(p.tags)).filter(t => curTags.has(t)).length
+      if (sharedTags > 0) { const w = sharedTags * 1.5; score += w; reasons.push({ w, text: 'Схожі активні компоненти' }) }
+      const sharedSkin = Array.from(tagSet(p.skin_type)).filter(t => curSkin.has(t)).length
+      if (sharedSkin > 0) { const w = sharedSkin; score += w; reasons.push({ w, text: 'Підходить вашому типу шкіри' }) }
+      reasons.sort((a, b) => b.w - a.w)
+      return { item: p, step, score, reason: reasons[0]?.text || 'Гарна пара до цього засобу' }
+    })
+    .sort((a, b) => b.score - a.score)
+
+  if (scored.length === 0) return []
+  const picks = [scored[0]]
+  const firstStep = scored[0].step
+  let second = scored.slice(1).find(s => s.step !== firstStep)
+  if (!second) second = scored[1]
+  if (second) picks.push(second)
+  return picks
+}
+
+function FrequentlyBoughtTogether({ current }: { current: Product }) {
+  const [recs, setRecs] = useState<{ item: FbtItem; reason: string }[]>([])
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const { addToCart } = useCart()
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(
+          `/api/products?category=${encodeURIComponent(current.category || '')}&limit=60&exclude=${encodeURIComponent(current.id)}`
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        const pool: FbtItem[] = Array.isArray(data) ? data : data.products || []
+        if (!cancelled) setRecs(recommendTwo(current, pool))
+      } catch {
+        /* ignore */
+      }
+    })()
+    return () => { cancelled = true }
+  }, [current])
+
+  if (recs.length === 0) return null
+
+  const handleAdd = async (id: string) => {
+    setAddingId(id)
+    await addToCart(id)
+    setTimeout(() => setAddingId(null), 600)
+  }
+
+  return (
+    <section className="py-12 sm:py-16 bg-[#E2F9FF]">
+      <div className="max-w-[900px] mx-auto px-6 sm:px-8">
+        <h2 className="font-bebas uppercase text-black text-[34px] sm:text-[44px] leading-[1.05] mb-2 text-center">
+          Часто купують разом
+        </h2>
+        <p className="text-center text-[14px] text-[#666] mb-8">
+          Підібрали засоби, що доповнюють цей у вашому догляді
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {recs.map(({ item, reason }) => {
+            const img = item.image_url || item.image_path || '/products/product-1.png'
+            return (
+              <div key={item.id} className="bg-white rounded-[18px] border border-[#E5E5E5] p-4 flex gap-4 items-center">
+                <Link
+                  href={`/product/${item.id}`}
+                  className="relative w-[84px] h-[84px] rounded-[12px] overflow-hidden bg-[#F8F7FB] flex-shrink-0"
+                >
+                  <Image src={img} alt={item.name} fill className="object-contain p-1.5" sizes="84px" />
+                </Link>
+                <div className="flex-grow min-w-0">
+                  <span className="inline-block text-[10px] px-2 py-[2px] rounded-full bg-[#F5F3FF] text-[#4348AE] mb-1">
+                    {reason}
+                  </span>
+                  <Link
+                    href={`/product/${item.id}`}
+                    className="block text-[14px] text-black hover:text-[#4348AE] leading-snug line-clamp-2"
+                  >
+                    {item.name}
+                  </Link>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="font-semibold text-[15px] text-black">₴{item.sale_price ?? 0}</span>
+                    <button
+                      onClick={() => handleAdd(item.id)}
+                      disabled={addingId === item.id}
+                      className="ml-auto h-9 px-3 rounded-lg bg-[#4348AE] text-white text-[13px] font-semibold hover:bg-[#373B8A] transition-colors disabled:opacity-60"
+                    >
+                      {addingId === item.id ? 'Додано ✓' : 'У кошик'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ============ SIMILAR PRODUCTS SECTION ============
 function SimilarProductsSection({ products, currentProductId }: { products: SimilarProduct[]; currentProductId: string }) {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -895,7 +1356,7 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
   if (similarProducts.length === 0) return null
 
   return (
-    <section className="bg-white py-16 sm:py-20">
+    <section className="bg-[#E2F9FF] py-16 sm:py-20">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
         <div className="flex items-start justify-between gap-6 mb-10">
           <h2 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
@@ -923,24 +1384,22 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
                       src={product.image_url || product.image_path || '/products/product-1.png'}
                       alt={product.name}
                       fill
-                      className="object-cover"
+                      className="object-contain p-4"
                       sizes="(min-width: 1280px) 393px, (min-width: 1024px) 360px, (min-width: 640px) 320px, 100vw"
                       loading="lazy"
                       placeholder="blur"
                       blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYwIiBoZWlnaHQ9IjM2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjhGN0ZCIi8+PC9zdmc+"
                     />
 
-                    {product.is_new === 1 && (
-                      <div className="absolute top-3 right-3 h-[22px] px-2 rounded-[6px] bg-white text-black uppercase flex items-center text-[16px] font-normal">
-                        NEW
+                    {product.discount_amount ? (
+                      <div className="absolute top-3 left-3 z-[4] flex flex-col items-start gap-1.5">
+                        <span className="h-[34px] px-3.5 rounded-[8px] bg-[#E84A8A] text-white text-[17px] font-bold tracking-[0.02em] flex items-center shadow-[0_6px_16px_rgba(232,74,138,0.5)]">
+                          −{product.discount_amount}%
+                        </span>
                       </div>
-                    )}
+                    ) : null}
 
-                    {product.discount_amount && (
-                      <div className="absolute top-3 left-3 h-[30px] px-3 rounded-[8px] bg-[#BCC2F4] text-black text-[16px] font-semibold tracking-[0.02em] flex items-center shadow-[0_6px_16px_rgba(188,194,244,0.45)]">
-                        Знижка ₴{product.discount_amount}
-                      </div>
-                    )}
+                    <WishlistButton productId={product.id} variant="icon" className="absolute top-3 right-3 z-[5]" />
 
                     <button
                       onClick={(e) => {
@@ -951,8 +1410,8 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
                       disabled={addingId === product.id}
                       className={`absolute bottom-3 right-3 rounded-lg p-2.5 transition-all shadow-md ${
                         addingId === product.id 
-                          ? 'bg-[#6046A3] text-white' 
-                          : 'bg-white hover:bg-[#F5F5F5] text-black'
+                          ? 'bg-[#4348AE] text-white' 
+                          : 'bg-[#E2F9FF] hover:bg-[#F5F5F5] text-black'
                       }`}
                       aria-label="Додати в кошик"
                     >
@@ -1088,7 +1547,7 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#E2F9FF]">
         <div className="flex items-center justify-center py-32">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#BCC2F4]"></div>
         </div>
@@ -1099,7 +1558,7 @@ export default function ProductPage() {
 
   if (error || !product) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#E2F9FF]">
         <div className="flex flex-col items-center justify-center py-32">
           <h1 className="text-2xl font-semibold text-black mb-4">Товар не знайдено</h1>
           <Link href="/catalog" className="text-[#7C83C9] hover:underline">
@@ -1135,7 +1594,7 @@ export default function ProductPage() {
   const reviewCount = reviewRating.count > 0 ? reviewRating.count : (product.review_count ?? 0)
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       {/* Product Hero Section */}
       <section className="py-8 sm:py-12">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
@@ -1150,7 +1609,6 @@ export default function ProductPage() {
             {/* Right: Product Info */}
             <div className="flex flex-col">
               <h1 className="font-gilroy text-[28px] sm:text-[32px] lg:text-[36px] leading-[1.2] font-semibold text-black mb-4">
-                {product.short_description ? `${product.short_description} – ` : ''}
                 {product.name}
               </h1>
 
@@ -1159,15 +1617,41 @@ export default function ProductPage() {
               </div>
 
               <div className="flex items-baseline gap-3 mb-6">
-                <span className="text-[32px] font-semibold text-black">
+                <span className={`text-[32px] font-semibold ${product.original_price && product.original_price > (product.sale_price ?? 0) ? 'text-[#E84A8A]' : 'text-black'}`}>
                   ₴{product.sale_price ?? 0}
                 </span>
                 {product.original_price && product.original_price > (product.sale_price ?? 0) && (
-                  <span className="text-[20px] text-[#999999] line-through">
-                    ₴{product.original_price}
-                  </span>
+                  <>
+                    <span className="text-[20px] text-[#999999] line-through">
+                      ₴{product.original_price}
+                    </span>
+                    <span className="text-[14px] font-bold text-white bg-[#E84A8A] rounded-[6px] px-2 py-0.5">
+                      −{product.discount_amount}%
+                    </span>
+                  </>
                 )}
               </div>
+
+              {product.tags && product.tags.trim() && (
+                <div className="mb-6">
+                  <p className="text-[14px] text-[#666666] mb-2">Теги</p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.tags
+                      .split(',')
+                      .map((t) => t.trim())
+                      .filter(Boolean)
+                      .map((tag, i) => (
+                        <Link
+                          key={i}
+                          href={`/catalog?tag=${encodeURIComponent(tag)}`}
+                          className="text-[13px] leading-tight px-3 py-1.5 rounded-full bg-[#F5F3FF] text-[#4348AE] hover:bg-[#E7DEFF] transition-colors"
+                        >
+                          {tag}
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               {volumeOptions.length > 0 && (
                 <div className="mb-6">
@@ -1194,7 +1678,7 @@ export default function ProductPage() {
                   disabled={addingToCart}
                   className={`w-full max-w-[605px] h-[50px] font-semibold text-[16px] uppercase tracking-wide transition-all ${
                     addingToCart 
-                      ? 'bg-[#6046A3] text-white' 
+                      ? 'bg-[#4348AE] text-white' 
                       : 'bg-[#BCC2F4] text-black hover:bg-[#A8AFEB]'
                   }`}
                 >
@@ -1208,10 +1692,11 @@ export default function ProductPage() {
                     router.push('/checkout')
                   }}
                   disabled={addingToCart}
-                  className="w-full max-w-[605px] h-[50px] bg-white border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  className="w-full max-w-[605px] h-[50px] bg-[#E2F9FF] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
                 >
                   Купити в один клік
                 </button>
+                <WishlistButton productId={productId} variant="full" className="w-full max-w-[605px]" />
               </div>
             </div>
           </div>
@@ -1225,8 +1710,11 @@ export default function ProductPage() {
         </div>
       </section>
 
+      {/* Frequently bought together (2 complementary picks) */}
+      <FrequentlyBoughtTogether current={product} />
+
       {/* FAQ Section */}
-      <FAQSection />
+      <FAQSection product={product} />
 
       {/* Reviews Section */}
       <ProductReviewsSection 

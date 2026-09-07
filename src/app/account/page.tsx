@@ -6,6 +6,9 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import PhoneInput from '@/components/ui/PhoneInput'
+import { useWishlist } from '@/contexts/WishlistContext'
+import AccountAvatar from '@/components/account/AccountAvatar'
 
 type User = {
   id: string
@@ -45,7 +48,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
       onClick={onClick}
       className={`px-4 sm:px-6 py-3 font-gilroy text-[14px] sm:text-[16px] transition-colors border-b-2 whitespace-nowrap ${
         active 
-          ? 'border-[#6046A3] text-[#6046A3] font-semibold' 
+          ? 'border-[#4348AE] text-[#4348AE] font-semibold' 
           : 'border-transparent text-[#666] hover:text-black'
       }`}
     >
@@ -58,9 +61,9 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 function StatusBadge({ status }: { status: string }) {
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     pending: { label: 'Очікує підтвердження', color: '#B45309', bg: '#FEF3C7' },
-    confirmed: { label: 'Підтверджено', color: '#1D4ED8', bg: '#DBEAFE' },
+    confirmed: { label: 'Підтверджено', color: '#1D4ED8', bg: '#E2F9FF' },
     processing: { label: 'Обробляється', color: '#7C3AED', bg: '#EDE9FE' },
-    shipped: { label: 'Відправлено', color: '#0891B2', bg: '#CFFAFE' },
+    shipped: { label: 'Відправлено', color: '#0891B2', bg: '#E2F9FF' },
     delivered: { label: 'Доставлено', color: '#059669', bg: '#D1FAE5' },
     cancelled: { label: 'Скасовано', color: '#DC2626', bg: '#FEE2E2' },
   }
@@ -127,8 +130,8 @@ function GuestOrderLookup({ onOrdersFound }: { onOrdersFound: (orders: Order[]) 
           onClick={() => setLookupType('phone')}
           className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
             lookupType === 'phone'
-              ? 'bg-[#6046A3] text-white'
-              : 'bg-white text-[#666] border border-[#E5E5E5] hover:border-[#6046A3]'
+              ? 'bg-[#4348AE] text-white'
+              : 'bg-[#E2F9FF] text-[#666] border border-[#E5E5E5] hover:border-[#4348AE]'
           }`}
         >
           За телефоном
@@ -137,8 +140,8 @@ function GuestOrderLookup({ onOrdersFound }: { onOrdersFound: (orders: Order[]) 
           onClick={() => setLookupType('email')}
           className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
             lookupType === 'email'
-              ? 'bg-[#6046A3] text-white'
-              : 'bg-white text-[#666] border border-[#E5E5E5] hover:border-[#6046A3]'
+              ? 'bg-[#4348AE] text-white'
+              : 'bg-[#E2F9FF] text-[#666] border border-[#E5E5E5] hover:border-[#4348AE]'
           }`}
         >
           За email
@@ -153,14 +156,7 @@ function GuestOrderLookup({ onOrdersFound }: { onOrdersFound: (orders: Order[]) 
 
       <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-3">
         {lookupType === 'phone' ? (
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+380 XX XXX XX XX"
-            required
-            className="flex-1 h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
-          />
+          <PhoneInput value={phone} onChange={setPhone} required className="flex-1" />
         ) : (
           <input
             type="email"
@@ -168,13 +164,13 @@ function GuestOrderLookup({ onOrdersFound }: { onOrdersFound: (orders: Order[]) 
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
             required
-            className="flex-1 h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+            className="flex-1 h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
           />
         )}
         <button
           type="submit"
           disabled={loading}
-          className="h-[50px] px-8 bg-[#6046A3] text-white font-semibold rounded-lg hover:bg-[#4D3882] transition-colors disabled:opacity-50"
+          className="h-[50px] px-8 bg-[#4348AE] text-white font-semibold rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
         >
           {loading ? 'Пошук...' : 'Знайти'}
         </button>
@@ -252,7 +248,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
   }
   
   return (
-    <div className="bg-white rounded-[24px] border border-[#E5E5E5] p-6 sm:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+    <div className="bg-[#E2F9FF] rounded-[24px] border border-[#E5E5E5] p-6 sm:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
       <h2 className="font-bebas text-[32px] sm:text-[40px] text-black text-center mb-2">
         {mode === 'login' ? 'Вхід в акаунт' : 'Реєстрація'}
       </h2>
@@ -277,7 +273,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+                className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
                 placeholder="Ваше ім'я"
               />
             </div>
@@ -287,7 +283,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+                className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
                 placeholder="Ваше прізвище"
               />
             </div>
@@ -301,7 +297,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+            className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
             placeholder="your@email.com"
           />
         </div>
@@ -309,13 +305,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
         {mode === 'register' && (
           <div>
             <label className="block text-[14px] text-[#666] mb-2">Телефон</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
-              placeholder="+380 XX XXX XX XX"
-            />
+            <PhoneInput value={phone} onChange={setPhone} />
           </div>
         )}
         
@@ -326,7 +316,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+            className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
             placeholder="••••••••"
           />
         </div>
@@ -339,7 +329,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3] transition-colors"
+              className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -348,7 +338,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[54px] bg-[#6046A3] text-white font-semibold text-[16px] rounded-lg hover:bg-[#4D3882] transition-colors disabled:opacity-50"
+          className="w-full h-[54px] bg-[#4348AE] text-white font-semibold text-[16px] rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
         >
           {loading ? 'Зачекайте...' : (mode === 'login' ? 'Увійти' : 'Зареєструватися')}
         </button>
@@ -363,7 +353,7 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
               setMode(mode === 'login' ? 'register' : 'login')
               setError(null)
             }}
-            className="text-[#6046A3] font-semibold hover:underline"
+            className="text-[#4348AE] font-semibold hover:underline"
           >
             {mode === 'login' ? 'Зареєструватися' : 'Увійти'}
           </button>
@@ -390,7 +380,7 @@ function OrdersList({ orders, showCustomerInfo = false }: { orders: Order[]; sho
   return (
     <div className="space-y-4">
       {orders.map((order) => (
-        <div key={order.id} className="bg-white border border-[#E5E5E5] rounded-[16px] p-4 sm:p-6">
+        <div key={order.id} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[16px] p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <p className="text-[13px] text-[#666]">Замовлення</p>
@@ -413,7 +403,7 @@ function OrdersList({ orders, showCustomerInfo = false }: { orders: Order[]; sho
                     />
                   )}
                   {item.quantity > 1 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#6046A3] text-white text-[10px] rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#4348AE] text-white text-[10px] rounded-full flex items-center justify-center">
                       {item.quantity}
                     </span>
                   )}
@@ -449,13 +439,13 @@ function OrdersList({ orders, showCustomerInfo = false }: { orders: Order[]; sho
               {order.tracking_number && (
                 <div>
                   <p className="text-[11px] sm:text-[12px] text-[#999]">ТТН</p>
-                  <p className="text-[13px] sm:text-[14px] text-[#6046A3] font-medium">{order.tracking_number}</p>
+                  <p className="text-[13px] sm:text-[14px] text-[#4348AE] font-medium">{order.tracking_number}</p>
                 </div>
               )}
             </div>
             <Link
-              href={`/orders/${order.id}/success`}
-              className="text-[14px] text-[#6046A3] font-medium hover:underline"
+              href={`/orders/${order.id}`}
+              className="text-[14px] text-[#4348AE] font-medium hover:underline"
             >
               Детальніше →
             </Link>
@@ -473,7 +463,11 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
   
   const [activeTab, setActiveTab] = useState<'orders' | 'wishlist' | 'settings'>(initialTab || 'orders')
   const [orders, setOrders] = useState<Order[]>([])
-  const [wishlist, setWishlist] = useState<WishlistProduct[]>([])
+  // Wishlist comes from the client-side store (works without login); we just
+  // resolve product details for the saved ids.
+  const { ids: wishlistIds, remove: removeWishlistId } = useWishlist()
+  const [productMap, setProductMap] = useState<Record<string, WishlistProduct>>({})
+  const wishlist = wishlistIds.map((id) => productMap[id]).filter(Boolean) as WishlistProduct[]
   const [loading, setLoading] = useState(true)
   
   // Profile edit state
@@ -490,19 +484,24 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [ordersRes, wishlistRes] = await Promise.all([
+      const [ordersRes, productsRes] = await Promise.all([
         fetch('/api/user/orders'),
-        fetch('/api/user/wishlist'),
+        fetch('/api/products'),
       ])
-      
+
       if (ordersRes.ok) {
         const ordersData = await ordersRes.json()
         setOrders(ordersData)
       }
-      
-      if (wishlistRes.ok) {
-        const wishlistData = await wishlistRes.json()
-        setWishlist(wishlistData)
+
+      if (productsRes.ok) {
+        const data = await productsRes.json()
+        const arr = Array.isArray(data) ? data : (data.products || [])
+        const map: Record<string, WishlistProduct> = {}
+        for (const p of arr) {
+          map[p.id] = { id: p.id, name: p.name, sale_price: p.sale_price ?? 0, image_url: p.image_url ?? null }
+        }
+        setProductMap(map)
       }
     } catch (error) {
       console.error('Failed to fetch data:', error)
@@ -531,17 +530,8 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
     }
   }
   
-  const removeFromWishlist = async (productId: string) => {
-    try {
-      await fetch('/api/user/wishlist', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId }),
-      })
-      setWishlist(wishlist.filter(p => p.id !== productId))
-    } catch (error) {
-      console.error('Failed to remove from wishlist:', error)
-    }
+  const removeFromWishlist = (productId: string) => {
+    removeWishlistId(productId)
   }
   
   return (
@@ -549,9 +539,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
       {/* User Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-[#BCC2F4] to-[#6046A3] flex items-center justify-center text-white text-[20px] sm:text-[24px] font-semibold">
-            {(user.first_name?.[0] || user.email[0]).toUpperCase()}
-          </div>
+          <AccountAvatar userId={user.id} initials={(user.first_name?.[0] || user.email[0]).toUpperCase()} />
           <div>
             <h1 className="font-bebas text-[28px] sm:text-[32px] text-black">
               {user.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Мій акаунт'}
@@ -585,7 +573,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
       {/* Tab Content */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin w-8 h-8 border-2 border-[#6046A3] border-t-transparent rounded-full mx-auto" />
+          <div className="animate-spin w-8 h-8 border-2 border-[#4348AE] border-t-transparent rounded-full mx-auto" />
           <p className="mt-4 text-[#666]">Завантаження...</p>
         </div>
       ) : (
@@ -602,7 +590,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                   <p className="text-[#666] mb-6">Час зробити перше замовлення!</p>
                   <Link
                     href="/catalog"
-                    className="inline-block px-8 py-3 bg-[#6046A3] text-white rounded-lg hover:bg-[#4D3882] transition-colors"
+                    className="inline-block px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors"
                   >
                     Перейти до каталогу
                   </Link>
@@ -625,7 +613,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                   <p className="text-[#666] mb-6">Додайте товари, які вам сподобались</p>
                   <Link
                     href="/catalog"
-                    className="inline-block px-8 py-3 bg-[#6046A3] text-white rounded-lg hover:bg-[#4D3882] transition-colors"
+                    className="inline-block px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors"
                   >
                     Перейти до каталогу
                   </Link>
@@ -633,7 +621,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {wishlist.map((product) => (
-                    <div key={product.id} className="bg-white border border-[#E5E5E5] rounded-[16px] overflow-hidden group">
+                    <div key={product.id} className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[16px] overflow-hidden group">
                       <Link href={`/product/${product.id}`} className="block relative aspect-square bg-[#F8F7FB]">
                         {product.image_url && (
                           <Image
@@ -646,7 +634,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                       </Link>
                       <div className="p-4">
                         <Link href={`/product/${product.id}`}>
-                          <h3 className="font-gilroy text-[16px] text-black hover:text-[#6046A3] transition-colors line-clamp-2 mb-2">
+                          <h3 className="font-gilroy text-[16px] text-black hover:text-[#4348AE] transition-colors line-clamp-2 mb-2">
                             {product.name}
                           </h3>
                         </Link>
@@ -673,13 +661,13 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
           {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="max-w-[600px]">
-              <div className="bg-white border border-[#E5E5E5] rounded-[24px] p-6 sm:p-8">
+              <div className="bg-[#E2F9FF] border border-[#E5E5E5] rounded-[24px] p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-bebas text-[24px] sm:text-[28px] text-black">Особисті дані</h2>
                   {!editMode && (
                     <button
                       onClick={() => setEditMode(true)}
-                      className="text-[14px] text-[#6046A3] font-medium hover:underline"
+                      className="text-[14px] text-[#4348AE] font-medium hover:underline"
                     >
                       Редагувати
                     </button>
@@ -695,7 +683,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                           type="text"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3]"
+                          className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE]"
                         />
                       </div>
                       <div>
@@ -704,7 +692,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                           type="text"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3]"
+                          className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE]"
                         />
                       </div>
                     </div>
@@ -719,19 +707,13 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
                     </div>
                     <div>
                       <label className="block text-[14px] text-[#666] mb-2">Телефон</label>
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#6046A3]"
-                        placeholder="+380 XX XXX XX XX"
-                      />
+                      <PhoneInput value={phone} onChange={setPhone} />
                     </div>
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
                       <button
                         onClick={handleSaveProfile}
                         disabled={saving}
-                        className="px-8 py-3 bg-[#6046A3] text-white rounded-lg hover:bg-[#4D3882] transition-colors disabled:opacity-50"
+                        className="px-8 py-3 bg-[#4348AE] text-white rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
                       >
                         {saving ? 'Збереження...' : 'Зберегти'}
                       </button>
@@ -855,7 +837,7 @@ function AccountContent() {
   if (loading) {
     return (
       <div className="text-center py-20">
-        <div className="animate-spin w-10 h-10 border-2 border-[#6046A3] border-t-transparent rounded-full mx-auto" />
+        <div className="animate-spin w-10 h-10 border-2 border-[#4348AE] border-t-transparent rounded-full mx-auto" />
       </div>
     )
   }
@@ -869,12 +851,12 @@ function AccountContent() {
 
 export default function AccountPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       <section className="py-10 sm:py-16">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[72px] xl:px-[100px]">
           <Suspense fallback={
             <div className="text-center py-20">
-              <div className="animate-spin w-10 h-10 border-2 border-[#6046A3] border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin w-10 h-10 border-2 border-[#4348AE] border-t-transparent rounded-full mx-auto" />
             </div>
           }>
             <AccountContent />

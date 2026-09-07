@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import Footer from '@/components/layout/Footer'
+import FloatingIcons from '@/components/FloatingIcons'
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       <section className="relative overflow-hidden py-20 sm:py-28">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_rgba(188,194,244,0.3),_rgba(255,255,255,0)_60%),radial-gradient(circle_at_80%_30%,_rgba(255,228,237,0.3),_rgba(255,255,255,0)_60%)]" />
-        <div className="relative max-w-[640px] mx-auto px-6 text-center">
+        <FloatingIcons count={7} offset={0} />
+        <div className="relative z-10 max-w-[640px] mx-auto px-6 text-center">
           <p className="font-bebas text-[120px] sm:text-[160px] leading-[1] text-[#E5E5E5]">404</p>
           <h1 className="mt-2 font-bebas text-[36px] sm:text-[48px] uppercase text-black">
             Сторінку не знайдено
@@ -17,7 +18,7 @@ export default function NotFound() {
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/"
-              className="inline-flex h-[50px] items-center justify-center rounded-[12px] bg-[#6046A3] px-8 text-white uppercase font-gilroy text-[15px] font-semibold hover:bg-[#4D3882] transition-colors"
+              className="inline-flex h-[50px] items-center justify-center rounded-[12px] bg-[#4348AE] px-8 text-white uppercase font-gilroy text-[15px] font-semibold hover:bg-[#373B8A] transition-colors"
             >
               На головну
             </Link>

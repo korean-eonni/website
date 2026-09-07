@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import FloatingIcons from '@/components/FloatingIcons'
+import Magnetic from '@/components/ui/Magnetic'
 
 interface Category {
   id: string
@@ -13,181 +13,104 @@ interface Category {
 }
 
 export default function Categories() {
-  const scrollerRef = useRef<HTMLDivElement | null>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-
   const categories: Category[] = [
     {
-      id: '1',
-      name: 'ВЕСЬ АСОРТИМЕНТ',
-      image: '/categories/category-1.png',
-      href: '/catalog',
-    },
-    {
       id: '2',
-      name: 'КОРЕЙСЬКА КОСМЕТИКА\nДЛЯ ОБЛИЧЧЯ',
+      name: 'ОБЛИЧЧЯ',
       image: '/categories/category-2.png',
       href: '/catalog?category=face',
     },
     {
+      id: '5',
+      name: 'ВОЛОССЯ',
+      // Woman on pink bg with flowing dark wavy hair, holding hair product — editorial (Lucy Alcorn, user's pick)
+      image: '/categories/cat-hair.jpg',
+      href: '/catalog?category=hair',
+    },
+    {
       id: '3',
-      name: 'КОРЕЙСЬКА КОСМЕТИКА\nДЛЯ ТІЛА',
-      image: '/categories/category-3.jpg',
+      name: 'ТІЛО',
+      // Woman applying exfoliating scrub to her shoulder on pink bg — body care editorial (user's pick, Jun 2026)
+      image: '/categories/cat-body.jpg',
       href: '/catalog?category=body',
     },
     {
       id: '4',
       name: 'HEALTH & CARE',
-      image: '/categories/category-4.png',
+      // Two gold spoons on pink — capsules + collagen powder — supplement editorial (user's pick)
+      image: '/categories/cat-health.jpg',
       href: '/catalog?category=health',
     },
     {
-      id: '5',
-      name: 'КОРЕЙСЬКА КОСМЕТИКА\nДЛЯ ВОЛОССЯ',
-      image: '/categories/category-5.png',
-      href: '/catalog?category=hair',
+      id: '6',
+      name: 'КОСМЕТИЧНІ ДЕВАЙСИ',
+      // Woman holding two pink Medicube AGE-R beauty devices on pink bg (user's pick, Jun 2026)
+      image: '/categories/cat-devices.jpg',
+      href: '/catalog?category=devices',
     },
   ]
 
-  useEffect(() => {
-    const updateScrollState = () => {
-      const el = scrollerRef.current
-      if (!el) return
-      setCanScrollLeft(el.scrollLeft > 0)
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
-    }
-
-    updateScrollState()
-    const el = scrollerRef.current
-    if (el) {
-      el.addEventListener('scroll', updateScrollState, { passive: true })
-    }
-    window.addEventListener('resize', updateScrollState)
-    return () => {
-      if (el) {
-        el.removeEventListener('scroll', updateScrollState)
-      }
-      window.removeEventListener('resize', updateScrollState)
-    }
-  }, [])
-
-  const scrollByCard = (direction: number) => {
-    const el = scrollerRef.current
-    if (!el) return
-    const firstCard = el.querySelector('[data-category-card]') as HTMLElement | null
-    const gap = 24
-    const amount = firstCard ? firstCard.offsetWidth + gap : el.clientWidth * 0.8
-    el.scrollBy({ left: amount * direction, behavior: 'smooth' })
-  }
-
   return (
-    <section className="relative bg-white py-16 sm:py-20 overflow-hidden">
-      <FloatingIcons count={5} offset={6} />
+    <section className="relative bg-[#E2F9FF] py-20 sm:py-24 lg:py-28 overflow-hidden">
+      <FloatingIcons count={7} offset={6} />
       <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
-        <div className="flex items-end justify-between gap-6 mb-12">
-          <h2 className="font-bebas text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px] uppercase text-black">
+        <div className="flex flex-col items-start gap-3 mb-10 sm:mb-14">
+          <h2 className="font-bebas text-[56px] leading-[60px] sm:text-[80px] sm:leading-[84px] lg:text-[112px] lg:leading-[112px] uppercase text-black">
             Категорії
           </h2>
+          <p
+            className="text-black/70 text-[15px] sm:text-[18px] lg:text-[20px] leading-[24px] sm:leading-[28px] max-w-[640px]"
+            style={{ fontFamily: 'Gilroy, sans-serif' }}
+          >
+            Обери напрямок догляду — а ми підберемо засоби, які підходять саме тобі.
+          </p>
         </div>
-      </div>
 
-      <div className="relative w-full">
-        <div
-          ref={scrollerRef}
-          className="pl-6 sm:pl-8 lg:pl-[72px] xl:pl-[100px] pr-0 overflow-x-auto scrollbar-hide"
-          style={{ scrollBehavior: 'smooth' }}
-        >
-          <div className="flex gap-5 sm:gap-6 w-max">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={category.href}
-                data-category-card
-                className="flex-shrink-0 w-[220px] sm:w-[240px] lg:w-[260px] xl:w-[288px] group"
-              >
-                <div className="relative w-full h-[240px] sm:h-[260px] xl:h-[288px] rounded-[20px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(min-width: 1280px) 288px, (min-width: 1024px) 260px, (min-width: 640px) 240px, 100vw"
-                  />
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 snap-x snap-mandatory -mx-6 px-6 sm:-mx-8 sm:px-8 lg:mx-0 lg:px-0">
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              href={category.href}
+              className="group block snap-start shrink-0 w-[68%] sm:w-[300px] lg:w-auto lg:flex-1"
+            >
+              <div className="relative w-full aspect-[4/5] rounded-[20px] sm:rounded-[24px] overflow-hidden bg-[#F8F7FB] border border-[#E5E5E5] shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+                <Image
+                  src={category.image}
+                  alt={category.name}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  sizes="(min-width: 1024px) 280px, (min-width: 640px) 300px, 70vw"
+                />
 
-                  <div className="absolute bottom-4 right-4 bg-white p-3 rounded-xl shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/65 via-black/25 to-transparent pointer-events-none" />
+
+                <h3
+                  className="absolute bottom-4 left-4 right-12 sm:bottom-5 sm:left-5 sm:right-14 text-white uppercase whitespace-pre-line text-[17px] leading-[20px] sm:text-[19px] sm:leading-[22px] lg:text-[20px] lg:leading-[23px] font-bold"
+                  style={{ fontFamily: 'Gilroy, sans-serif', textShadow: '0 2px 6px rgba(0,0,0,0.45)' }}
+                >
+                  {category.name}
+                </h3>
+
+                <Magnetic strength={10} className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white flex items-center justify-center text-black shadow-md transition-colors duration-300 group-hover:bg-[#4348AE] group-hover:text-white">
                     <svg
                       width="20"
                       height="20"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
                   </div>
-                </div>
-
-                <h3
-                  className="mt-4 text-black uppercase whitespace-pre-line group-hover:text-[#666666] transition-colors"
-                  style={{
-                    fontFamily: 'Gilroy, sans-serif',
-                    fontSize: '21px',
-                    lineHeight: '27px',
-                    fontWeight: 600,
-                  }}
-                >
-                  {category.name}
-                </h3>
-              </Link>
-            ))}
-          </div>
+                </Magnetic>
+              </div>
+            </Link>
+          ))}
         </div>
-
-        {/* ПЕРЕЙТИ button */}
-        <div className="mt-8 sm:mt-10 text-center px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
-          <Link
-            href="/catalog"
-            className="inline-flex items-center justify-center h-[46px] sm:h-[50px] px-10 sm:px-14 rounded-[12px] bg-[#75C6F7] hover:bg-[#5BB8F0] text-black font-semibold text-[15px] sm:text-[16px] uppercase tracking-[0.05em] transition-colors"
-          >
-            Перейти
-          </Link>
-        </div>
-
-        {categories.length > 1 && (
-          <>
-            <button
-              onClick={() => scrollByCard(-1)}
-              disabled={!canScrollLeft}
-              className="absolute left-0 lg:left-6 top-1/2 -translate-y-1/2 disabled:opacity-30 disabled:cursor-not-allowed p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
-              aria-label="Попередня категорія"
-            >
-              <Image
-                src="/arrow-next.png"
-                alt="Попередня категорія"
-                width={50}
-                height={50}
-                className="rotate-180"
-              />
-            </button>
-            <button
-              onClick={() => scrollByCard(1)}
-              disabled={!canScrollRight}
-              className="absolute right-6 sm:right-10 lg:right-16 xl:right-28 top-1/2 -translate-y-1/2 disabled:opacity-30 disabled:cursor-not-allowed p-0 w-[50px] h-[50px] transition-all duration-300 z-10 hover:opacity-80"
-              aria-label="Наступна категорія"
-            >
-              <Image
-                src="/arrow-next.png"
-                alt="Наступна категорія"
-                width={50}
-                height={50}
-              />
-            </button>
-          </>
-        )}
       </div>
     </section>
   )

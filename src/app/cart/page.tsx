@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
@@ -8,17 +9,37 @@ import Link from 'next/link'
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart } = useCart()
 
-  // Shipping cost (free over 1500 UAH)
-  const shippingCost = subtotal >= 1500 ? 0 : 70
-  const total = subtotal + shippingCost
+  // Skin-test bundle promo (10% off), set when the user added the full routine.
+  const [promo, setPromo] = useState<string | null>(null)
+  const [promoItems, setPromoItems] = useState<string[]>([])
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem('eonni_promo')
+      const pi = localStorage.getItem('eonni_promo_items')
+      if (p) setPromo(p)
+      if (pi) setPromoItems(JSON.parse(pi))
+    } catch {
+      /* localStorage unavailable */
+    }
+  }, [])
+
+  // Delivery is free over 1500 UAH; below that it's paid by the carrier's tariff
+  // on receipt, so we don't add a fixed fee to the cart total.
+  const freeShipping = subtotal >= 1500
+  // Promo holds only while EVERY item from the test bundle is still in the cart.
+  const cartIds = new Set(items.map((i) => i.product_id))
+  const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
+  const promoActive = promo === 'SKINTEST10' && bundlePresent && subtotal > 0
+  const promoDiscount = promoActive ? Math.round(subtotal * 0.1) : 0
+  const total = subtotal - promoDiscount
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#E2F9FF]">
       <section className="py-12 sm:py-16">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-[72px] xl:px-[100px]">
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-1.5 text-[14px] text-[#666666] mb-6">
-            <Link href="/" className="hover:text-[#6046A3] transition-colors">Головна</Link>
+            <Link href="/" className="hover:text-[#4348AE] transition-colors">Головна</Link>
             <svg className="w-3.5 h-3.5 text-[#BBBBBB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
             <span className="text-black font-medium">Кошик</span>
           </nav>
@@ -29,7 +50,7 @@ export default function CartPage() {
 
           {loading ? (
             <div className="text-center py-20">
-              <div className="animate-spin w-10 h-10 border-2 border-[#6046A3] border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin w-10 h-10 border-2 border-[#4348AE] border-t-transparent rounded-full mx-auto" />
               <p className="mt-4 text-[#666]">Завантаження...</p>
             </div>
           ) : items.length === 0 ? (
@@ -43,7 +64,7 @@ export default function CartPage() {
               </p>
               <Link
                 href="/catalog"
-                className="inline-block px-10 py-4 bg-[#6046A3] text-white font-semibold rounded-lg hover:bg-[#4D3882] transition-colors"
+                className="inline-block px-10 py-4 bg-[#4348AE] text-white font-semibold rounded-lg hover:bg-[#373B8A] transition-colors"
               >
                 Перейти до каталогу
               </Link>
@@ -83,7 +104,7 @@ export default function CartPage() {
                         <div className="flex flex-col justify-center">
                           <Link 
                             href={`/product/${item.product_id}`}
-                            className="font-gilroy text-[16px] text-black hover:text-[#6046A3] transition-colors line-clamp-2"
+                            className="font-gilroy text-[16px] text-black hover:text-[#4348AE] transition-colors line-clamp-2"
                           >
                             {item.product?.name}
                           </Link>
@@ -143,7 +164,7 @@ export default function CartPage() {
                 <div className="mt-6 flex items-center justify-between">
                   <Link
                     href="/catalog"
-                    className="text-[14px] text-[#6046A3] font-medium hover:underline flex items-center gap-2"
+                    className="text-[14px] text-[#4348AE] font-medium hover:underline flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -169,13 +190,19 @@ export default function CartPage() {
                       <span className="text-[#666]">Товари ({itemCount})</span>
                       <span className="font-medium">₴{subtotal.toFixed(0)}</span>
                     </div>
+                    {promoActive && (
+                      <div className="flex justify-between text-[16px] font-semibold text-[#E84A8A]">
+                        <span>Знижка за тест шкіри −10%</span>
+                        <span>−₴{promoDiscount.toFixed(0)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-[16px]">
                       <span className="text-[#666]">Доставка</span>
                       <span className="font-medium">
-                        {shippingCost === 0 ? (
+                        {freeShipping ? (
                           <span className="text-[#059669]">Безкоштовно</span>
                         ) : (
-                          `₴${shippingCost}`
+                          <span className="text-[#666]">За тарифами перевізника</span>
                         )}
                       </span>
                     </div>
@@ -196,7 +223,7 @@ export default function CartPage() {
 
                   <Link
                     href="/checkout"
-                    className="mt-6 block w-full py-4 bg-[#6046A3] text-white text-center font-semibold text-[16px] rounded-lg hover:bg-[#4D3882] transition-colors"
+                    className="mt-6 block w-full py-4 bg-[#4348AE] text-white text-center font-semibold text-[16px] rounded-lg hover:bg-[#373B8A] transition-colors"
                   >
                     Оформити замовлення
                   </Link>

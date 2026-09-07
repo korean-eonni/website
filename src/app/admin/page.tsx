@@ -1,15 +1,23 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { randomUUID } from 'crypto'
-import { ADMIN_COOKIE, isAuthed } from '@/lib/adminAuth'
+import {
+  ADMIN_COOKIE,
+  ADMIN_COOKIE_OPTIONS,
+  checkAdminPassword,
+  isAuthed,
+  makeAdminToken,
+} from '@/lib/adminAuth'
 import { createProduct, deleteProduct, listProducts } from '@/lib/productStore'
-import { storeImage } from '@/lib/uploads'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import { brands } from '@/data/brands'
 import { syncSheetToDatabase } from '@/lib/sheetSync'
+import {
+  appendProductToSheet,
+  getLinkedDriveAccount,
+  uploadImagesToDrive,
+} from '@/lib/productCreate'
 import AdminFlash from '@/components/admin/AdminFlash'
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'keskuse'
 
 type ProductRow = {
   id: string
@@ -26,12 +34,8 @@ type ProductRow = {
 async function loginAction(formData: FormData) {
   'use server'
   const password = String(formData.get('password') || '')
-  if (password === ADMIN_PASSWORD) {
-    cookies().set(ADMIN_COOKIE, '1', {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-    })
+  if (checkAdminPassword(password)) {
+    cookies().set(ADMIN_COOKIE, makeAdminToken(), ADMIN_COOKIE_OPTIONS)
   }
   redirect('/admin')
 }
@@ -54,77 +58,144 @@ async function addProductAction(formData: FormData) {
     const num = Number(value)
     return Number.isFinite(num) ? num : null
   }
+  const text = (key: string, max?: number): string | null => {
+    const raw = String(formData.get(key) || '').trim()
+    if (!raw) return null
+    return max ? raw.slice(0, max) : raw
+  }
 
-  const product = {
-    id: randomUUID(),
-    name: String(formData.get('name') || '').trim(),
-    image_url: null as string | null,
-    image_path: null as string | null,
-    // Additional image URLs (null for new products)
-    image_url_2: null as string | null,
-    image_url_3: null as string | null,
-    image_url_4: null as string | null,
-    image_url_5: null as string | null,
-    image_url_6: null as string | null,
-    image_url_7: null as string | null,
-    image_url_8: null as string | null,
-    image_url_9: null as string | null,
-    image_url_10: null as string | null,
-    image_url_11: null as string | null,
-    image_url_12: null as string | null,
-    short_description: String(formData.get('short_description') || '').trim() || null,
-    long_description: String(formData.get('long_description') || '').trim() || null,
-    supplier: String(formData.get('supplier') || '').trim() || null,
+  const name = String(formData.get('name') || '').trim()
+  if (!name) {
+    redirect('/admin?error=name-required')
+  }
+
+  // Collect up to 10 photo files from the multi-file <input name="images">.
+  const rawFiles = formData.getAll('images') as File[]
+  const photoFiles: File[] = rawFiles
+    .filter((f) => f && typeof f === 'object' && f.size > 0)
+    .slice(0, 10)
+
+  if (photoFiles.length === 0) {
+    redirect('/admin?error=image-required')
+  }
+
+  let photoUrls: string[] = []
+  try {
+    photoUrls = await uploadImagesToDrive(photoFiles, name)
+  } catch (err) {
+    console.error('[admin/addProduct] Drive upload failed:', err)
+    redirect('/admin?error=drive-upload-failed')
+  }
+
+  // Build product input shared by sheet-append and DB-insert paths.
+  const ratingNum = toNumber(formData.get('rating'))
+  const reviewCountNum = toNumber(formData.get('review_count'))
+  const sharedInput = {
+    name,
+    supplier: text('supplier', 80),
+    category: text('category', 80),
+    subcategory: text('subcategory', 80),
+    brand: text('brand', 80),
+    sku: text('sku', 40),
+    weight_grams: toNumber(formData.get('weight_grams')),
     cost_price: toNumber(formData.get('cost_price')),
     sale_price: toNumber(formData.get('sale_price')),
     original_price: toNumber(formData.get('original_price')),
     discount_amount: toNumber(formData.get('discount_amount')),
+    tags: text('tags', 200),
+    short_description: text('short_description', 160),
+    long_description: text('long_description', 5000),
+    usage_instructions: text('usage_instructions', 2000),
+    clinical_proof: text('clinical_proof', 2000),
+    solves_problems: text('solves_problems', 2000),
+    key_ingredients: text('key_ingredients', 2000),
+    fit_skin: text('fit_skin', 500),
+    compatibility: text('compatibility', 2000),
+    is_active: !!formData.get('is_active'),
+    is_new: !!formData.get('is_new'),
+    is_exclusive: !!formData.get('is_exclusive'),
+    volume_options: text('volume_options', 200),
+    rating: ratingNum,
+    review_count: reviewCountNum,
+    age_group: text('age_group', 40),
+    ingredients: text('ingredients', 3000),
+    skin_type: text('skin_type', 100),
+    series: text('series', 100),
+    classification: text('classification', 100),
+  }
+
+  // 1) Append the row to the sheet so the source of truth (Google Sheet) is
+  //    kept in sync. If this fails, we abort before writing to DB so the two
+  //    don't diverge — the admin can retry.
+  try {
+    await appendProductToSheet({ ...sharedInput, photoUrls })
+  } catch (err) {
+    console.error('[admin/addProduct] sheet append failed:', err)
+    redirect('/admin?error=sheet-append-failed')
+  }
+
+  // 2) Insert into DB immediately so the product shows on site without
+  //    waiting for the next scheduled sync.
+  const product = {
+    id: randomUUID(),
+    name,
+    image_url: photoUrls[0] ?? null,
+    image_path: null,
+    image_url_2: photoUrls[1] ?? null,
+    image_url_3: photoUrls[2] ?? null,
+    image_url_4: photoUrls[3] ?? null,
+    image_url_5: photoUrls[4] ?? null,
+    image_url_6: photoUrls[5] ?? null,
+    image_url_7: photoUrls[6] ?? null,
+    image_url_8: photoUrls[7] ?? null,
+    image_url_9: photoUrls[8] ?? null,
+    image_url_10: photoUrls[9] ?? null,
+    image_url_11: null,
+    image_url_12: null,
+    short_description: sharedInput.short_description,
+    long_description: sharedInput.long_description,
+    supplier: sharedInput.supplier,
+    cost_price: sharedInput.cost_price,
+    sale_price: sharedInput.sale_price,
+    original_price: sharedInput.original_price,
+    discount_amount: sharedInput.discount_amount,
     stock_quantity: toNumber(formData.get('stock_quantity')),
-    category: String(formData.get('category') || '').trim() || null,
-    subcategory: String(formData.get('subcategory') || '').trim() || null,
-    weight_grams: toNumber(formData.get('weight_grams')),
-    tags: String(formData.get('tags') || '').trim() || null,
-    sku: String(formData.get('sku') || '').trim() || null,
-    barcode: String(formData.get('barcode') || '').trim() || null,
-    brand: String(formData.get('brand') || '').trim() || null,
-    // New fields for product page
-    volume_options: null as string | null,
-    rating: null as number | null,
-    review_count: null as number | null,
-    // Extended product attributes
-    age_group: null as string | null,
-    ingredients: null as string | null,
-    skin_type: null as string | null,
-    series: null as string | null,
-    classification: null as string | null,
-    is_active: formData.get('is_active') ? 1 : 0,
-    is_new: formData.get('is_new') ? 1 : 0,
-    is_exclusive: formData.get('is_exclusive') ? 1 : 0,
+    category: sharedInput.category,
+    subcategory: sharedInput.subcategory,
+    weight_grams: sharedInput.weight_grams,
+    tags: sharedInput.tags,
+    sku: sharedInput.sku,
+    barcode: text('barcode', 40),
+    brand: sharedInput.brand,
+    volume_options: sharedInput.volume_options,
+    rating: sharedInput.rating,
+    review_count: sharedInput.review_count,
+    age_group: sharedInput.age_group,
+    ingredients: sharedInput.ingredients,
+    skin_type: sharedInput.skin_type,
+    series: sharedInput.series,
+    classification: sharedInput.classification,
+    usage_instructions: sharedInput.usage_instructions,
+    clinical_proof: sharedInput.clinical_proof,
+    solves_problems: sharedInput.solves_problems,
+    key_ingredients: sharedInput.key_ingredients,
+    fit_skin: sharedInput.fit_skin,
+    compatibility: sharedInput.compatibility,
+    is_active: sharedInput.is_active ? 1 : 0,
+    is_new: sharedInput.is_new ? 1 : 0,
+    is_exclusive: sharedInput.is_exclusive ? 1 : 0,
     created_at: now,
     updated_at: now,
   }
 
-  if (!product.name) {
-    redirect('/admin')
+  try {
+    await createProduct(product)
+  } catch (err) {
+    console.error('[admin/addProduct] DB insert failed:', err)
+    redirect('/admin?error=db-insert-failed')
   }
 
-  const imageFile = formData.get('image') as File | null
-  if (!imageFile || imageFile.size === 0) {
-    redirect('/admin')
-  }
-  if (imageFile && imageFile.size > 0) {
-    try {
-      const stored = await storeImage(imageFile, product.id)
-      product.image_path = stored.image_path
-      product.image_url = stored.image_url
-    } catch {
-      redirect('/admin')
-    }
-  }
-
-  await createProduct(product)
-
-  redirect('/admin')
+  redirect('/admin?success=product-added')
 }
 
 async function deleteProductAction(formData: FormData) {
@@ -156,14 +227,21 @@ async function syncSheetAction() {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams?: { sync?: string; imported?: string; error?: string; reason?: string }
+  searchParams?: {
+    sync?: string
+    imported?: string
+    error?: string
+    reason?: string
+    oauth?: string
+    success?: string
+  }
 }) {
   if (!isAuthed()) {
     return (
       <main className="min-h-screen bg-[#F8F7FB] flex items-center justify-center px-6">
         <form
           action={loginAction}
-          className="w-full max-w-md bg-white rounded-2xl border border-[#E5E5E5] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+          className="w-full max-w-md bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
         >
           <h1 className="text-3xl font-bebas uppercase text-black mb-6">
             Admin доступ
@@ -190,6 +268,7 @@ export default async function AdminPage({
   }
 
   const products = (await listProducts()) as ProductRow[]
+  const linkedDriveAccount = await getLinkedDriveAccount()
 
   return (
     <main className="min-h-screen bg-[#F8F7FB] px-6 py-10">
@@ -199,11 +278,69 @@ export default async function AdminPage({
         reason={searchParams?.reason}
       />
       <div className="max-w-[1200px] mx-auto">
+        {searchParams?.oauth === 'ok' && (
+          <div className="mb-6 rounded-lg border border-[#0D7E2F] bg-[#E6F7EA] px-4 py-3 text-[14px] text-[#0D7E2F]">
+            ✓ Google Drive під'єднано як {linkedDriveAccount ?? 'обраний акаунт'}.
+            Фото товарів тепер завантажуватимуться в Drive.
+          </div>
+        )}
+        {searchParams?.oauth === 'error' && (
+          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
+            ✗ Помилка під&apos;єднання Google: {searchParams.reason ?? 'unknown'}
+          </div>
+        )}
+        {searchParams?.error === 'drive-upload-failed' && (
+          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
+            ✗ Фото не вдалося завантажити в Drive. Перевір під&apos;єднання нижче.
+          </div>
+        )}
+
+        {/* Google Drive connection status */}
+        <div className="mb-8 rounded-2xl border border-[#E5E5E5] bg-white px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-[14px] font-semibold text-black">Google Drive</p>
+            <p className="text-[13px] text-[#666] mt-1">
+              {linkedDriveAccount ? (
+                <>
+                  Під&apos;єднано: <span className="font-mono">{linkedDriveAccount}</span>. Фото
+                  товарів зберігаються в обрану папку.
+                </>
+              ) : (
+                <>
+                  Не під&apos;єднано. Без цього адмінка не зможе зберігати фото в Drive.
+                </>
+              )}
+            </p>
+          </div>
+          <a
+            href="/api/admin/oauth/start"
+            className={`h-10 px-4 rounded-lg uppercase text-[14px] flex items-center transition-colors ${
+              linkedDriveAccount
+                ? 'border border-black text-black hover:bg-black hover:text-white'
+                : 'bg-[#4348AE] text-white hover:bg-[#373B8A]'
+            }`}
+          >
+            {linkedDriveAccount ? 'Перепід’єднати' : 'Під’єднати Google Drive'}
+          </a>
+        </div>
+
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-bebas uppercase text-black">
             Admin панель
           </h1>
           <div className="flex items-center gap-3">
+            <a
+              href="/admin/orders"
+              className="h-10 px-4 rounded-lg bg-[#4348AE] text-white uppercase text-[14px] flex items-center hover:bg-[#373B8A] transition-colors"
+            >
+              Замовлення
+            </a>
+            <a
+              href="/admin/restock"
+              className="h-10 px-4 rounded-lg border border-[#4348AE] text-[#4348AE] uppercase text-[14px] flex items-center hover:bg-[#F5F3FF] transition-colors"
+            >
+              Запити на товар
+            </a>
             <form action={syncSheetAction}>
               <button
                 type="submit"
@@ -223,7 +360,7 @@ export default async function AdminPage({
           </div>
         </div>
 
-        <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8 mb-10">
+        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8 mb-10">
           <h2 className="text-2xl font-bebas uppercase text-black mb-6">
             Додати товар
           </h2>
@@ -244,15 +381,22 @@ export default async function AdminPage({
                 className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
               />
             </div>
-            <div>
-              <label className="block text-sm mb-2">Фото (393×400, до 2MB)</label>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">
+                Фото товару (до 10 файлів, JPG/PNG/WEBP, кожне до ~5MB)
+              </label>
               <input
-                name="image"
+                name="images"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
+                multiple
                 required
                 className="w-full"
               />
+              <p className="mt-1 text-xs text-[#666]">
+                Перший файл — головне фото. Файли збережуться в Google Drive за шаблоном
+                «Назва товару_1.jpg», «..._2.jpg», і т.д. Посилання автоматично потраплять у Sheet.
+              </p>
             </div>
             <div>
               <label className="block text-sm mb-2">Постачальник</label>
@@ -282,7 +426,7 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Бренд</label>
               <select
                 name="brand"
-                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3 bg-white"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3 bg-[#E2F9FF]"
                 defaultValue=""
               >
                 <option value="">Оберіть бренд</option>
@@ -322,7 +466,7 @@ export default async function AdminPage({
               <input name="original_price" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
             </div>
             <div>
-              <label className="block text-sm mb-2">Знижка (₴)</label>
+              <label className="block text-sm mb-2">Знижка (%)</label>
               <input name="discount_amount" type="number" step="0.01" className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3" />
             </div>
             <div>
@@ -353,10 +497,142 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Довгий опис</label>
               <textarea
                 name="long_description"
-                maxLength={2000}
+                maxLength={5000}
                 className="w-full min-h-[120px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
+
+            {/* Detail-page sections (separate tabs on the product page) */}
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Спосіб застосування</label>
+              <textarea
+                name="usage_instructions"
+                maxLength={2000}
+                rows={3}
+                className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Клінічно підтверджено</label>
+              <textarea
+                name="clinical_proof"
+                maxLength={2000}
+                rows={3}
+                className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Які проблеми вирішує</label>
+              <textarea
+                name="solves_problems"
+                maxLength={2000}
+                rows={3}
+                className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Ключові інгредієнти</label>
+              <textarea
+                name="key_ingredients"
+                maxLength={2000}
+                rows={3}
+                className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Для якої шкіри підходить</label>
+              <input
+                name="fit_skin"
+                maxLength={300}
+                placeholder="Усі типи / Чутлива / Жирна / Суха / Комбінована"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Сумісність та застереження</label>
+              <textarea
+                name="compatibility"
+                maxLength={2000}
+                rows={3}
+                className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
+              />
+            </div>
+
+            {/* Extended attributes */}
+            <div>
+              <label className="block text-sm mb-2">Об'єм / Варіанти</label>
+              <input
+                name="volume_options"
+                maxLength={200}
+                placeholder="20 мл, 40 мл, 80 мл"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Серія</label>
+              <input
+                name="series"
+                maxLength={100}
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Вік</label>
+              <input
+                name="age_group"
+                maxLength={40}
+                placeholder="18+ / 25+ / Всі віки"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Тип шкіри</label>
+              <input
+                name="skin_type"
+                maxLength={100}
+                placeholder="Жирна / Суха / Усі типи"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Класифікація</label>
+              <input
+                name="classification"
+                maxLength={100}
+                placeholder="Натуральна / Професійна"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-2">Інгредієнти (повний склад)</label>
+              <textarea
+                name="ingredients"
+                maxLength={3000}
+                rows={3}
+                className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Рейтинг (1-5)</label>
+              <input
+                name="rating"
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-2">Кількість відгуків</label>
+              <input
+                name="review_count"
+                type="number"
+                min="0"
+                className="w-full h-11 border border-[#CCCCCC] rounded-lg px-3"
+              />
+            </div>
+
             <div className="flex items-center gap-2">
               <input id="is_active" name="is_active" type="checkbox" defaultChecked />
               <label htmlFor="is_active" className="text-sm">
@@ -384,7 +660,7 @@ export default async function AdminPage({
           </ConfirmableForm>
         </section>
 
-        <section className="bg-white rounded-2xl border border-[#E5E5E5] p-8">
+        <section className="bg-[#E2F9FF] rounded-2xl border border-[#E5E5E5] p-8">
           <h2 className="text-2xl font-bebas uppercase text-black mb-6">
             Товари ({products.length})
           </h2>

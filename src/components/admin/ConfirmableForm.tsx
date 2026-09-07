@@ -67,7 +67,7 @@ export default function ConfirmableForm({
       </form>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+          <div className="w-full max-w-md rounded-2xl bg-[#E2F9FF] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
             <h3 className="text-2xl font-bebas uppercase text-black">{title}</h3>
             {description && (
               <p className="mt-2 text-sm text-[#666666] leading-relaxed">

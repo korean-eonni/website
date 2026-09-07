@@ -35,11 +35,11 @@ export type Order = {
   guest_phone: string | null
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   total_amount: number
-  shipping_method: 'nova_poshta' | 'ukrposhta' | 'pickup'
+  shipping_method: 'nova_poshta' | 'ukrposhta'
   shipping_city: string | null
   shipping_warehouse: string | null
   shipping_address: string | null
-  payment_method: 'liqpay' | 'card' | 'cash_on_delivery' | 'bank_transfer'
+  payment_method: 'platon' | 'card' | 'cash_on_delivery'
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
   first_name: string
   last_name: string
@@ -352,6 +352,12 @@ export async function getOrderItems(orderId: string): Promise<OrderItem[]> {
   return rows
 }
 
+export async function getAllOrders(limit = 100): Promise<Order[]> {
+  await ensureUserSchema()
+  const { rows } = await sql<Order>`SELECT * FROM orders ORDER BY created_at DESC LIMIT ${limit}`
+  return rows
+}
+
 export async function getUserOrders(userId: string): Promise<Order[]> {
   await ensureUserSchema()
   const { rows } = await sql<Order>`SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC`
@@ -391,6 +397,52 @@ export async function updatePaymentStatus(id: string, paymentStatus: Order['paym
   await ensureUserSchema()
   const now = new Date().toISOString()
   await sql`UPDATE orders SET payment_status = ${paymentStatus}, updated_at = ${now} WHERE id = ${id}`
+}
+
+// ── Restock ("Повідомити, коли з'явиться") requests ─────────────────────────
+export type RestockRequest = {
+  id: string
+  product_id: string | null
+  product_name: string | null
+  contact: string
+  notified: number
+  created_at: string
+}
+
+async function ensureRestockSchema() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS restock_requests (
+      id TEXT PRIMARY KEY,
+      product_id TEXT,
+      product_name TEXT,
+      contact TEXT NOT NULL,
+      notified INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )
+  `
+}
+
+export async function createRestockRequest(input: {
+  product_id: string | null
+  product_name: string | null
+  contact: string
+}): Promise<RestockRequest> {
+  await ensureRestockSchema()
+  const now = new Date().toISOString()
+  const id = randomUUID()
+  await sql`
+    INSERT INTO restock_requests (id, product_id, product_name, contact, notified, created_at)
+    VALUES (${id}, ${input.product_id}, ${input.product_name}, ${input.contact}, 0, ${now})
+  `
+  return { id, ...input, notified: 0, created_at: now }
+}
+
+export async function getRestockRequests(limit = 300): Promise<RestockRequest[]> {
+  await ensureRestockSchema()
+  const { rows } = await sql<RestockRequest>`
+    SELECT * FROM restock_requests ORDER BY created_at DESC LIMIT ${limit}
+  `
+  return rows
 }
 
 // Cart functions
