@@ -1,11 +1,12 @@
 'use client'
 
 import Image from 'next/image'
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 const announcements = [
   '10% ЗНИЖКИ НА ПЕРШЕ ЗАМОВЛЕННЯ',
-  'ДО КОЖНОЇ 1000грн. МАСКА MEDICUBE В ПОДАРУНОК',
-  'ОРИГІНАЛЬНА КОРЕЙСЬКА КОСМЕТИКА',
+  'ЗА КОЖНІ 1000 ГРН — МАСКА MEDICUBE У ПОДАРУНОК',
+  `БЕЗКОШТОВНА ДОСТАВКА ВІД ${FREE_SHIPPING_THRESHOLD} ГРН`,
 ]
 
 export default function AnnouncementBar() {

@@ -865,9 +865,8 @@ export default function Header() {
 function PromoStrip({ promoRef }: { promoRef: React.RefObject<HTMLDivElement> }) {
   const promoItems = [
     '10% ЗНИЖКИ НА ПЕРШЕ ЗАМОВЛЕННЯ',
-    'ДО КОЖНОЇ 1000грн. МАСКА MEDICUBE В ПОДАРУНОК',
-    `БЕЗКОШТОВНА ДОСТАВКА ВІД ${FREE_SHIPPING_THRESHOLD}грн`,
-    'ОРИГІНАЛЬНА КОРЕЙСЬКА КОСМЕТИКА',
+    'ЗА КОЖНІ 1000 ГРН — МАСКА MEDICUBE У ПОДАРУНОК',
+    `БЕЗКОШТОВНА ДОСТАВКА ВІД ${FREE_SHIPPING_THRESHOLD} ГРН`,
   ]
 
   return (
