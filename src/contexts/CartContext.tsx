@@ -100,11 +100,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const newly = giftMasksForSubtotal(nextSubtotal).slice(prevN, nextN)
           setGiftFly({ id: Date.now(), masks: newly })
         }
+      } else {
+        // Сервер відмовив (наприклад, товару вже немає) — знімаємо оптимістичне
+        // збільшення лічильника й перечитуємо реальний кошик.
+        setItemCount(prev => prev - quantity)
+        refreshCart()
       }
     }).catch(() => {
       setItemCount(prev => prev - quantity)
     })
-  }, [applyCartData])
+  }, [applyCartData, refreshCart])
 
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (quantity < 1) {

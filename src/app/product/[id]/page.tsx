@@ -9,6 +9,7 @@ import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
+import { isOutOfStock } from '@/lib/stock'
 
 type Product = {
   id: string
@@ -38,6 +39,7 @@ type Product = {
   rating?: number | null
   review_count?: number | null
   stock_quantity: number | null
+  coming_soon?: number | null
   tags?: string | null
   ingredients: string | null
   weight_grams?: number | null
@@ -1155,6 +1157,7 @@ type FbtItem = {
   tags: string | null
   skin_type: string | null
   coming_soon?: number | null
+  stock_quantity?: number | null
 }
 
 type RoutineStep =
@@ -1209,7 +1212,7 @@ function recommendTwo(
   const sameTypeOk = curStep === 'hair' || curStep === 'body' || curStep === 'supplement'
 
   const scored = pool
-    .filter(p => p.id !== current.id && !(p.coming_soon && p.coming_soon > 0) && (p.sale_price ?? 0) > 0)
+    .filter(p => p.id !== current.id && !(p.coming_soon && p.coming_soon > 0) && !isOutOfStock(p.stock_quantity) && (p.sale_price ?? 0) > 0)
     .map(p => {
       const step = routineStep(p.name, p.subcategory, p.tags)
       const reasons: { w: number; text: string }[] = []
@@ -1497,6 +1500,9 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedVolume, setSelectedVolume] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState(false)
+  const [notifyOpen, setNotifyOpen] = useState(false)
+  const [notifyContact, setNotifyContact] = useState('')
+  const [notifyStatus, setNotifyStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
 
   const fetchReviews = async (id: string) => {
     try {
@@ -1596,6 +1602,26 @@ export default function ProductPage() {
     ? product.volume_options.split(',').map((v) => v.trim()).filter(Boolean)
     : []
 
+  // Немає залишку (або товар помічено «Скоро в наявності») → купити не можна.
+  // Правило те саме, що в каталозі — src/lib/stock.ts.
+  const soldOut = isOutOfStock(product.stock_quantity) || (product.coming_soon ?? 0) > 0
+
+  const handleNotify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!notifyContact.trim() || !product) return
+    setNotifyStatus('sending')
+    try {
+      const res = await fetch('/api/restock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, productName: product.name, contact: notifyContact.trim() }),
+      })
+      setNotifyStatus(res.ok ? 'done' : 'error')
+    } catch {
+      setNotifyStatus('error')
+    }
+  }
+
   // Use real review data if available, otherwise fall back to product data
   const rating = reviewRating.count > 0 ? reviewRating.average : (product.rating ?? 0)
   const reviewCount = reviewRating.count > 0 ? reviewRating.count : (product.review_count ?? 0)
@@ -1672,6 +1698,53 @@ export default function ProductPage() {
                 </div>
               )}
 
+              {soldOut ? (
+                <div className="flex flex-col gap-3 mt-auto">
+                  <div className="w-full max-w-[605px] rounded-[14px] border border-[#E5E5E5] bg-[#F8F7FB] px-5 py-4">
+                    <p className="font-bebas uppercase text-[24px] leading-[26px] text-black">Скоро в наявності</p>
+                    <p className="mt-1.5 font-gilroy text-[14px] leading-[20px] text-[#666666]">
+                      Товару зараз немає на складі, тому оформити замовлення не можна. Лишіть контакт — повідомимо, щойно він знову зʼявиться.
+                    </p>
+                  </div>
+
+                  {notifyStatus === 'done' ? (
+                    <div className="w-full max-w-[605px] min-h-[50px] flex items-center justify-center px-4 py-3 bg-[#F5F3FF] border border-[#DCD4F5] text-[#4348AE] font-semibold text-[15px] text-center">
+                      Дякуємо! Повідомимо, щойно товар зʼявиться 💜
+                    </div>
+                  ) : notifyOpen ? (
+                    <form onSubmit={handleNotify} className="w-full max-w-[605px] flex flex-col sm:flex-row gap-2">
+                      <input
+                        value={notifyContact}
+                        onChange={(e) => setNotifyContact(e.target.value)}
+                        placeholder="Email або телефон"
+                        className="flex-1 h-[50px] px-4 border border-[#CCCCCC] bg-white text-[15px] outline-none focus:border-[#4348AE]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={notifyStatus === 'sending'}
+                        className="h-[50px] px-6 bg-[#4348AE] text-white font-semibold text-[15px] uppercase tracking-wide hover:bg-[#373B8A] transition-colors disabled:opacity-60"
+                      >
+                        {notifyStatus === 'sending' ? '…' : 'Повідомити мене'}
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setNotifyOpen(true)}
+                      className="w-full max-w-[605px] h-[50px] bg-[#BCC2F4] text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-[#A8AFEB] transition-all"
+                    >
+                      Повідомити, коли зʼявиться
+                    </button>
+                  )}
+
+                  {notifyStatus === 'error' && (
+                    <p className="text-[13px] text-red-500">Перевірте email або номер телефону</p>
+                  )}
+
+                  <WishlistButton productId={productId} variant="full" className="w-full max-w-[605px]" />
+                </div>
+              ) : (
+              <>
               <div className="mb-6">
                 <label className="block text-[14px] text-[#666666] mb-2">Кількість</label>
                 <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} />
@@ -1707,6 +1780,8 @@ export default function ProductPage() {
                 </button>
                 <WishlistButton productId={productId} variant="full" className="w-full max-w-[605px]" />
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

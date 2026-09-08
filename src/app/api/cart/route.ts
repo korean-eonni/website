@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { addToCart, updateCartItemQuantity, removeFromCart, clearCart, getSessionByToken } from '@/lib/userStore'
 import { randomUUID } from 'crypto'
 import { sql } from '@vercel/postgres'
+import { isOutOfStock } from '@/lib/stock'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,6 +100,22 @@ export async function POST(request: Request) {
 
     if (!productId) {
       return NextResponse.json({ error: 'Product ID required' }, { status: 400 })
+    }
+
+    // Джерело правди — база. Навіть якщо сторінку відкрито давно або запит
+    // надіслано напряму, товар без залишку в кошик не потрапить.
+    const { rows } = await sql`
+      SELECT name, stock_quantity, coming_soon, is_active FROM products WHERE id = ${productId}
+    `
+    const p = rows[0]
+    if (!p || !p.is_active) {
+      return NextResponse.json({ error: 'Товар недоступний' }, { status: 409 })
+    }
+    if (isOutOfStock(p.stock_quantity) || (p.coming_soon ?? 0) > 0) {
+      return NextResponse.json(
+        { error: 'Товару немає в наявності — його не можна додати в кошик' },
+        { status: 409 },
+      )
     }
 
     const { sessionId, userId } = await getSessionId()

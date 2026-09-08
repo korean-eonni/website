@@ -4,6 +4,7 @@ import { createOrder, addOrderItem, getSessionByToken, clearCart } from '@/lib/u
 import { getProduct, tryDecrementStock } from '@/lib/productStore'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
+import { isOutOfStock } from '@/lib/stock'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,6 +70,14 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { error: `Товар недоступний: ${productId}` },
           { status: 400 }
+        )
+      }
+      // Кошик міг пролежати довго — звіряємося з базою ще раз, перед
+      // створенням замовлення, а не лише при додаванні в кошик.
+      if (isOutOfStock(product.stock_quantity) || (product.coming_soon ?? 0) > 0) {
+        return NextResponse.json(
+          { error: `Товару немає в наявності: ${product.name}` },
+          { status: 409 }
         )
       }
       const price = Number(product.sale_price ?? 0)

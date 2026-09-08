@@ -8,6 +8,7 @@ import { FREE_SHIPPING_THRESHOLD, hasFreeShipping } from '@/lib/shipping'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
+import { isOutOfStock } from '@/lib/stock'
 
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
@@ -30,6 +31,11 @@ export default function CartPage() {
   // Delivery is free over FREE_SHIPPING_THRESHOLD; below that it's paid by the
   // carrier's tariff on receipt, so we don't add a fixed fee to the cart total.
   const freeShipping = hasFreeShipping(subtotal)
+  // Позиції, яких уже немає на складі: покупець міг покласти їх у кошик раніше,
+  // ніж товар закінчився. Поки вони в кошику — оформлення заблоковане.
+  const unavailableIds = new Set(
+    items.filter((i) => isOutOfStock(i.product?.stock_quantity)).map((i) => i.id),
+  )
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))
   const bundlePresent = promoItems.length > 0 && promoItems.every((id) => cartIds.has(id))
@@ -115,12 +121,17 @@ export default function CartPage() {
                           )}
                         </Link>
                         <div className="flex flex-col justify-center">
-                          <Link 
+                          <Link
                             href={`/product/${item.product_id}`}
                             className="font-gilroy text-[16px] text-black hover:text-[#4348AE] transition-colors line-clamp-2"
                           >
                             {item.product?.name}
                           </Link>
+                          {unavailableIds.has(item.id) && (
+                            <p className="mt-1.5 inline-flex items-center gap-1.5 self-start rounded-full bg-[#FFF4F4] border border-[#F3C6C6] px-2.5 py-1 text-[12px] font-semibold text-[#9B2C2C]">
+                              Немає в наявності — приберіть із кошика
+                            </p>
+                          )}
                           {/* Mobile price — mirrors the desktop column, discount included */}
                           <p className="md:hidden mt-2 font-semibold">
                             {memberApplied ? (
@@ -309,12 +320,23 @@ export default function CartPage() {
                     <span className="font-bebas text-[32px] text-black">₴{total.toFixed(0)}</span>
                   </div>
 
-                  <Link
-                    href="/checkout"
-                    className="mt-6 block w-full py-4 bg-[#4348AE] text-white text-center font-semibold text-[16px] rounded-lg hover:bg-[#373B8A] transition-colors"
-                  >
-                    Оформити замовлення
-                  </Link>
+                  {unavailableIds.size > 0 ? (
+                    <div className="mt-6">
+                      <div className="w-full py-4 bg-[#E5E5E5] text-[#888888] text-center font-semibold text-[16px] rounded-lg cursor-not-allowed select-none">
+                        Оформити замовлення
+                      </div>
+                      <p className="mt-2 text-[13px] leading-[18px] text-[#9B2C2C] text-center">
+                        У кошику є {unavailableIds.size === 1 ? 'товар, якого' : 'товари, яких'} немає в наявності. {unavailableIds.size === 1 ? 'Приберіть його' : 'Приберіть їх'}, щоб продовжити.
+                      </p>
+                    </div>
+                  ) : (
+                    <Link
+                      href="/checkout"
+                      className="mt-6 block w-full py-4 bg-[#4348AE] text-white text-center font-semibold text-[16px] rounded-lg hover:bg-[#373B8A] transition-colors"
+                    >
+                      Оформити замовлення
+                    </Link>
+                  )}
 
                   {/* Second way into the account, next to where people already are */}
                   <Link
