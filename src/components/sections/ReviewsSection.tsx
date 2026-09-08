@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from 'react'
-import Link from 'next/link'
 import FloatingIcons from '@/components/FloatingIcons'
 import Magnetic from '@/components/ui/Magnetic'
 
@@ -261,20 +260,6 @@ export default function ReviewsSection() {
               </div>
             </article>
           ))}
-        </div>
-
-        {/* View All Link */}
-        <div className="mt-12 text-center">
-          <Link
-            href="/catalog"
-            className="inline-flex items-center gap-2 font-gilroy text-[14px] uppercase tracking-wider font-semibold text-[#4348AE] hover:text-black transition-colors"
-          >
-            Переглянути всі відгуки
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </Link>
         </div>
       </div>
     </section>
