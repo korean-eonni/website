@@ -28,6 +28,7 @@ type Weights = {
   aging?: number
   dehydrated?: boolean
   allergy?: boolean
+  pregnant?: boolean
   concern?: Concern
 }
 
@@ -129,6 +130,20 @@ function buildQuestions(gender: Gender): Question[] {
         { label: 'Так, інше / точно не знаю', w: { sensitive: 1, allergy: true } },
       ],
     },
+    // ── Safety context: чи можна рекомендувати ретиноїди ────────────────
+    ...(gender !== 'male'
+      ? ([
+          {
+            id: 'pregnancy',
+            text: 'Чи є зараз вагітність або грудне вигодовування?',
+            options: [
+              { label: 'Ні', w: {} },
+              { label: 'Так', w: { pregnant: true } },
+              { label: 'Волію не вказувати', w: {} },
+            ],
+          },
+        ] as Question[])
+      : []),
     // ── Axis 3: Pigmentation ────────────────────────────────────────────
     {
       id: 'spots',
@@ -306,7 +321,7 @@ const CONCERN_OUTCOME: Record<Concern, { title: string; text: string; when: stri
   },
   'anti-aging': {
     title: 'Зморшки та втрата пружності',
-    text: 'Пептиди, ретинол і колаген стимулюють оновлення та синтез власного колагену — підвищується пружність, дрібні зморшки розгладжуються, овал підтягується.',
+    text: 'Ретиноїди та окремі пептиди підтримують процеси оновлення шкіри й допомагають покращити її пружність. Колаген у косметичних формулах переважно сприяє зволоженню та створенню захисної плівки.',
     when: 'пружність — 4–8 тижнів, зморшки — 8–12',
   },
 }
@@ -407,6 +422,7 @@ export default function SkinTestPage() {
     let sensitive = 0, pigment = 0, aging = 0
     let dehydrated = false
     let allergy = false
+    let pregnant = false
     // Weighted need vector — EVERY answer that implies a concern contributes here,
     // so the product matching reflects the whole answer set, not just one choice.
     const cw: Record<Concern, number> = {
@@ -436,6 +452,7 @@ export default function SkinTestPage() {
         if (w.aging) aging += w.aging
         if (w.dehydrated) dehydrated = true
         if (w.allergy) allergy = true
+        if (w.pregnant) pregnant = true
         // The explicit "main concern" answer weighs most; every other concern hint adds too.
         if (w.concern) cw[w.concern] += q.id === 'concern' ? 5 : 2
       })
@@ -461,7 +478,7 @@ export default function SkinTestPage() {
     const concern = (top && top[1] > 0 ? top[0] : type === 'oily' ? 'oily-skin' : 'hydration') as Concern
 
     return {
-      type, sensitive: isSensitive, pigment: isPigment, aging: isAging, dehydrated, allergy,
+      type, sensitive: isSensitive, pigment: isPigment, aging: isAging, dehydrated, allergy, pregnant,
       concern, concernWeights: cw,
       outcome: buildOutcome(cw),
     }
@@ -481,6 +498,7 @@ export default function SkinTestPage() {
           body: JSON.stringify({
             type: result.type, sensitive: result.sensitive, pigment: result.pigment,
             aging: result.aging, dehydrated: result.dehydrated, concern: result.concern,
+            pregnant: result.pregnant,
             concernWeights: result.concernWeights,
           }),
         })
@@ -673,6 +691,26 @@ export default function SkinTestPage() {
                   <p className="font-gilroy text-[14px] leading-[20px] text-[#9B2C2C]">
                     ⚠️ Ви вказали алергію — обирайте гіпоалергенні засоби без віддушок та ефірних олій, уважно читайте склад і завжди робіть патч-тест (на згині ліктя) перед першим застосуванням.
                   </p>
+                </div>
+              )}
+
+              {result.pregnant && (
+                <div className="mt-4 text-left bg-[#FFF7ED] border border-[#F5D5A8] rounded-[14px] p-4 max-w-[640px] mx-auto">
+                  <p className="font-gilroy text-[14px] leading-[20px] text-[#8A4B08]">
+                    ⚠️ Ви вказали вагітність або грудне вигодовування. Засоби з ретиноїдами (ретинол, ретиналь, ретинілпальмітат) у цей період не застосовують без призначення лікаря — ми прибрали їх із вашої добірки. Перед введенням будь-яких активних засобів порадьтеся з лікарем.
+                  </p>
+                </div>
+              )}
+
+              {(result.aging || result.outcome.some((o) => o.concern === 'anti-aging')) && (
+                <div className="mt-4 text-left bg-[#F5F3FF] border border-[#DCD4F5] rounded-[14px] p-4 sm:p-5 max-w-[640px] mx-auto">
+                  <p className="font-gilroy font-bold text-[14px] leading-[20px] text-[#4348AE] mb-2">Якщо у вашому догляді є ретиноїди</p>
+                  <ul className="font-gilroy text-[13.5px] leading-[20px] text-[#444] space-y-1.5 list-disc pl-4">
+                    <li>Вводьте поступово: 1–2 рази на тиждень увечері, далі — орієнтуючись на реакцію шкіри.</li>
+                    <li>Щоранку обовʼязково наносьте SPF — ретиноїди підвищують чутливість шкіри до сонця.</li>
+                    <li>Не наносьте в один крок із кислотами (AHA/BHA) та чистим вітаміном C.</li>
+                    <li>Не застосовуйте під час вагітності та грудного вигодовування, при загостренні розацеа чи екземи, на пошкодженому барʼєрі, а також якщо приймаєте ретиноїди всередину — спершу проконсультуйтеся з лікарем або косметологом.</li>
+                  </ul>
                 </div>
               )}
 

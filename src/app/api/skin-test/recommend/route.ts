@@ -87,6 +87,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const type = (body.type || 'normal') as SkinType
     const concern = (body.concern || 'hydration') as Concern
+    const pregnant = body.pregnant === true
 
     // Weighted need vector from EVERY answer. Fall back to a single-concern vector
     // for older clients that don't send concernWeights.
@@ -100,6 +101,15 @@ export async function POST(request: Request) {
     const face = all.filter(
       (p) => (p.category ?? '').toLowerCase() === 'обличчя' && (p.sale_price ?? 0) > 0,
     )
+
+    // Ретиноїди не застосовують під час вагітності та грудного вигодовування без
+    // призначення лікаря — такі засоби повністю виключаємо з добірки.
+    const RETINOID_KW = ['ретинол', 'ретинал', 'ретиної', 'ретиніл', 'retinol', 'retinal', 'retinyl']
+    const hasRetinoid = (p: (typeof face)[number]): boolean => {
+      const hay = (p.name + ' ' + (p.tags ?? '') + ' ' + (p.key_ingredients ?? '')).toLowerCase()
+      return RETINOID_KW.some((k) => hay.includes(k))
+    }
+    const pool = pregnant ? face.filter((p) => !hasRetinoid(p)) : face
 
     const score = (p: (typeof face)[number]): number => {
       const tags = (p.tags ?? '').toLowerCase()
@@ -151,7 +161,7 @@ export async function POST(request: Request) {
     for (const key of slotKeys) {
       const def = SLOT_DEFS[key]
       if (!def) continue
-      const candidates = face
+      const candidates = pool
         .filter((p) => matchesSlot(p, def))
         .filter((p) => !chosen.has(p.id))
         .sort((a, b) => score(b) - score(a))
@@ -168,7 +178,7 @@ export async function POST(request: Request) {
         if (results.length >= 5) break
         if (usedKeys.has(key)) continue
         const def = SLOT_DEFS[key]
-        const candidates = face
+        const candidates = pool
           .filter((p) => matchesSlot(p, def))
           .filter((p) => !chosen.has(p.id))
           .sort((a, b) => score(b) - score(a))
