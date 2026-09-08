@@ -14,8 +14,12 @@ type AuthContextType = {
   user: AuthUser | null
   /** Still checking the session — treat prices as undiscounted until it resolves. */
   loading: boolean
-  /** Logged-in customers get the registered-customer discount. */
+  /** Logged-in customer. */
   isMember: boolean
+  /** Уже робив замовлення — знижка на перше замовлення вичерпана. */
+  hasOrders: boolean
+  /** Має право на знижку 10%: залогінений і це його перше замовлення. */
+  discountEligible: boolean
   refresh: () => Promise<void>
 }
 
@@ -23,11 +27,14 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isMember: false,
+  hasOrders: false,
+  discountEligible: false,
   refresh: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [hasOrders, setHasOrders] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
@@ -36,9 +43,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // customer looking logged-out and quietly drop their discount.
       const res = await fetch('/api/auth/me', { cache: 'no-store', credentials: 'same-origin' })
       // 401 is the normal "not logged in" answer here, not an error worth logging.
-      setUser(res.ok ? (await res.json()).user ?? null : null)
+      const data = res.ok ? await res.json() : null
+      setUser(data?.user ?? null)
+      setHasOrders(!!data?.hasOrders)
     } catch {
       setUser(null)
+      setHasOrders(false)
     } finally {
       setLoading(false)
     }
@@ -62,7 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh])
 
   return (
-    <AuthContext.Provider value={{ user, loading, isMember: !!user, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, isMember: !!user, hasOrders, discountEligible: !!user && !hasOrders, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   )

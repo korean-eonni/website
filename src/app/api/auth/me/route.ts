@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { SESSION_TTL_MS, getSessionByToken, getUserById, touchSession } from '@/lib/userStore'
+import { SESSION_TTL_MS, getSessionByToken, getUserById, touchSession, userHasOrders } from '@/lib/userStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +40,10 @@ export async function GET() {
       return NextResponse.json({ user: null }, { status: 401, headers: NO_STORE })
     }
 
+    // Знижка 10% діє лише на перше замовлення, тож сторінки мають знати, чи
+    // клієнт уже щось замовляв — інакше вони показали б ціну, якої не буде.
+    const hasOrders = await userHasOrders(user.id)
+
     const response = NextResponse.json(
       {
         user: {
@@ -49,6 +53,7 @@ export async function GET() {
           last_name: user.last_name,
           phone: user.phone,
         },
+        hasOrders,
       },
       { headers: NO_STORE }
     )

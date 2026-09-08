@@ -12,7 +12,7 @@ import { isOutOfStock } from '@/lib/stock'
 
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
-  const { isMember } = useAuth()
+  const { isMember, discountEligible } = useAuth()
 
   // Skin-test bundle promo (10% off), set when the user added the full routine.
   const [promo, setPromo] = useState<string | null>(null)
@@ -44,7 +44,7 @@ export default function CartPage() {
 
   // Registered-customer discount. Mirrors the order API exactly, including the
   // rule that the two discounts never stack — the bigger one wins.
-  const memberDiscount = isMember
+  const memberDiscount = discountEligible
     ? memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))
     : 0
   const memberApplied = memberDiscount >= promoDiscount && memberDiscount > 0

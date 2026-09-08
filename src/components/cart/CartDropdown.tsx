@@ -14,7 +14,7 @@ import type { GiftLine } from '@/lib/giftMasks'
 export default function CartDropdown() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, giftMasks, giftFly } = useCart()
   const [isOpen, setIsOpen] = useState(false)
-  const { isMember } = useAuth()
+  const { discountEligible } = useAuth()
   const [promo, setPromo] = useState<string | null>(null)
   const [promoItems, setPromoItems] = useState<string[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -69,7 +69,7 @@ export default function CartDropdown() {
   const promoDiscount = promoEligible ? Math.round(subtotal * 0.1) : 0
   // Registered-customer discount — same rule as the cart and the order API,
   // including that the two never stack.
-  const memberDiscount = isMember
+  const memberDiscount = discountEligible
     ? memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))
     : 0
   const memberApplied = memberDiscount >= promoDiscount && memberDiscount > 0

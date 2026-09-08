@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createOrder, addOrderItem, getSessionByToken, clearCart } from '@/lib/userStore'
+import { createOrder, addOrderItem, getSessionByToken, clearCart, userHasOrders } from '@/lib/userStore'
 import { getProduct, tryDecrementStock } from '@/lib/productStore'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
@@ -118,7 +118,10 @@ export async function POST(request: Request) {
     // from anything the client sends, so a tampered request can't invent its own.
     // They do NOT stack: the customer simply gets whichever one is worth more.
     const promoCode = typeof data.promoCode === 'string' ? data.promoCode.trim() : ''
-    const memberDiscount = userId ? memberDiscountForLines(lines) : 0
+    // Знижка зареєстрованим діє ЛИШЕ на перше замовлення — якщо в клієнта вже
+    // є хоч одне, вона не застосовується.
+    const firstOrder = userId ? !(await userHasOrders(userId)) : false
+    const memberDiscount = firstOrder ? memberDiscountForLines(lines) : 0
     const promoDiscount =
       promoCode === 'SKINTEST10' && totalAmount > 0 ? Math.round(totalAmount * 0.1) : 0
 

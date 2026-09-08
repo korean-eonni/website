@@ -1,5 +1,8 @@
 /**
- * Registered-customer discount: 10% off for anyone ordering while logged in.
+ * Registered-customer discount: 10% off, FIRST ORDER ONLY.
+ *
+ * Eligibility (logged in AND no previous order) is decided by the caller:
+ * `userHasOrders()` on the server, `discountEligible` from AuthContext in the UI.
  *
  * Single source of truth for both the prices shown in the UI and the amount the
  * order API actually charges — they must never drift apart, or a customer would

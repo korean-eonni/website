@@ -465,6 +465,17 @@ export async function getAllUsers(): Promise<User[]> {
   return rows
 }
 
+/**
+ * Чи робив цей клієнт хоч одне замовлення. Знижка 10% діє лише на ПЕРШЕ
+ * замовлення, тож це єдине джерело правди і для сервера, і для того, що
+ * бачить клієнт на сторінках кошика й оформлення.
+ */
+export async function userHasOrders(userId: string): Promise<boolean> {
+  await ensureUserSchema()
+  const { rows } = await sql`SELECT 1 FROM orders WHERE user_id = ${userId} LIMIT 1`
+  return rows.length > 0
+}
+
 export async function getUserOrders(userId: string): Promise<Order[]> {
   await ensureUserSchema()
   const { rows } = await sql<Order>`SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC`

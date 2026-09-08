@@ -70,7 +70,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, subtotal, clearCart, giftMasks } = useCart()
-  const { isMember } = useAuth()
+  const { discountEligible } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
   // Skin-test bundle promo (10% off) — activated from /skin-test "add full routine".
   const [promo, setPromo] = useState<string | null>(null)
@@ -158,7 +158,7 @@ export default function CheckoutPage() {
 
   // Registered-customer discount. Must mirror the order API exactly — that's what
   // decides the amount actually charged. The two discounts never stack.
-  const memberDiscount = isMember
+  const memberDiscount = discountEligible
     ? memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))
     : 0
   const memberApplied = memberDiscount >= promoDiscount && memberDiscount > 0
