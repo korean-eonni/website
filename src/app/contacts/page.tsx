@@ -177,7 +177,7 @@ export default function ContactsPage() {
               </div>
               <div className="mt-6 p-4 rounded-[12px] bg-[#FFE8F0] border border-[#FFD0E0]">
                 <p className="text-[14px] text-[#444444]">
-                  <strong>Зверніть увагу:</strong> Замовлення, оформлені до 18:00, відправляємо в той же день!
+                  <strong>Зверніть увагу:</strong> Замовлення, оформлені та оплачені до 18:00 у робочі дні, відправляємо того ж дня.
                 </p>
               </div>
             </div>

@@ -98,7 +98,7 @@ export default function KyivPage() {
           <p className="mt-6 max-w-[720px] text-black font-gilroy text-[16px] leading-[24px] sm:text-[18px] sm:leading-[28px]">
             Магазин Eonni — оригінальна K-beauty з доставкою по Києву та всій Україні.
             Догляд за обличчям, тілом і волоссям, корейські БАДи та косметичні девайси від офіційних
-            представників. Замовляй до 14:00 — відправляємо того ж дня.
+            представників. Замовлення, оформлені та оплачені до 18:00 у робочі дні, відправляємо того ж дня.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

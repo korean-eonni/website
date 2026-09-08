@@ -17,7 +17,7 @@ const items: Item[] = [
   {
     id: 'delivery',
     title: 'Швидка доставка',
-    text: 'У той самий день — якщо замовлення оформлене до 18:00.',
+    text: 'Замовлення, оформлені та оплачені до 18:00 у робочі дні, відправляємо того ж дня.',
     href: '/payment-delivery',
     badgeGradient: 'from-[#FFE8F0] to-[#FFC9DC]',
     badgeShadow: 'shadow-[0_10px_28px_rgba(255,150,180,0.32)]',

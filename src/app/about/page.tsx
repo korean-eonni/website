@@ -293,7 +293,7 @@ export default function AboutPage() {
                 </div>
                 <div className="rounded-[16px] bg-white/10 p-5">
                   <p className="font-bebas uppercase text-[22px]">✓ Швидка доставка</p>
-                  <p className="mt-2 text-[14px] text-white/70">Відправляємо в день замовлення до 18:00</p>
+                  <p className="mt-2 text-[14px] text-white/70">Замовлення, оформлені та оплачені до 18:00 у робочі дні, відправляємо того ж дня.</p>
                 </div>
                 <div className="rounded-[16px] bg-white/10 p-5">
                   <p className="font-bebas uppercase text-[22px]">✓ Підтримка 12-23</p>

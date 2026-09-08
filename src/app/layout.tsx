@@ -11,7 +11,7 @@ import MicrosoftClarity from '@/components/analytics/MicrosoftClarity'
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua').trim().replace(/\/$/, '')
 const SITE_NAME = 'Eonni — Корейська косметика в Києві'
 const SITE_DESCRIPTION =
-  'Інтернет-магазин корейської косметики Eonni у Києві. Оригінальна K-beauty: догляд за обличчям, тілом, волоссям, БАДи та косметичні девайси від Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics. Доставка по Києву того ж дня та Новою Поштою по всій Україні.'
+  'Інтернет-магазин корейської косметики Eonni у Києві. Оригінальна K-beauty: догляд за обличчям, тілом, волоссям, БАДи та косметичні девайси від Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics. Доставка Новою Поштою та Укрпоштою по всій Україні.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
