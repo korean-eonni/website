@@ -63,15 +63,6 @@ const cityFaq = {
     },
     {
       '@type': 'Question',
-      name: 'Чи можна отримати замовлення в день оформлення?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text:
-          'Так. Кур\'єрська доставка по Києву — у день замовлення. Якщо ви оформите замовлення до 14:00 в будній день, ми відправимо його Новою Поштою того ж дня.',
-      },
-    },
-    {
-      '@type': 'Question',
       name: 'Які бренди корейської косметики є в наявності в Києві?',
       acceptedAnswer: {
         '@type': 'Answer',
@@ -161,7 +152,6 @@ export default function KyivPage() {
               По Києву
             </h2>
             <p className="mt-2 font-gilroy text-[15px] leading-[22px] text-[#4A5061]">
-              Кур&apos;єр у день замовлення<br />
               Нова Пошта від 70 ₴<br />
               Безкоштовно від {FREE_SHIPPING_THRESHOLD} ₴
             </p>
