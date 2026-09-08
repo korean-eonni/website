@@ -9,7 +9,7 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua').tr
 export const metadata: Metadata = {
   title: 'Корейська косметика в Києві — магазин Eonni',
   description:
-    'Купити корейську косметику в Києві з доставкою в день замовлення. Магазин Eonni: оригінальна K-beauty від Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics. Доставка по всій Україні Новою Поштою і Укрпоштою.',
+    'Купити корейську косметику в Києві з відправленням у день замовлення. Магазин Eonni: оригінальна K-beauty від Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics. Доставка по всій Україні Новою Поштою і Укрпоштою.',
   keywords: [
     'корейська косметика київ',
     'купити корейську косметику київ',
