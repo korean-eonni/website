@@ -12,7 +12,7 @@ import Link from 'next/link'
 import PhoneInput from '@/components/ui/PhoneInput'
 
 type ShippingMethod = 'nova_poshta' | 'ukrposhta'
-type PaymentMethod = 'platon' | 'card' | 'cash_on_delivery'
+type PaymentMethod = 'platon' | 'card' | 'cash_on_delivery' | 'bank_transfer'
 
 type City = {
   Ref: string
@@ -109,6 +109,11 @@ export default function CheckoutPage() {
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery')
   const [notes, setNotes] = useState('')
+  // Рахунок ФОП: клієнт лишає номер, менеджер передзвонює й надсилає реквізити.
+  // Замовлення створюється одразу — саме з цим номером.
+  const [bankPhone, setBankPhone] = useState('')
+  const [showManagerModal, setShowManagerModal] = useState(false)
+  const bankPhoneValid = bankPhone.replace(/\D/g, '').length >= 12
 
   // Prefill contact fields from the logged-in user's profile (if any), so their
   // orders carry correct name/phone/email. Only fills empty fields — never
@@ -315,7 +320,7 @@ export default function CheckoutPage() {
         firstName,
         lastName,
         email,
-        phone,
+        phone: paymentMethod === 'bank_transfer' && bankPhone.trim() ? bankPhone.trim() : phone,
         shippingMethod,
         shippingCity: selectedCity?.Description || null,
         shippingWarehouse: selectedWarehouse?.Description || null,
@@ -384,7 +389,14 @@ export default function CheckoutPage() {
         return
       }
 
-      // Offline methods (cash / bank transfer): clear cart and show success.
+      // Рахунок ФОП: замовлення вже в адмінці, далі з клієнтом працює менеджер.
+      if (paymentMethod === 'bank_transfer') {
+        await clearCart()
+        setShowManagerModal(true)
+        return
+      }
+
+      // Накладений платіж: чистимо кошик і показуємо сторінку підтвердження.
       await clearCart()
       router.push(`/orders/${orderId}/success`)
     } catch (err: any) {
@@ -392,6 +404,32 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (showManagerModal) {
+    return (
+      <main className="min-h-screen bg-[#E2F9FF]">
+        <section className="py-20">
+          <div className="max-w-[560px] mx-auto px-6">
+            <div className="bg-white rounded-[24px] p-8 sm:p-10 text-center shadow-[0_8px_28px_rgba(96,70,163,0.12)]">
+              <div className="text-[56px] leading-none mb-4">🎉</div>
+              <h1 className="font-bebas uppercase text-[34px] leading-[38px] sm:text-[40px] sm:leading-[44px] text-black">
+                Дякуємо за замовлення!
+              </h1>
+              <p className="mt-4 font-gilroy text-[16px] leading-[24px] text-[#444]">
+                Найближчим часом з вами звʼяжеться наш менеджер для уточнення інформації.
+              </p>
+              <Link
+                href="/catalog"
+                className="mt-8 inline-flex h-[50px] px-8 items-center justify-center bg-[#4348AE] text-white font-semibold rounded-lg hover:bg-[#373B8A] transition-colors"
+              >
+                Повернутися до каталогу
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    )
   }
 
   if (redirecting) {
@@ -852,6 +890,34 @@ export default function CheckoutPage() {
                           <p className="text-[13px] text-[#666]">Visa, Mastercard, Apple Pay, Google Pay, Privat24, оплата частинами</p>
                         </div>
                       </label>
+
+                      {/* Рахунок ФОП — менеджер передзвонює й надсилає реквізити */}
+                      <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
+                        paymentMethod === 'bank_transfer' ? 'border-[#4348AE] bg-[#F5F3FF]' : 'border-[#E5E5E5] hover:border-[#BBBBBB]'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="payment"
+                          checked={paymentMethod === 'bank_transfer'}
+                          onChange={() => { setPaymentMethod('bank_transfer'); setBankPhone((v) => v || phone) }}
+                          className="w-5 h-5 accent-[#4348AE]"
+                        />
+                        <span className="text-[28px] flex-shrink-0 leading-none">🏦</span>
+                        <div className="flex-grow">
+                          <p className="font-medium">Оплата на розрахунковий рахунок ФОП</p>
+                          <p className="text-[13px] text-[#666]">Менеджер звʼяжеться з вами та надішле реквізити</p>
+                        </div>
+                      </label>
+
+                      {paymentMethod === 'bank_transfer' && (
+                        <div className="p-4 border border-[#DCD4F5] bg-[#F5F3FF] rounded-lg">
+                          <label className="block text-[14px] text-[#666] mb-2">Номер телефону для звʼязку</label>
+                          <PhoneInput value={bankPhone} onChange={setBankPhone} required />
+                          <p className="mt-2 text-[13px] text-[#666]">
+                            Ми зателефонуємо, уточнимо деталі замовлення та надішлемо реквізити для оплати.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Notes */}
@@ -875,10 +941,14 @@ export default function CheckoutPage() {
                       </button>
                       <button
                         onClick={handleSubmitOrder}
-                        disabled={loading}
+                        disabled={loading || (paymentMethod === 'bank_transfer' && !bankPhoneValid)}
                         className="flex-grow sm:flex-grow-0 px-12 py-4 bg-[#4348AE] text-white font-semibold rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-50"
                       >
-                        {loading ? 'Оформлення...' : 'Підтвердити замовлення'}
+                        {loading
+                          ? 'Оформлення...'
+                          : paymentMethod === 'bank_transfer'
+                            ? 'Звʼязатися зі мною'
+                            : 'Підтвердити замовлення'}
                       </button>
                 </div>
                 </div>

@@ -47,6 +47,7 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash_on_delivery: 'Накладений платіж (оплата при отриманні)',
   platon: 'Оплата карткою онлайн',
   card: 'Переказ на картку',
+  bank_transfer: 'Оплата на розрахунковий рахунок ФОП',
 }
 const PAYMENT_STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: 'Очікує оплати', color: '#B45309', bg: '#FEF3C7' },

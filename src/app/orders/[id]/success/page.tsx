@@ -62,7 +62,7 @@ export default function OrderSuccessPage() {
     cash_on_delivery: 'Накладний платіж',
     platon: 'Оплата карткою онлайн',
     card: 'Оплата на картку',
-    bank_transfer: 'Безготівковий розрахунок',
+    bank_transfer: 'Оплата на розрахунковий рахунок ФОП',
   }
 
   const shippingMethodLabels: Record<string, string> = {
