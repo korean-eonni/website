@@ -18,7 +18,7 @@ export default function HomeIntro() {
           Догляд за обличчям, тілом і волоссям, корейські БАДи, маски та косметичні девайси
           від офіційних брендів — Medicube, Mediheal, Torriden, UNOVE, VT&nbsp;Cosmetics,
           LACTOFIT, VITAHALO, BIOHEAL&nbsp;BOH, CJ&nbsp;WELLCARE, INNERLAB та ARDIEM.
-          Кур&apos;єр по Києву за 2-4&nbsp;години, Нова Пошта по
+          Нова Пошта по
           Україні. Повернення протягом 14&nbsp;днів.
         </p>
       </div>
