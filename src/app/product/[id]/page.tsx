@@ -539,7 +539,7 @@ function faqProductType(p: FaqProduct): 'supplement' | 'tool' | 'skincare' {
   const cat = (p.category || '').toLowerCase()
   // Passive tools / accessories — but NOT treatment pads (those answer skincare Qs well).
   const isTool = /(towel|рушник|sponge|спонж|brush|пензл|щітк|applicator|аплікатор|spatula|лопатк|шпатель)/.test(n)
-  if (isTool && !/\bpad\b|пади|пад[іиа]/.test(n)) return 'tool'
+  if (isTool && !/\bpad\b|п[ае]ди|п[ае]д[іиа]/.test(n)) return 'tool'
   // Ingestible supplements / inner beauty.
   const ingestible = /gummy|мармелад|jelly stick|желейн.{0,4}стік|probiotic|пробіотик|синбіотик|таблетк|драже|саше|sachet|\binner\b|collagen\s*\d{3,}|колаген\s*\d{3,}/.test(n)
   const isHealthCare = cat.includes('health') && cat.includes('care')
@@ -1176,7 +1176,7 @@ function routineStep(name?: string | null, subcategory?: string | null, tags?: s
   if (/маск|\bmask\b/.test(s)) return 'mask'
   if (/очищенн|cleans|пінк|гель для вмив|демакіяж|гідрофіл|вмиван/.test(s)) return 'cleanser'
   if (/сироват|serum|ампул|ampoule|шот|\bshot\b/.test(s)) return 'serum'
-  if (/тонер|toner|пади|\bпад/.test(s) || /essence|есенц/.test(s)) return 'toner'
+  if (/тонер|toner|п[ае]ди|\bп[ае]д/.test(s) || /essence|есенц/.test(s)) return 'toner'
   if (/крем|cream|молочко|емульс|lotion|гель-крем/.test(s)) return 'cream'
   return 'other'
 }

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // Body: { type, sensitive, pigment, aging, dehydrated, concern, concernWeights }
 // Returns one matched product per routine step. The set of steps is chosen from
 // the user's PRIMARY need (ROUTINE_BY_CONCERN), and each step's badge label is a
-// real site subcategory (Сироватки, Креми, Тонери, Пади, …).
+// real site subcategory (Сироватки, Креми, Тонери, Педи, …).
 //
 // Matching: step ← product `subcategory`; suitability ← keyword hits in `tags`
 // (+ `fit_skin`/`solves_problems`). skin_type column is empty in the data, so we
@@ -38,7 +38,7 @@ const CONCERN_KW: Record<Concern, string[]> = {
 const SLOT_DEFS: Record<string, { label: string; sub: string[] }> = {
   cleanser:    { label: 'Очищення та демакіяж', sub: ['очищення та демакіяж', 'очищення'] },
   toner:       { label: 'Тонери', sub: ['тонери'] },
-  pads:        { label: 'Пади', sub: ['пади'] },
+  pads:        { label: 'Педи', sub: ['педи', 'пади'] },
   exfoliation: { label: 'Ексфоліація', sub: ['ексфоліація'] },
   serum:       { label: 'Сироватки', sub: ['сироватки'] },
   eye:         { label: 'Догляд за зоною навколо очей', sub: ['догляд за зоною навколо очей'] },
@@ -51,7 +51,7 @@ const SLOT_DEFS: Record<string, { label: string; sub: string[] }> = {
 // Which steps we propose is driven by the user's PRIMARY need from the test —
 // not a fixed list. Each routine is in real application order and built from the
 // site's own subcategories:
-//   • acne / жирна / pores → додаємо Пади (та Ексфоліацію) для очищення пор
+//   • acne / жирна / pores → додаємо Педи (та Ексфоліацію) для очищення пор
 //   • anti-aging          → додаємо Догляд за зоною навколо очей + Маски
 //   • hydration / суха / чутлива → додаємо зволожувальну/заспокійливу Маску
 //   • pigmentation        → SPF обовʼязковий (вже в базі) + освітлювальна Маска
