@@ -140,8 +140,7 @@ export default function KyivPage() {
               Щодня
             </h2>
             <p className="mt-2 font-gilroy text-[15px] leading-[22px] text-[#4A5061]">
-              Пн–Пт: 10:00 — 20:00<br />
-              Сб–Нд: 11:00 — 18:00
+              Пн–Нд: 12:00 — 23:00
             </p>
           </div>
           <div className="bg-white rounded-[20px] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">

@@ -65,9 +65,7 @@ const contactMethods = [
 ]
 
 const workingHours = [
-  { day: 'Понеділок – П\'ятниця', hours: '10:00 – 20:00' },
-  { day: 'Субота', hours: '11:00 – 19:00' },
-  { day: 'Неділя', hours: '11:00 – 18:00' },
+  { day: 'Понеділок – Неділя', hours: '12:00 – 23:00' },
 ]
 
 const faqItems = [

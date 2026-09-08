@@ -193,8 +193,7 @@ export default function Footer() {
                 вул. Левка Лук&apos;яненка, 21
               </p>
               <p className="text-black/60 text-[13px] mt-4">
-                Пн-Пт: 10:00 - 20:00<br />
-                Сб-Нд: 11:00 - 18:00
+                Пн-Нд: 12:00 - 23:00
               </p>
             </div>
           </div>
