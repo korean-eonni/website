@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/returns-exchange' },
   title: 'Повернення та обмін | Eonni — Умови повернення косметики',
   description:
-    'Умови повернення та обміну товарів в Eonni. 14 днів на повернення, простий процес, швидке повернення коштів. Дізнайтесь про правила та процедуру.',
+    'Умови повернення та обміну товарів в Eonni. 14 днів на повернення товарів, які підлягають поверненню. Дізнайтесь про правила та процедуру.',
   keywords: 'повернення косметики, обмін товару, 14 днів повернення, Eonni',
   openGraph: {
     title: 'Повернення та обмін | Eonni',
-    description: '14 днів на повернення, простий процес, швидке повернення коштів.',
+    description: '14 днів на повернення товарів, які підлягають поверненню.',
     type: 'website',
     locale: 'uk_UA',
   },
@@ -124,7 +124,7 @@ export default function ReturnsExchangePage() {
             <div className="rounded-[20px] bg-[#E2F9FF] p-6 border border-[#E5E5E5] text-center">
               <div className="text-4xl mb-3">📅</div>
               <p className="font-bebas uppercase text-[28px] text-black">14 днів</p>
-              <p className="text-[14px] text-[#666666]">на повернення товару</p>
+              <p className="text-[14px] text-[#666666]">на повернення товарів, які підлягають поверненню</p>
             </div>
             <div className="rounded-[20px] bg-[#E2F9FF] p-6 border border-[#E5E5E5] text-center">
               <div className="text-4xl mb-3">💳</div>
