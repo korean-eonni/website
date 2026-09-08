@@ -20,8 +20,10 @@ export default function CartDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  // Free masks are counted in the icon badge (they live in the cart too).
-  const badgeCount = itemCount + giftMasks.length
+  // Only PAID items are counted in the icon badge. The free masks are still
+  // listed inside the cart, but counting them here made the badge read "3" for
+  // one purchase + two gifts, which customers read as items added by mistake.
+  const badgeCount = itemCount
 
   // --- Fly-to-cart gift animation -------------------------------------------
   // When an add crosses a 1000₴ threshold, the context hands us the newly-earned
