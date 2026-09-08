@@ -293,8 +293,7 @@ export default function CartPage() {
                   {!isMember && subtotal > 0 && (
                     <div className="mt-4 p-4 bg-[#FFE8F0] rounded-lg">
                       <p className="text-[14px] text-[#B03060]">
-                        Зареєстрованим клієнтам —{' '}
-                        <span className="font-semibold">знижка 10% на все замовлення</span>. Ви б
+                        <span className="font-semibold">Зареєструйтеся та отримайте знижку 10% на перше замовлення</span>. Ви б
                         зекономили ₴
                         {memberDiscountForLines(
                           items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity }))
