@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/payment-delivery' },
   title: 'Доставка та оплата | Eonni — Умови доставки корейської косметики',
   description:
     `Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD}₴. Оплата онлайн або при отриманні. Відправка в день замовлення до 18:00.`,

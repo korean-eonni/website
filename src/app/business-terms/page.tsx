@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/business-terms' },
   title: 'Умови ведення бізнесу | Eonni — Публічна оферта',
   description:
     'Публічна оферта інтернет-магазину Eonni. Умови оформлення замовлення, оплати, доставки, повернення товару та відповідальність сторін.',

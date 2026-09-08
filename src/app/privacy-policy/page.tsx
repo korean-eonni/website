@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/privacy-policy' },
   title: 'Політика конфіденційності | Eonni — Захист персональних даних',
   description:
     'Політика конфіденційності інтернет-магазину Eonni. Дізнайтесь, які дані ми збираємо, як їх використовуємо та захищаємо відповідно до законодавства України.',

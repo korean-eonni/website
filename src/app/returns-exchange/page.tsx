@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/returns-exchange' },
   title: 'Повернення та обмін | Eonni — Умови повернення косметики',
   description:
     'Умови повернення та обміну товарів в Eonni. 14 днів на повернення, простий процес, швидке повернення коштів. Дізнайтесь про правила та процедуру.',

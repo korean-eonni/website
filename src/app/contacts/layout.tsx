@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/contacts' },
   title: 'Контакти | Eonni — Корейська косметика',
   description:
     "Зв'яжіться з Eonni: телефон +380732737330, email eonnisupport@gmail.com, Instagram @eonni.korean.cosmetics. Працюємо щодня з 10:00 до 20:00. Київ, вул. Левка Лук'яненка, 21.",

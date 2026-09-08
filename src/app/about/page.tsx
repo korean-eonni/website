@@ -6,6 +6,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/about' },
   title: 'Про нас | Eonni — Корейська косметика в Україні',
   description:
     'Eonni — інтернет-магазин оригінальної корейської косметики в Україні. Експертний підбір догляду, швидка доставка, 100% автентичність продукції. Дізнайтесь більше про нашу історію та цінності.',
