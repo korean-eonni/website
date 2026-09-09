@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/payment-delivery' },
   title: 'Доставка та оплата | Eonni — Умови доставки корейської косметики',
   description:
-    `Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD}₴. Оплата онлайн або при отриманні. Замовлення до 18:00 у робочі дні відправляємо того ж дня.`,
+    `Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴. Оплата онлайн або при отриманні. Замовлення до 18:00 у робочі дні відправляємо того ж дня.`,
   keywords: 'доставка косметики, Нова Пошта, Укрпошта, оплата онлайн, накладений платіж, Eonni',
   openGraph: {
     title: 'Доставка та оплата | Eonni',
-    description: `Швидка доставка по всій Україні. Безкоштовно від ${FREE_SHIPPING_THRESHOLD}₴. Замовлення до 18:00 у робочі дні відправляємо того ж дня.`,
+    description: `Швидка доставка по всій Україні. Безкоштовно від ${FREE_SHIPPING_THRESHOLD} ₴. Замовлення до 18:00 у робочі дні відправляємо того ж дня.`,
     type: 'website',
     locale: 'uk_UA',
   },
@@ -24,9 +24,9 @@ const deliveryMethods = [
     icon: '🚚',
     description: 'Найпопулярніший спосіб доставки',
     options: [
-      { type: 'До відділення', time: '1-3 дні', price: 'від 70₴' },
-      { type: 'До поштомату', time: '1-3 дні', price: 'від 45₴' },
-      { type: 'Кур\'єр до дверей', time: '1-2 дні', price: 'від 100₴' },
+      { type: 'До відділення', time: '1-3 дні', price: 'від 70 ₴' },
+      { type: 'До поштомату', time: '1-3 дні', price: 'від 45 ₴' },
+      { type: 'Кур\'єр до дверей', time: '1-2 дні', price: 'від 100 ₴' },
     ],
     tone: '#FFE8F0',
   },
@@ -35,8 +35,8 @@ const deliveryMethods = [
     icon: '📮',
     description: 'Економний варіант доставки',
     options: [
-      { type: 'До відділення', time: '3-7 днів', price: 'від 35₴' },
-      { type: 'Кур\'єр до дверей', time: '3-7 днів', price: 'від 50₴' },
+      { type: 'До відділення', time: '3-7 днів', price: 'від 35 ₴' },
+      { type: 'Кур\'єр до дверей', time: '3-7 днів', price: 'від 50 ₴' },
     ],
     tone: '#E2F9FF',
   },
@@ -54,7 +54,7 @@ const paymentMethods = [
     name: 'Накладений платіж',
     icon: '💵',
     description: 'Оплата при отриманні',
-    benefits: ['Оплата готівкою або карткою', 'Комісія перевізника ~20₴ + 2%', 'Передоплата 300₴'],
+    benefits: ['Оплата готівкою або карткою', 'Комісія перевізника ~20 ₴ + 2%', 'Передоплата 300 ₴'],
     tone: '#FFF8E9',
   },
   {
@@ -96,7 +96,7 @@ const faqItems = [
   },
   {
     question: 'Чи є безкоштовна доставка?',
-    answer: `При замовленні від ${FREE_SHIPPING_THRESHOLD}₴ доставка безкоштовна — і Новою Поштою, і Укрпоштою. Слідкуйте за акціями — іноді знижуємо поріг безкоштовної доставки.`,
+    answer: `При замовленні від ${FREE_SHIPPING_THRESHOLD} ₴ доставка безкоштовна — і Новою Поштою, і Укрпоштою. Слідкуйте за акціями — іноді знижуємо поріг безкоштовної доставки.`,
   },
   {
     question: 'Як відстежити посилку?',
@@ -104,7 +104,7 @@ const faqItems = [
   },
   {
     question: 'Що таке передоплата при накладеному платежі?',
-    answer: 'При оплаті накладеним платежем ми просимо передоплату 300₴ для підтвердження серйозності намірів. Це захищає нас від невикупу посилок.',
+    answer: 'При оплаті накладеним платежем ми просимо передоплату 300 ₴ для підтвердження серйозності намірів. Це захищає нас від невикупу посилок.',
   },
   {
     question: 'Чи можна змінити адресу доставки?',
@@ -132,7 +132,7 @@ export default function PaymentDeliveryPage() {
               <p className="mt-6 text-black font-gilroy text-[16px] leading-[24px] sm:text-[18px] sm:leading-[28px]">
                 Доставляємо по всій Україні Новою Поштою та Укрпоштою. 
                 Замовлення, оформлені та оплачені до 18:00 у робочі дні, відправляємо того ж дня. 
-                Безкоштовна доставка від {FREE_SHIPPING_THRESHOLD}₴.
+                Безкоштовна доставка від {FREE_SHIPPING_THRESHOLD}&nbsp;₴.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link
@@ -151,7 +151,7 @@ export default function PaymentDeliveryPage() {
               </div>
               <div className="rounded-[20px] bg-[#F6F1FF] p-6 text-center">
                 <div className="text-4xl mb-3">🎁</div>
-                <p className="font-bebas uppercase text-[24px] text-black">Від {FREE_SHIPPING_THRESHOLD}₴</p>
+                <p className="font-bebas uppercase text-[24px] text-black">Від {FREE_SHIPPING_THRESHOLD}&nbsp;₴</p>
                 <p className="text-[13px] text-[#666666]">безкоштовна доставка</p>
               </div>
               <div className="rounded-[20px] bg-[#FFF8E9] p-6 text-center">
