@@ -26,9 +26,12 @@ type NewProductsProps = {
 }
 
 // Product Card Component
-function ProductCard({ product, addingId, onAddToCart }: {
+function ProductCard({ product, addingId, addedId, onAddToCart }: {
   product: Product
+  /** Товар, запит для якого зараз у дорозі. */
   addingId: string | null
+  /** Товар, додавання якого сервер підтвердив. */
+  addedId: string | null
   onAddToCart: (id: string) => void
 }) {
   const allImages = product.images && product.images.length > 1 ? product.images : [product.image]
@@ -117,13 +120,15 @@ function ProductCard({ product, addingId, onAddToCart }: {
             }}
             disabled={addingId === product.id}
             className={`absolute bottom-2 right-2 sm:bottom-3 sm:right-3 rounded-lg p-2 sm:p-2.5 transition-colors shadow-md z-[4] ${
-              addingId === product.id
+              addingId === product.id || addedId === product.id
                 ? 'bg-[#4348AE] text-white'
                 : 'bg-white hover:bg-[#E2F9FF] text-black'
             }`}
             aria-label="Додати в кошик"
           >
             {addingId === product.id ? (
+              <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+            ) : addedId === product.id ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 13l4 4L19 7" />
               </svg>
@@ -185,6 +190,7 @@ function ProductCard({ product, addingId, onAddToCart }: {
 export default function NewProducts({ products }: NewProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [addingId, setAddingId] = useState<string | null>(null)
+  const [addedId, setAddedId] = useState<string | null>(null)
   const { addToCart } = useCart()
   const displayProducts = products ?? []
 
@@ -210,8 +216,12 @@ export default function NewProducts({ products }: NewProductsProps) {
 
   const handleAddToCart = async (productId: string) => {
     setAddingId(productId)
-    await addToCart(productId)
-    setTimeout(() => setAddingId(null), 500)
+    const ok = await addToCart(productId)
+    setAddingId(null)
+    if (ok) {
+      setAddedId(productId)
+      setTimeout(() => setAddedId((v) => (v === productId ? null : v)), 1500)
+    }
   }
 
   const sliderProducts = displayProducts.slice(currentIndex, currentIndex + itemsPerView)
@@ -244,6 +254,7 @@ export default function NewProducts({ products }: NewProductsProps) {
               key={product.id} 
               product={product} 
               addingId={addingId}
+              addedId={addedId}
               onAddToCart={handleAddToCart}
             />
           ))}
@@ -258,6 +269,7 @@ export default function NewProducts({ products }: NewProductsProps) {
                   <ProductCard
                     product={product}
                     addingId={addingId}
+                    addedId={addedId}
                     onAddToCart={handleAddToCart}
                   />
                 </div>

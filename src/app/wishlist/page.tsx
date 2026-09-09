@@ -26,6 +26,19 @@ type Product = {
 export default function WishlistPage() {
   const { ids, ready, count } = useWishlist()
   const { addToCart } = useCart()
+  // Поки запит у дорозі — кнопка вимкнена; галочка зʼявляється лише після
+  // підтвердження сервера, а причину відмови покаже кошик.
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const [addedId, setAddedId] = useState<string | null>(null)
+
+  const handleAdd = async (id: string) => {
+    setAddingId(id)
+    const ok = await addToCart(id)
+    setAddingId(null)
+    if (!ok) return
+    setAddedId(id)
+    setTimeout(() => setAddedId((v) => (v === id ? null : v)), 1500)
+  }
   const [productMap, setProductMap] = useState<Record<string, Product>>({})
   const [loading, setLoading] = useState(true)
 
@@ -81,14 +94,27 @@ export default function WishlistPage() {
                         {isPurchasable(p) ? (
                           <button
                             type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(p.id) }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAdd(p.id) }}
+                            disabled={addingId === p.id}
                             aria-label="Додати в кошик"
-                            className="absolute bottom-3 right-3 w-[40px] h-[40px] rounded-lg flex items-center justify-center bg-[#E2F9FF] hover:bg-white text-black shadow-sm z-[4]"
+                            className={`absolute bottom-3 right-3 w-[40px] h-[40px] rounded-lg flex items-center justify-center shadow-sm z-[4] disabled:cursor-not-allowed ${
+                              addingId === p.id || addedId === p.id
+                                ? 'bg-[#4348AE] text-white'
+                                : 'bg-[#E2F9FF] hover:bg-white text-black'
+                            }`}
                           >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                            </svg>
+                            {addingId === p.id ? (
+                              <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+                            ) : addedId === p.id ? (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                              </svg>
+                            )}
                           </button>
                         ) : (
                           <span className="absolute bottom-3 left-3 right-3 rounded-lg bg-white/90 px-2 py-1.5 text-center text-[12px] font-semibold text-[#9B2C2C] z-[4]">

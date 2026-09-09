@@ -206,9 +206,12 @@ function VolumeButton({ label, selected, onClick }: { label: string; selected: b
   )
 }
 
-function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (productId: string) => void }) {
+function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (productId: string) => Promise<boolean> }) {
   const router = useRouter()
+  // «adding» — запит у дорозі, «added» — сервер підтвердив. Галочку
+  // малюємо лише за другим станом.
   const [adding, setAdding] = useState(false)
+  const [added, setAdded] = useState(false)
   const comingSoon = isComingSoon(product)
   const [notifyOpen, setNotifyOpen] = useState(false)
   const [notifyContact, setNotifyContact] = useState('')
@@ -243,8 +246,12 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
     e.preventDefault()
     e.stopPropagation()
     setAdding(true)
-    await onAddToCart(product.id)
-    setTimeout(() => setAdding(false), 500)
+    const ok = await onAddToCart(product.id)
+    setAdding(false)
+    if (ok) {
+      setAdded(true)
+      setTimeout(() => setAdded(false), 1500)
+    }
   }
 
   const handleNotify = async (e: React.FormEvent) => {
@@ -356,13 +363,15 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
           ) : (
             <button
               className={`absolute bottom-3 right-3 w-[40px] h-[40px] rounded-lg flex items-center justify-center transition-colors shadow-sm disabled:cursor-not-allowed z-[4] ${
-                adding ? 'bg-[#4348AE] text-white' : 'bg-white hover:bg-[#E2F9FF] text-black'
+                adding || added ? 'bg-[#4348AE] text-white' : 'bg-white hover:bg-[#E2F9FF] text-black'
               }`}
               aria-label="Додати в кошик"
               onClick={handleAddToCart}
               disabled={adding}
             >
               {adding ? (
+                <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+              ) : added ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 13l4 4L19 7" />
                 </svg>

@@ -1251,6 +1251,8 @@ function recommendTwo(
 function FrequentlyBoughtTogether({ current }: { current: Product }) {
   const [recs, setRecs] = useState<{ item: FbtItem; reason: string }[]>([])
   const [addingId, setAddingId] = useState<string | null>(null)
+  // Окремо від addingId: галочку показуємо лише після успішної відповіді.
+  const [addedId, setAddedId] = useState<string | null>(null)
   const { addToCart } = useCart()
 
   useEffect(() => {
@@ -1275,8 +1277,12 @@ function FrequentlyBoughtTogether({ current }: { current: Product }) {
 
   const handleAdd = async (id: string) => {
     setAddingId(id)
-    await addToCart(id)
-    setTimeout(() => setAddingId(null), 600)
+    const ok = await addToCart(id)
+    setAddingId(null)
+    if (ok) {
+      setAddedId(id)
+      setTimeout(() => setAddedId((v) => (v === id ? null : v)), 1500)
+    }
   }
 
   return (
@@ -1316,7 +1322,7 @@ function FrequentlyBoughtTogether({ current }: { current: Product }) {
                       disabled={addingId === item.id}
                       className="ml-auto h-9 px-3 rounded-lg bg-[#4348AE] text-white text-[13px] font-semibold hover:bg-[#373B8A] transition-colors disabled:opacity-60"
                     >
-                      {addingId === item.id ? 'Додано ✓' : 'У кошик'}
+                      {addingId === item.id ? 'Додаю…' : addedId === item.id ? 'Додано ✓' : 'У кошик'}
                     </button>
                   </div>
                 </div>
@@ -1334,6 +1340,8 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
   const [currentIndex, setCurrentIndex] = useState(0)
   const [itemsPerView, setItemsPerView] = useState(3)
   const [addingId, setAddingId] = useState<string | null>(null)
+  // Окремо від addingId: галочку показуємо лише після успішної відповіді.
+  const [addedId, setAddedId] = useState<string | null>(null)
   const { addToCart } = useCart()
   
   // Filter out current product
@@ -1341,8 +1349,12 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
   
   const handleAddToCart = async (productId: string) => {
     setAddingId(productId)
-    await addToCart(productId)
-    setTimeout(() => setAddingId(null), 500)
+    const ok = await addToCart(productId)
+    setAddingId(null)
+    if (ok) {
+      setAddedId(productId)
+      setTimeout(() => setAddedId((v) => (v === productId ? null : v)), 1500)
+    }
   }
 
   useEffect(() => {
@@ -1426,13 +1438,15 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
                       }}
                       disabled={addingId === product.id}
                       className={`absolute bottom-3 right-3 rounded-lg p-2.5 transition-all shadow-md ${
-                        addingId === product.id 
-                          ? 'bg-[#4348AE] text-white' 
+                        addingId === product.id || addedId === product.id
+                          ? 'bg-[#4348AE] text-white'
                           : 'bg-[#E2F9FF] hover:bg-[#F5F5F5] text-black'
                       }`}
                       aria-label="Додати в кошик"
                     >
                       {addingId === product.id ? (
+                        <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+                      ) : addedId === product.id ? (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M5 13l4 4L19 7" />
                         </svg>
@@ -1520,6 +1534,12 @@ export default function ProductPage() {
   }, [product])
   const [selectedVolume, setSelectedVolume] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState(false)
+  // «Додано в кошик» — тільки після 200 від сервера.
+  const [addedToCart, setAddedToCart] = useState(false)
+  // Окремий стан для «Купити в один клік»: перехід на checkout має
+  // відбутися лише після підтвердженого додавання, а до того кнопка
+  // показує, що запит у дорозі.
+  const [buyingNow, setBuyingNow] = useState(false)
   const [notifyOpen, setNotifyOpen] = useState(false)
   const [notifyContact, setNotifyContact] = useState('')
   const [notifyStatus, setNotifyStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
@@ -1776,32 +1796,38 @@ export default function ProductPage() {
               </div>
 
               <div className="flex flex-col gap-3 mt-auto">
-                <button 
+                <button
                   onClick={async () => {
                     setAddingToCart(true)
-                    await addToCart(productId, quantity)
-                    setTimeout(() => setAddingToCart(false), 1000)
+                    const ok = await addToCart(productId, quantity)
+                    setAddingToCart(false)
+                    if (ok) {
+                      setAddedToCart(true)
+                      setTimeout(() => setAddedToCart(false), 2000)
+                    }
                   }}
-                  disabled={addingToCart}
-                  className={`w-full max-w-[605px] h-[50px] font-semibold text-[16px] uppercase tracking-wide transition-all ${
-                    addingToCart 
-                      ? 'bg-[#4348AE] text-white' 
+                  disabled={addingToCart || buyingNow}
+                  className={`w-full max-w-[605px] h-[50px] font-semibold text-[16px] uppercase tracking-wide transition-all disabled:cursor-not-allowed ${
+                    addingToCart || addedToCart
+                      ? 'bg-[#4348AE] text-white'
                       : 'bg-[#BCC2F4] text-black hover:bg-[#A8AFEB]'
                   }`}
                 >
-                  {addingToCart ? '✓ Додано в кошик' : 'Додати в кошик'}
+                  {addingToCart ? 'Додаю…' : addedToCart ? '✓ Додано в кошик' : 'Додати в кошик'}
                 </button>
-                <button 
+                <button
                   onClick={async () => {
-                    setAddingToCart(true)
-                    await addToCart(productId, quantity)
-                    setAddingToCart(false)
-                    router.push('/checkout')
+                    setBuyingNow(true)
+                    const ok = await addToCart(productId, quantity)
+                    setBuyingNow(false)
+                    // Без підтвердження на checkout не йдемо — інакше на повільному
+                    // звʼязку покупець побачив би там порожній кошик.
+                    if (ok) router.push('/checkout')
                   }}
-                  disabled={addingToCart}
-                  className="w-full max-w-[605px] h-[50px] bg-[#E2F9FF] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  disabled={addingToCart || buyingNow}
+                  className="w-full max-w-[605px] h-[50px] bg-[#E2F9FF] border border-black text-black font-semibold text-[16px] uppercase tracking-wide hover:bg-gray-50 transition-colors flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Купити в один клік
+                  {buyingNow ? 'Додаю…' : 'Купити в один клік'}
                 </button>
                 <WishlistButton productId={productId} variant="full" className="w-full max-w-[605px]" />
               </div>

@@ -37,7 +37,8 @@ type CartContextType = {
   giftMasks: GiftLine[]
   /** Latest batch of newly-earned masks to fly into the cart icon (or null). */
   giftFly: GiftFly | null
-  addToCart: (productId: string, quantity?: number) => Promise<void>
+  /** Повертає true лише тоді, коли сервер підтвердив додавання. */
+  addToCart: (productId: string, quantity?: number) => Promise<boolean>
   updateQuantity: (itemId: string, quantity: number) => Promise<void>
   removeItem: (itemId: string) => Promise<void>
   clearCart: () => Promise<void>
@@ -93,42 +94,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refreshCart()
   }, [refreshCart])
 
-  const addToCart = useCallback(async (productId: string, quantity: number = 1) => {
-    setItemCount(prev => prev + quantity)
+  // Чекаємо на відповідь і віддаємо її виклику: кнопка має право показати
+  // «Додано» тільки після 200, а «Купити в один клік» — перейти на checkout
+  // лише тоді, коли товар справді в кошику. Лічильник теж більше не
+  // збільшуємо наперед, інакше на повільному звʼязку він показував товар,
+  // якого сервер не прийняв.
+  const addToCart = useCallback(async (productId: string, quantity: number = 1): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity }),
+      })
 
-    fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, quantity }),
-    }).then(async (res) => {
-      if (res.ok) {
-        const data = await res.json()
-        // How many free masks existed before vs. after this add — if the subtotal
-        // crossed one or more 1000₴ thresholds, fly the newly-earned masks in.
-        const prevN = giftCountForSubtotal(subtotalRef.current)
-        const nextSubtotal = typeof data.subtotal === 'number' ? data.subtotal : subtotalRef.current
-        const nextN = giftCountForSubtotal(nextSubtotal)
-        applyCartData(data)
-        if (nextN > prevN) {
-          const newly = giftMasksForSubtotal(nextSubtotal).slice(prevN, nextN)
-          setGiftFly({ id: Date.now(), masks: newly })
-        }
-      } else {
-        // Сервер відмовив (наприклад, товару вже немає) — знімаємо оптимістичне
-        // збільшення лічильника й перечитуємо реальний кошик.
-        setItemCount(prev => prev - quantity)
-        // Причину показуємо покупцеві: раніше лічильник просто мовчки
-        // відкочувався, і виглядало так, ніби кнопка не спрацювала.
+      if (!res.ok) {
+        // Причину показуємо покупцеві: раніше кнопка просто мовчала, і
+        // виглядало так, ніби вона не спрацювала.
         const reason = await res
           .json()
           .then((d) => (typeof d?.error === 'string' ? d.error : null))
           .catch(() => null)
         setCartError(reason || 'Не вдалося додати товар у кошик. Спробуйте ще раз.')
-        refreshCart()
+        await refreshCart()
+        return false
       }
-    }).catch(() => {
-      setItemCount(prev => prev - quantity)
-    })
+
+      const data = await res.json()
+      // How many free masks existed before vs. after this add — if the subtotal
+      // crossed one or more 1000₴ thresholds, fly the newly-earned masks in.
+      const prevN = giftCountForSubtotal(subtotalRef.current)
+      const nextSubtotal = typeof data.subtotal === 'number' ? data.subtotal : subtotalRef.current
+      const nextN = giftCountForSubtotal(nextSubtotal)
+      applyCartData(data)
+      if (nextN > prevN) {
+        const newly = giftMasksForSubtotal(nextSubtotal).slice(prevN, nextN)
+        setGiftFly({ id: Date.now(), masks: newly })
+      }
+      return true
+    } catch {
+      setCartError('Немає зв’язку з сервером. Перевірте інтернет і спробуйте ще раз.')
+      return false
+    }
   }, [applyCartData, refreshCart])
 
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {

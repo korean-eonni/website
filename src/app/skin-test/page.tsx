@@ -373,6 +373,9 @@ export default function SkinTestPage() {
   const [recsLoading, setRecsLoading] = useState(false)
   const [addedAll, setAddedAll] = useState(false)
   const [addedId, setAddedId] = useState<string | null>(null)
+  // Поки запит у дорозі — кнопка про це говорить і не приймає повторний клік.
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const [addingAll, setAddingAll] = useState(false)
   // Whether saved progress has been restored yet (avoids a flash of the start screen).
   const [restored, setRestored] = useState(false)
 
@@ -514,8 +517,16 @@ export default function SkinTestPage() {
   }, [done, result])
 
   const addAll = async () => {
-    if (!recs) return
-    for (const r of recs) await addToCart(r.id, 1)
+    if (!recs || addingAll) return
+    setAddingAll(true)
+    // Промокод має сенс лише для повного набору, тому якщо сервер відмовив
+    // хоч в одному товарі (наприклад, він щойно закінчився) — не вмикаємо його.
+    let allAdded = true
+    for (const r of recs) {
+      if (!(await addToCart(r.id, 1))) allAdded = false
+    }
+    setAddingAll(false)
+    if (!allAdded) return
     // Activate the 10% skin-test bundle promo + remember the bundle's items, so the
     // discount only holds while ALL of them stay in the cart.
     try {
@@ -527,7 +538,10 @@ export default function SkinTestPage() {
   }
 
   const addOne = async (id: string) => {
-    await addToCart(id, 1)
+    setAddingId(id)
+    const ok = await addToCart(id, 1)
+    setAddingId(null)
+    if (!ok) return
     setAddedId(id)
     setTimeout(() => setAddedId((v) => (v === id ? null : v)), 1500)
   }
@@ -777,10 +791,10 @@ export default function SkinTestPage() {
                                 type="button"
                                 onClick={() => addOne(r.id)}
                                 className={`mt-2.5 w-full h-[42px] rounded-[12px] text-[14px] font-semibold transition-colors ${
-                                  addedId === r.id ? 'bg-[#4348AE] text-white' : 'bg-[#E2F9FF] text-black hover:bg-[#cdeef6]'
+                                  addedId === r.id || addingId === r.id ? 'bg-[#4348AE] text-white' : 'bg-[#E2F9FF] text-black hover:bg-[#cdeef6]'
                                 }`}
                               >
-                                {addedId === r.id ? '✓ Додано' : 'У кошик'}
+                                {addingId === r.id ? 'Додаю…' : addedId === r.id ? '✓ Додано' : 'У кошик'}
                               </button>
                             </div>
                           </div>
@@ -792,11 +806,14 @@ export default function SkinTestPage() {
                       <button
                         type="button"
                         onClick={addAll}
-                        className={`inline-flex items-center justify-center gap-2 h-[56px] px-10 rounded-[14px] text-[16px] font-semibold transition-colors shadow-[0_4px_16px_rgba(96,70,163,0.3)] ${
-                          addedAll ? 'bg-[#373B8A] text-white' : 'bg-[#4348AE] text-white hover:bg-[#373B8A]'
+                        disabled={addingAll}
+                        className={`inline-flex items-center justify-center gap-2 h-[56px] px-10 rounded-[14px] text-[16px] font-semibold transition-colors shadow-[0_4px_16px_rgba(96,70,163,0.3)] disabled:cursor-not-allowed ${
+                          addedAll || addingAll ? 'bg-[#373B8A] text-white' : 'bg-[#4348AE] text-white hover:bg-[#373B8A]'
                         }`}
                       >
-                        {addedAll ? (
+                        {addingAll ? (
+                          'Додаю…'
+                        ) : addedAll ? (
                           '✓ Додано у кошик зі знижкою −10%'
                         ) : (
                           <>
