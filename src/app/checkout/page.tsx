@@ -6,6 +6,7 @@ import { useCart } from '@/contexts/CartContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { hasFreeShipping } from '@/lib/shipping'
+import { maxOrderable } from '@/lib/stock'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -69,15 +70,42 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, subtotal, clearCart, giftMasks } = useCart()
+  const { items, subtotal, clearCart, giftMasks, loading: cartLoading, refreshCart } = useCart()
   const { discountEligible } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
+  // Кошик перечитано з сервера вже на цій сторінці (а не колись раніше).
+  const [cartChecked, setCartChecked] = useState(false)
   // Skin-test bundle promo (10% off) — activated from /skin-test "add full routine".
   const [promo, setPromo] = useState<string | null>(null)
   const [promoItems, setPromoItems] = useState<string[]>([])
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Наявність могла змінитися, поки покупець ходив сайтом або тримав
+  // вкладку відкритою, тож перед формою перечитуємо кошик із сервера.
+  useEffect(() => {
+    let alive = true
+    refreshCart().finally(() => {
+      if (alive) setCartChecked(true)
+    })
+    return () => {
+      alive = false
+    }
+  }, [refreshCart])
+
+  // maxOrderable = 0 для неактивного товару, «Скоро в наявності» та нульового
+  // залишку, тож одна умова покриває всі чотири перевірки: активність,
+  // coming_soon, фактичний залишок і кількість, що його перевищує.
+  const cartHasProblems = items.some((i) => i.quantity > maxOrderable(i.product ?? {}))
+
+  // Заповнювати форму немає сенсу — повертаємо до кошика, де видно, який саме
+  // товар заважає, і показуємо причину.
+  useEffect(() => {
+    if (!cartLoading && cartChecked && cartHasProblems) {
+      router.replace('/cart?unavailable=1')
+    }
+  }, [cartLoading, cartChecked, cartHasProblems, router])
 
   // Contact info
   const [firstName, setFirstName] = useState('')
@@ -440,6 +468,36 @@ export default function CheckoutPage() {
             <div className="w-12 h-12 mx-auto mb-6 border-4 border-[#4348AE] border-t-transparent rounded-full animate-spin" />
             <h1 className="font-bebas text-[40px] text-black mb-3">Перенаправляємо на оплату…</h1>
             <p className="text-[#666]">Не закривайте сторінку — за мить відкриється захищена форма оплати Platon.</p>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (cartLoading || !cartChecked) {
+    return (
+      <main className="min-h-screen bg-[#E2F9FF]">
+        <section className="py-20">
+          <div className="max-w-[600px] mx-auto px-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-6 border-4 border-[#4348AE] border-t-transparent rounded-full animate-spin" />
+            <h1 className="font-bebas text-[40px] text-black mb-3">Завантаження…</h1>
+            <p className="text-[#666]">Перевіряємо наявність товарів у вашому кошику.</p>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (cartHasProblems) {
+    return (
+      <main className="min-h-screen bg-[#E2F9FF]">
+        <section className="py-20">
+          <div className="max-w-[600px] mx-auto px-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-6 border-4 border-[#4348AE] border-t-transparent rounded-full animate-spin" />
+            <h1 className="font-bebas text-[40px] text-black mb-3">Повертаємо до кошика…</h1>
+            <p className="text-[#666]">
+              Деякі товари у вашому кошику вже недоступні або їх залишилося менше.
+            </p>
           </div>
         </section>
       </main>

@@ -28,6 +28,22 @@ export default function CartPage() {
     }
   }, [])
 
+  // Повідомлення, з яким checkout повернув покупця сюди: там перед показом
+  // форми ще раз перевіряють наявність кожного товару.
+  const [blockedNotice, setBlockedNotice] = useState(false)
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get('unavailable')) {
+        setBlockedNotice(true)
+        // Прибираємо позначку з адреси, щоб повідомлення не поверталося
+        // після оновлення сторінки.
+        window.history.replaceState(null, '', '/cart')
+      }
+    } catch {
+      /* window недоступне */
+    }
+  }, [])
+
   // Delivery is free over FREE_SHIPPING_THRESHOLD; below that it's paid by the
   // carrier's tariff on receipt, so we don't add a fixed fee to the cart total.
   const freeShipping = hasFreeShipping(subtotal)
@@ -66,6 +82,13 @@ export default function CartPage() {
           <h1 className="font-bebas uppercase text-black text-[48px] leading-[52px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px] mb-10">
             Кошик
           </h1>
+
+          {blockedNotice && (
+            <div className="mb-8 rounded-[16px] border border-[#F5C2C2] bg-[#FDECEC] px-5 py-4 text-[15px] font-gilroy text-[#9B2C2C]">
+              Деякі товари у вашому кошику вже недоступні або їх залишилося менше.
+              Перевірте кошик, щоб продовжити оформлення.
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-20">
