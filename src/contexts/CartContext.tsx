@@ -9,7 +9,11 @@ type CartProduct = {
   sale_price: number | null
   original_price: number | null
   image_url: string | null
+  // Усе, що читає правило наявності (src/lib/stock.ts): товар міг закінчитися
+  // або отримати позначку «Скоро в наявності» вже після того, як його поклали.
   stock_quantity: number | null
+  coming_soon: number | null
+  is_active: number | null
 }
 
 type CartItem = {
@@ -158,11 +162,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await fetch('/api/cart', {
+      const res = await fetch('/api/cart', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemId, quantity }),
       })
+      if (!res.ok) {
+        // Найчастіше залишок змінився вже після того, як сторінку відкрили.
+        // Показуємо причину й повертаємо кошик до того, що дозволяє склад,
+        // щоб покупець не бачив суму за кількість, яку не зможе замовити.
+        const reason = await res
+          .json()
+          .then((d) => (typeof d?.error === 'string' ? d.error : null))
+          .catch(() => null)
+        setCartError(reason || 'Не вдалося змінити кількість. Змініть її, будь ласка.')
+        refreshCart()
+      }
     } catch {
       refreshCart()
     }

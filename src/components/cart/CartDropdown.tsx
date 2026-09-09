@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import Magnetic from '@/components/ui/Magnetic'
 import type { GiftLine } from '@/lib/giftMasks'
+import { maxOrderable } from '@/lib/stock'
 
 export default function CartDropdown() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, giftMasks, giftFly } = useCart()
@@ -223,7 +224,13 @@ export default function CartDropdown() {
                           <span className="w-6 text-center text-[14px]">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-7 h-7 flex items-center justify-center text-[#666] hover:text-black transition-colors"
+                            disabled={item.quantity >= maxOrderable(item.product ?? {})}
+                            title={
+                              item.quantity >= maxOrderable(item.product ?? {})
+                                ? `Залишилося ${maxOrderable(item.product ?? {})} шт.`
+                                : undefined
+                            }
+                            className="w-7 h-7 flex items-center justify-center text-[#666] hover:text-black transition-colors disabled:text-[#CCC] disabled:cursor-not-allowed disabled:hover:text-[#CCC]"
                           >
                             +
                           </button>

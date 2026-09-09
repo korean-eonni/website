@@ -8,7 +8,7 @@ import { FREE_SHIPPING_THRESHOLD, hasFreeShipping } from '@/lib/shipping'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
-import { isUnavailable } from '@/lib/stock'
+import { isUnavailable, maxOrderable, stockHint } from '@/lib/stock'
 
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
@@ -171,8 +171,8 @@ export default function CartPage() {
                         )}
                       </div>
 
-                      {/* Quantity */}
-                      <div className="flex items-center justify-center">
+                      {/* Quantity — «+» не переступає фактичний залишок */}
+                      <div className="flex flex-col items-center justify-center gap-1">
                         <div className="flex items-center border border-[#E5E5E5] rounded-lg">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -183,11 +183,22 @@ export default function CartPage() {
                           <span className="w-10 text-center font-medium">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-10 h-10 flex items-center justify-center text-[#666] hover:text-black transition-colors"
+                            disabled={item.quantity >= maxOrderable(item.product ?? {})}
+                            title={
+                              item.quantity >= maxOrderable(item.product ?? {})
+                                ? `Залишилося ${maxOrderable(item.product ?? {})} шт.`
+                                : undefined
+                            }
+                            className="w-10 h-10 flex items-center justify-center text-[#666] hover:text-black transition-colors disabled:text-[#CCC] disabled:cursor-not-allowed disabled:hover:text-[#CCC]"
                           >
                             +
                           </button>
                         </div>
+                        {stockHint(item.product ?? {}) && (
+                          <span className="text-[12px] text-[#9B2C2C] whitespace-nowrap">
+                            {stockHint(item.product ?? {})}
+                          </span>
+                        )}
                       </div>
 
                       {/* Total */}

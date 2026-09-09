@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import { decodeRouteId } from '@/lib/routeParams'
-import { isPurchasable, isUnavailable } from '@/lib/stock'
+import { isPurchasable, isUnavailable, maxOrderable, stockHint } from '@/lib/stock'
 
 type Product = {
   id: string
@@ -95,13 +95,17 @@ function StarRating({ reviewCount }: { rating: number; reviewCount: number }) {
 }
 
 // ============ QUANTITY SELECTOR ============
-function QuantitySelector({ 
-  quantity, 
-  onQuantityChange 
-}: { 
+function QuantitySelector({
+  quantity,
+  onQuantityChange,
+  max,
+}: {
   quantity: number
-  onQuantityChange: (qty: number) => void 
+  onQuantityChange: (qty: number) => void
+  /** Фактичний залишок на складі — вище нього «+» не піднімається. */
+  max: number
 }) {
+  const atMax = quantity >= max
   return (
     <div className="flex items-center border border-[#BBBBBB] w-[120px] h-[40px] justify-between px-[10px]">
       <button
@@ -113,8 +117,10 @@ function QuantitySelector({
       </button>
       <span className="text-[16px] font-normal text-black">{quantity}</span>
       <button
-        onClick={() => onQuantityChange(quantity + 1)}
-        className="text-[20px] text-black hover:text-[#7C83C9] transition-colors"
+        onClick={() => onQuantityChange(Math.min(max, quantity + 1))}
+        disabled={atMax}
+        title={atMax ? `Залишилося ${max} шт.` : undefined}
+        className="text-[20px] text-black hover:text-[#7C83C9] transition-colors disabled:text-[#CCCCCC] disabled:cursor-not-allowed disabled:hover:text-[#CCCCCC]"
         aria-label="Increase quantity"
       >
         +
@@ -1506,6 +1512,12 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+
+  // Товар міг розпродатися, поки сторінка була відкрита — тоді вибрана
+  // кількість опускається до того, що ще є на складі.
+  useEffect(() => {
+    setQuantity((q) => Math.min(q, Math.max(1, maxOrderable(product ?? {}))))
+  }, [product])
   const [selectedVolume, setSelectedVolume] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState(false)
   const [notifyOpen, setNotifyOpen] = useState(false)
@@ -1613,6 +1625,8 @@ export default function ProductPage() {
   // Немає залишку (або товар помічено «Скоро в наявності») → купити не можна.
   // Правило те саме, що в каталозі — src/lib/stock.ts.
   const soldOut = isUnavailable(product)
+  // Скільком одиницям сервер скаже «так»: той самий ліміт перевіряє /api/cart.
+  const orderLimit = Math.max(1, maxOrderable(product))
 
   const handleNotify = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1755,7 +1769,10 @@ export default function ProductPage() {
               <>
               <div className="mb-6">
                 <label className="block text-[14px] text-[#666666] mb-2">Кількість</label>
-                <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} />
+                <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} max={orderLimit} />
+                {stockHint(product) && (
+                  <p className="mt-2 text-[13px] font-semibold text-[#9B2C2C]">{stockHint(product)}</p>
+                )}
               </div>
 
               <div className="flex flex-col gap-3 mt-auto">
