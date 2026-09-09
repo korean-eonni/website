@@ -8,7 +8,7 @@ import { FREE_SHIPPING_THRESHOLD, hasFreeShipping } from '@/lib/shipping'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
-import { isOutOfStock } from '@/lib/stock'
+import { isUnavailable } from '@/lib/stock'
 
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
@@ -34,7 +34,7 @@ export default function CartPage() {
   // Позиції, яких уже немає на складі: покупець міг покласти їх у кошик раніше,
   // ніж товар закінчився. Поки вони в кошику — оформлення заблоковане.
   const unavailableIds = new Set(
-    items.filter((i) => isOutOfStock(i.product?.stock_quantity)).map((i) => i.id),
+    items.filter((i) => isUnavailable(i.product ?? {})).map((i) => i.id),
   )
   // Promo holds only while EVERY item from the test bundle is still in the cart.
   const cartIds = new Set(items.map((i) => i.product_id))

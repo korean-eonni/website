@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import { decodeRouteId } from '@/lib/routeParams'
-import { isOutOfStock } from '@/lib/stock'
+import { isPurchasable, isUnavailable } from '@/lib/stock'
 
 type Product = {
   id: string
@@ -1213,7 +1213,7 @@ function recommendTwo(
   const sameTypeOk = curStep === 'hair' || curStep === 'body' || curStep === 'supplement'
 
   const scored = pool
-    .filter(p => p.id !== current.id && !(p.coming_soon && p.coming_soon > 0) && !isOutOfStock(p.stock_quantity) && (p.sale_price ?? 0) > 0)
+    .filter(p => p.id !== current.id && isPurchasable(p) && (p.sale_price ?? 0) > 0)
     .map(p => {
       const step = routineStep(p.name, p.subcategory, p.tags)
       const reasons: { w: number; text: string }[] = []
@@ -1612,7 +1612,7 @@ export default function ProductPage() {
 
   // Немає залишку (або товар помічено «Скоро в наявності») → купити не можна.
   // Правило те саме, що в каталозі — src/lib/stock.ts.
-  const soldOut = isOutOfStock(product.stock_quantity) || (product.coming_soon ?? 0) > 0
+  const soldOut = isUnavailable(product)
 
   const handleNotify = async (e: React.FormEvent) => {
     e.preventDefault()

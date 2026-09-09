@@ -25,3 +25,42 @@ export function resolveComingSoon(
   if (isOutOfStock(stock)) return 1
   return manualFlag ? 1 : 0
 }
+
+/** The stored "coming soon" flag, in any shape the data has ever used. */
+export function isComingSoonFlag(v: number | string | boolean | null | undefined): boolean {
+  if (v === null || v === undefined) return false
+  if (typeof v === 'boolean') return v
+  if (typeof v === 'number') return v > 0
+  const s = String(v).trim().toLowerCase()
+  if (!s) return false
+  return ['1', 'true', 'так', 'yes', '+', 'скоро'].includes(s)
+}
+
+export type AvailabilityFields = {
+  stock_quantity?: number | string | null
+  coming_soon?: number | string | boolean | null
+  is_active?: number | string | null
+}
+
+/**
+ * Can this product be put in a basket right now?
+ *
+ * This is the ONE rule the whole site must answer with — the same three
+ * conditions the cart and order APIs enforce (active, in stock, not flagged as
+ * coming soon). Listings used to check the stock number alone, so a product with
+ * stock left but the flag still on showed a working "Додати в кошик" button that
+ * the server then refused with 409.
+ *
+ * Fields that aren't present are treated as no objection, so partial product
+ * shapes (cart lines, wishlist entries) can be passed in as they are.
+ */
+export function isPurchasable(p: AvailabilityFields): boolean {
+  if (p.is_active !== undefined && p.is_active !== null && Number(p.is_active) !== 1) return false
+  if (isOutOfStock(p.stock_quantity)) return false
+  return !isComingSoonFlag(p.coming_soon)
+}
+
+/** Convenience inverse — what listings use to dim a card and swap the button. */
+export function isUnavailable(p: AvailabilityFields): boolean {
+  return !isPurchasable(p)
+}

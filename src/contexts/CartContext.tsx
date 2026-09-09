@@ -48,6 +48,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [subtotal, setSubtotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [giftFly, setGiftFly] = useState<GiftFly | null>(null)
+  // Why the server last refused an add. Shown to the customer, then cleared.
+  const [cartError, setCartError] = useState<string | null>(null)
 
   // Mirror of `subtotal` readable inside async callbacks without stale closures,
   // so addToCart can tell how many gift masks existed before the server response.
@@ -55,6 +57,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => { subtotalRef.current = subtotal }, [subtotal])
 
   const giftMasks = useMemo(() => giftMasksForSubtotal(subtotal), [subtotal])
+
+  // Informational only — clear it on its own so messages can't pile up.
+  useEffect(() => {
+    if (!cartError) return
+    const t = setTimeout(() => setCartError(null), 5000)
+    return () => clearTimeout(t)
+  }, [cartError])
 
   const applyCartData = useCallback((data: { items?: CartItem[]; itemCount?: number; subtotal?: number }) => {
     if (data.items) setItems(data.items)
@@ -104,6 +113,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // Сервер відмовив (наприклад, товару вже немає) — знімаємо оптимістичне
         // збільшення лічильника й перечитуємо реальний кошик.
         setItemCount(prev => prev - quantity)
+        // Причину показуємо покупцеві: раніше лічильник просто мовчки
+        // відкочувався, і виглядало так, ніби кнопка не спрацювала.
+        const reason = await res
+          .json()
+          .then((d) => (typeof d?.error === 'string' ? d.error : null))
+          .catch(() => null)
+        setCartError(reason || 'Не вдалося додати товар у кошик. Спробуйте ще раз.')
         refreshCart()
       }
     }).catch(() => {
@@ -206,6 +222,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {cartError && (
+        <div role="status" className="fixed inset-x-0 bottom-6 z-[80] flex justify-center px-4 pointer-events-none">
+          <div className="flex items-start gap-3 rounded-[14px] bg-[#9B2C2C] text-white px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.2)] max-w-[420px]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="mt-0.5 flex-shrink-0">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v5M12 16h.01" />
+            </svg>
+            <span className="font-gilroy text-[14px] leading-[20px]">{cartError}</span>
+          </div>
+        </div>
+      )}
     </CartContext.Provider>
   )
 }

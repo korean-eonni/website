@@ -9,7 +9,7 @@ import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { listProducts } from '@/lib/productStore'
-import { isOutOfStock } from '@/lib/stock'
+import { isUnavailable } from '@/lib/stock'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,7 +55,7 @@ export default async function Home() {
       image: mainImage,
       images: allImages,
       isNew: row.is_new === 1,
-      comingSoon: isOutOfStock(row.stock_quantity),
+      comingSoon: isUnavailable(row),
       slug: row.id,
     }
   }

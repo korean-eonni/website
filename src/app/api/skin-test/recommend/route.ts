@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { listProducts } from '@/lib/productStore'
+import { isPurchasable } from '@/lib/stock'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,7 +100,9 @@ export async function POST(request: Request) {
     const all = await listProducts('is_active = 1')
     // Facial routine → restrict to face products that actually have a price/stock.
     const face = all.filter(
-      (p) => (p.category ?? '').toLowerCase() === 'обличчя' && (p.sale_price ?? 0) > 0,
+      // Only products that can actually be bought — recommending a sold-out or
+      // "coming soon" item sends the customer to a page with no button.
+      (p) => (p.category ?? '').toLowerCase() === 'обличчя' && (p.sale_price ?? 0) > 0 && isPurchasable(p),
     )
 
     // Ретиноїди не застосовують під час вагітності та грудного вигодовування без

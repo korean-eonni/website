@@ -13,7 +13,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
-import { isOutOfStock } from '@/lib/stock'
+import { isUnavailable } from '@/lib/stock'
 
 // Pre-computed dominant packaging colour per product id (see
 // scripts/compute-product-colors.mjs). Used for the default "by colour" order:
@@ -121,12 +121,13 @@ type Product = {
   rating: number | null
 }
 
-// Availability is driven by the stock column: a product is "coming soon" (not
-// yet purchasable) when its stock has no number ≥ 1 — i.e. empty, 0 or
-// non-numeric. Such products still appear in the catalogue, but dimmed and with
-// a "Скоро в наявності" badge instead of the add-to-cart button.
+// Not purchasable right now — inactive, no stock, or flagged "coming soon".
+// Uses the shared rule, i.e. exactly the three conditions the cart and order APIs
+// enforce, so a card can never offer a button the server will refuse. Such
+// products still appear in the catalogue, dimmed and with a "Скоро в наявності"
+// badge instead of the add-to-cart button.
 function isComingSoon(p: Product): boolean {
-  return isOutOfStock(p.stock_quantity)
+  return isUnavailable(p)
 }
 
 // A set/bundle = two products joined by " + " in the name, e.g. "Крем + Сироватка".
