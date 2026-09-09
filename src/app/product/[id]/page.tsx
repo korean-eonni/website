@@ -9,6 +9,7 @@ import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
+import { decodeRouteId } from '@/lib/routeParams'
 import { isOutOfStock } from '@/lib/stock'
 
 type Product = {
@@ -1488,10 +1489,17 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
 export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
-  const productId = params.id as string
+  const routeId = params.id as string
   const { addToCart } = useCart()
   
   const [product, setProduct] = useState<Product | null>(null)
+
+  // The URL segment arrives percent-encoded — a Cyrillic slug reaches the client
+  // as %D0%BF%D0%B0…, and sending that back to the API matches no product: it made
+  // add-to-cart fail with 409 and left the reviews list silently empty. So the id
+  // the server returned is what every later call uses; the route segment is only
+  // ever a lookup key, and is merely decoded as a fallback while the fetch runs.
+  const productId = product?.id ?? decodeRouteId(routeId)
   const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [reviewRating, setReviewRating] = useState<{ average: number; count: number }>({ average: 0, count: 0 })
@@ -1523,7 +1531,7 @@ export default function ProductPage() {
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const response = await fetch(`/api/product/${productId}`)
+        const response = await fetch(`/api/product/${routeId}`)
         if (!response.ok) {
           throw new Error('Product not found')
         }
@@ -1544,8 +1552,8 @@ export default function ProductPage() {
           setSimilarProducts(similarData.products || [])
         }
 
-        // Fetch reviews
-        await fetchReviews(productId)
+        // Fetch reviews by the id the API returned, not the encoded URL segment.
+        await fetchReviews(data.id)
       } catch (err) {
         setError('Товар не знайдено')
       } finally {
@@ -1553,10 +1561,10 @@ export default function ProductPage() {
       }
     }
 
-    if (productId) {
+    if (routeId) {
       fetchProduct()
     }
-  }, [productId])
+  }, [routeId])
 
   if (loading) {
     return (
