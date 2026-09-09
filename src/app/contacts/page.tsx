@@ -57,7 +57,7 @@ const contactMethods = [
     ),
     title: 'Email',
     value: 'eonnisupport@gmail.com',
-    subtext: 'Відповідаємо протягом 2 годин',
+    subtext: 'Відповімо протягом робочого дня',
     href: 'mailto:eonnisupport@gmail.com',
     action: 'Написати',
     tone: '#FFF8E9',
@@ -71,7 +71,7 @@ const workingHours = [
 const faqItems = [
   {
     question: 'Як швидко ви відповідаєте?',
-    answer: 'У робочий час — протягом 15-30 хвилин. У неробочий час — наступного ранку до 11:00.',
+    answer: 'Відповімо протягом робочого дня.',
   },
   {
     question: 'Чи можна отримати консультацію щодо підбору косметики?',
@@ -109,7 +109,7 @@ export default function ContactsPage() {
             </h1>
             <p className="mt-6 text-black font-gilroy text-[16px] leading-[24px] sm:text-[18px] sm:leading-[28px]">
               Маєте питання щодо замовлення, доставки чи підбору косметики? Ми завжди раді допомогти! 
-              Оберіть зручний спосіб зв&apos;язку — відповімо якнайшвидше.
+              Оберіть зручний спосіб зв&apos;язку. Відповімо протягом робочого дня.
             </p>
           </div>
         </div>
@@ -207,8 +207,8 @@ export default function ContactsPage() {
                 </div>
                 <div className="p-4 rounded-[12px] bg-[#E2F9FF] border border-[#E2F9FF]">
                   <p className="text-[14px] text-[#444444]">
-                    <strong>Доставка:</strong> Нова Пошта та кур&apos;єр по всій Україні.
-                    Безкоштовно від суми замовлення {FREE_SHIPPING_THRESHOLD}&nbsp;₴.
+                    <strong>Доставка:</strong> Новою Поштою та Укрпоштою по всій Україні.
+                    При замовленні від {FREE_SHIPPING_THRESHOLD}&nbsp;₴ доставка безкоштовна.
                   </p>
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function ContactsPage() {
             <div className="text-center mb-8">
               <h2 className="font-bebas uppercase text-black text-[36px] sm:text-[44px]">Напишіть нам</h2>
               <p className="mt-2 text-[16px] text-[#666666]">
-                Залиште повідомлення, і ми відповімо протягом робочого дня
+                Відповімо протягом робочого дня
               </p>
             </div>
             {submitted ? (
