@@ -86,3 +86,13 @@ export function stockHint(p: AvailabilityFields): string | null {
   if (n < 1 || n > LOW_STOCK_HINT) return null
   return `Залишилося ${n} шт.`
 }
+
+/**
+ * Що написати замість кнопки «Додати в кошик». Два стани читаються
+ * по-різному: «Скоро в наявності» — товар очікується, «Немає в наявності»
+ * — його просто розібрали. Для товару, який можна купити, — null.
+ */
+export function unavailableLabel(p: AvailabilityFields): string | null {
+  if (isPurchasable(p)) return null
+  return isComingSoonFlag(p.coming_soon) ? 'Скоро в наявності' : 'Немає в наявності'
+}

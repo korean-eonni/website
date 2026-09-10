@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer'
 import WishlistButton from '@/components/WishlistButton'
 import { useWishlist } from '@/contexts/WishlistContext'
 import { useCart } from '@/contexts/CartContext'
-import { isPurchasable } from '@/lib/stock'
+import { isPurchasable, unavailableLabel } from '@/lib/stock'
 
 type Product = {
   id: string
@@ -118,7 +118,7 @@ export default function WishlistPage() {
                           </button>
                         ) : (
                           <span className="absolute bottom-3 left-3 right-3 rounded-lg bg-white/90 px-2 py-1.5 text-center text-[12px] font-semibold text-[#9B2C2C] z-[4]">
-                            Скоро в наявності
+                            {unavailableLabel(p)}
                           </span>
                         )}
                       </div>
