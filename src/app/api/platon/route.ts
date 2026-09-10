@@ -31,15 +31,30 @@ export async function POST(request: Request) {
   if (!order) {
     return NextResponse.json({ error: 'order-not-found' }, { status: 404 })
   }
-  if (order.payment_status && order.payment_status !== 'pending') {
-    return NextResponse.json({ error: 'order-already-paid' }, { status: 409 })
+  if (order.payment_status === 'paid') {
+    return NextResponse.json(
+      { error: 'order-already-paid', message: 'Це замовлення вже оплачено.' },
+      { status: 409 },
+    )
   }
+  // Порядок важливий: скасоване замовлення має payment_status 'failed', і
+  // покупцеві потрібно сказати саме про прострочений резерв, а не «вже
+  // оплачено».
   if (order.status === 'cancelled' || order.stock_released_at) {
     return NextResponse.json(
       {
         error: 'reservation-expired',
         message:
           'Це замовлення скасовано, бо оплату не завершили вчасно. Оформіть замовлення ще раз — кошик збережено.',
+      },
+      { status: 409 },
+    )
+  }
+  if (order.payment_status !== 'pending') {
+    return NextResponse.json(
+      {
+        error: 'order-not-payable',
+        message: 'Це замовлення вже не можна оплатити онлайн. Звʼяжіться з нами, будь ласка.',
       },
       { status: 409 },
     )
