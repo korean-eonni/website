@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/layout/Footer'
@@ -42,23 +42,39 @@ export default function WishlistPage() {
   const [productMap, setProductMap] = useState<Record<string, Product>>({})
   const [loading, setLoading] = useState(true)
 
+  // Про кожен id питаємо лише раз — інакше товар, якого вже немає в базі,
+  // змушував би сторінку перезапитувати його нескінченно.
+  const requested = useRef<Set<string>>(new Set())
+
   useEffect(() => {
+    if (!ready) return
+    const missing = ids.filter((id) => !requested.current.has(id))
+    if (missing.length === 0) {
+      setLoading(false)
+      return
+    }
+    for (const id of missing) requested.current.add(id)
+
     let cancelled = false
-    fetch('/api/products')
+    // Питаємо саме збережені товари, разом із неактивними: знятий з продажу
+    // товар має лишитися в списку з підписом, а не зникнути.
+    fetch(`/api/products?ids=${missing.map(encodeURIComponent).join(',')}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => {
         if (cancelled) return
         const arr: Product[] = Array.isArray(data) ? data : data.products || []
-        const map: Record<string, Product> = {}
-        for (const p of arr) map[p.id] = p
-        setProductMap(map)
+        setProductMap((prev) => {
+          const next = { ...prev }
+          for (const p of arr) next[p.id] = p
+          return next
+        })
       })
       .catch(() => {})
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [ready, ids])
 
   const products = ids.map((id) => productMap[id]).filter(Boolean) as Product[]
 

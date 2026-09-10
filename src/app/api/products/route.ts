@@ -3,8 +3,11 @@ import { listProducts } from '@/lib/productStore'
 
 export const dynamic = 'force-dynamic'
 
+/** Скільки товарів максимум можна попросити по id за один запит. */
+const MAX_IDS = 100
+
 /**
- * GET /api/products?category=<name>&limit=<n>&exclude=<id>
+ * GET /api/products?category=<name>&limit=<n>&exclude=<id>&ids=<id,id,…>
  *
  * Returns active products, optionally filtered by category and limited. The
  * product detail page uses this for the "similar products" carousel — before
@@ -13,6 +16,10 @@ export const dynamic = 'force-dynamic'
  * Category values come straight from the DB (e.g. "Догляд за обличчям"), so
  * we strict-match. Limit is clamped to [1, 60]; exclude removes a single id
  * (the current product).
+ *
+ * `ids` — окремий режим: повертає саме ці товари (не більше MAX_IDS) разом із
+ * неактивними. Потрібен списку бажань: товар, знятий з продажу, має лишитися
+ * в списку з підписом «Немає в наявності», а не зникнути без сліду.
  */
 export async function GET(request: Request) {
   try {
@@ -21,6 +28,17 @@ export async function GET(request: Request) {
     const exclude = url.searchParams.get('exclude')?.trim() || null
     const rawLimit = parseInt(url.searchParams.get('limit') || '', 10)
     const limit = Number.isFinite(rawLimit) ? Math.min(60, Math.max(1, rawLimit)) : null
+
+    const rawIds = url.searchParams.get('ids')?.trim() || null
+    if (rawIds) {
+      const wanted = new Set(
+        rawIds.split(',').map((id) => id.trim()).filter(Boolean).slice(0, MAX_IDS),
+      )
+      const byId = (await listProducts()).filter((p) => wanted.has(p.id))
+      return NextResponse.json(byId, {
+        headers: { 'Cache-Control': 'private, no-store' },
+      })
+    }
 
     let products = await listProducts('is_active = 1')
     if (category) {
