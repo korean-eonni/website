@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/layout/Footer'
@@ -376,6 +376,9 @@ export default function SkinTestPage() {
   // Поки запит у дорозі — кнопка про це говорить і не приймає повторний клік.
   const [addingId, setAddingId] = useState<string | null>(null)
   const [addingAll, setAddingAll] = useState(false)
+  // Пояснення, чому добірка змінилася: товар розібрали, поки покупець
+  // читав результат тесту.
+  const [swapNotice, setSwapNotice] = useState<string | null>(null)
   // Whether saved progress has been restored yet (avoids a flash of the start screen).
   const [restored, setRestored] = useState(false)
 
@@ -487,46 +490,65 @@ export default function SkinTestPage() {
     }
   }, [done, gender, questions, answers])
 
+  // Добірка приходить із сервера, який уже відкидає недоступні товари
+  // (is_active = 1, stock_quantity >= 1, coming_soon = 0). Виклик винесено
+  // окремо, щоб повторити його, коли щось розібрали просто зараз — тоді
+  // сервер підставить наступний за відповідністю доступний засіб.
+  const loadRecs = useCallback(async () => {
+    if (!result) return
+    setRecsLoading(true)
+    try {
+      const res = await fetch('/api/skin-test/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: result.type, sensitive: result.sensitive, pigment: result.pigment,
+          aging: result.aging, dehydrated: result.dehydrated, concern: result.concern,
+          pregnant: result.pregnant,
+          concernWeights: result.concernWeights,
+        }),
+      })
+      const data = res.ok ? await res.json() : { products: [] }
+      setRecs(data.products || [])
+    } catch {
+      setRecs([])
+    } finally {
+      setRecsLoading(false)
+    }
+  }, [result])
+
   // Fetch matched products once the profile is resolved.
   useEffect(() => {
     if (!done || !result) return
-    let cancelled = false
-    setRecsLoading(true)
     setRecs(null)
-    ;(async () => {
-      try {
-        const res = await fetch('/api/skin-test/recommend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: result.type, sensitive: result.sensitive, pigment: result.pigment,
-            aging: result.aging, dehydrated: result.dehydrated, concern: result.concern,
-            pregnant: result.pregnant,
-            concernWeights: result.concernWeights,
-          }),
-        })
-        const data = res.ok ? await res.json() : { products: [] }
-        if (!cancelled) setRecs(data.products || [])
-      } catch {
-        if (!cancelled) setRecs([])
-      } finally {
-        if (!cancelled) setRecsLoading(false)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [done, result])
+    void loadRecs()
+  }, [done, result, loadRecs])
 
   const addAll = async () => {
     if (!recs || addingAll) return
     setAddingAll(true)
-    // Промокод має сенс лише для повного набору, тому якщо сервер відмовив
-    // хоч в одному товарі (наприклад, він щойно закінчився) — не вмикаємо його.
-    let allAdded = true
+    setSwapNotice(null)
+    // Кожен товар додаємо по черзі й чекаємо на відповідь сервера: знижка
+    // діє лише на повний набір, тож достатньо однієї відмови, щоб набір
+    // втратив сенс.
+    const failed: string[] = []
     for (const r of recs) {
-      if (!(await addToCart(r.id, 1))) allAdded = false
+      if (!(await addToCart(r.id, 1))) failed.push(r.name)
     }
     setAddingAll(false)
-    if (!allAdded) return
+
+    if (failed.length > 0) {
+      // Засіб розібрали, поки покупець читав результат. Мовчазна відмова
+      // залишала неповний набір без знижки, тому пояснюємо і одразу
+      // перепитуємо сервер — він підставить доступну заміну.
+      setSwapNotice(
+        failed.length === 1
+          ? `«${failed[0]}» щойно закінчився — ми підібрали заміну. Перевірте оновлену добірку й додайте набір ще раз.`
+          : 'Деякі засоби щойно закінчилися — ми підібрали заміну. Перевірте оновлену добірку й додайте набір ще раз.',
+      )
+      await loadRecs()
+      return
+    }
     // Activate the 10% skin-test bundle promo + remember the bundle's items, so the
     // discount only holds while ALL of them stay in the cart.
     try {
@@ -539,9 +561,15 @@ export default function SkinTestPage() {
 
   const addOne = async (id: string) => {
     setAddingId(id)
+    setSwapNotice(null)
     const ok = await addToCart(id, 1)
     setAddingId(null)
-    if (!ok) return
+    if (!ok) {
+      // Так само: показуємо заміну замість порожньої відмови.
+      setSwapNotice('Цього засобу вже немає — ми оновили добірку.')
+      await loadRecs()
+      return
+    }
     setAddedId(id)
     setTimeout(() => setAddedId((v) => (v === id ? null : v)), 1500)
   }
@@ -759,6 +787,12 @@ export default function SkinTestPage() {
                 <p className="text-center text-[12px] uppercase tracking-[0.22em] text-[#4348AE] font-bold mb-2">Персональна добірка</p>
                 <h3 className="font-bebas uppercase text-black text-[34px] sm:text-[44px] leading-[1.02] mb-1 text-center">Ваш повний догляд</h3>
                 <p className="font-gilroy text-[14px] sm:text-[15px] text-[#666] mb-7 text-center max-w-[460px] mx-auto">Підібрано саме під ваш профіль шкіри — натисніть на товар, щоб дізнатися більше</p>
+
+                {swapNotice && (
+                  <div className="mb-6 rounded-[16px] border border-[#F5C2C2] bg-[#FDECEC] px-5 py-4 text-[14px] font-gilroy text-[#9B2C2C]">
+                    {swapNotice}
+                  </div>
+                )}
 
                 {recsLoading && (
                   <div className="py-12 text-center text-[#666] font-gilroy">Підбираємо засоби під вашу шкіру…</div>
