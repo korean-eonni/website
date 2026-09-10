@@ -78,7 +78,9 @@ const usePostgres = !!process.env.POSTGRES_URL
 // Schema initialization flag - only run once per cold start
 let schemaInitialized = false
 
-async function ensureUserSchema() {
+/** Створює таблиці користувачів/замовлень, якщо їх ще немає.
+ *  Експортовано, щоб транзакція замовлення могла зробити це до BEGIN. */
+export async function ensureUserSchema() {
   if (!usePostgres) return
   if (schemaInitialized) return
   

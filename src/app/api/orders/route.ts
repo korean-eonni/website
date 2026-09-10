@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createOrder, addOrderItem, getSessionByToken, clearCart, userHasOrders } from '@/lib/userStore'
-import { getProduct, tryDecrementStock } from '@/lib/productStore'
+import { getSessionByToken, clearCart, userHasOrders, ensureUserSchema } from '@/lib/userStore'
+import { getProduct, ensureProductSchema } from '@/lib/productStore'
+import { createOrderWithStock } from '@/lib/orderTransaction'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
 import { isOutOfStock } from '@/lib/stock'
@@ -135,64 +136,40 @@ export async function POST(request: Request) {
           : ` | Промокод SKINTEST10: −10% (−₴${discount})`
     }
 
-    // Reserve stock atomically. If we fail half-way, roll back what we took.
-    const reserved: Array<{ productId: string; quantity: number }> = []
-    for (const line of lines) {
-      const remaining = await tryDecrementStock(line.productId, line.quantity)
-      if (remaining === null) {
-        // Roll back — give back anything we already reserved.
-        for (const r of reserved) {
-          await tryDecrementStock(r.productId, -r.quantity).catch(() => {})
-        }
-        return NextResponse.json(
-          { error: `Недостатньо на складі: ${line.productName}` },
-          { status: 409 }
-        )
-      }
-      reserved.push({ productId: line.productId, quantity: line.quantity })
-    }
+    // Резерв залишків, саме замовлення та його позиції — однією транзакцією.
+    // Якщо другого товару вже не вистачає, залишок першого НЕ зменшується:
+    // раніше він «згорав» на кожній невдалій спробі, бо повернення через
+    // tryDecrementStock(id, -qty) не працювало (вона відхиляє qty <= 0).
+    // Подарункові маски додаються тією ж транзакцією, але не резервуються.
+    await ensureProductSchema()
+    await ensureUserSchema()
 
-    const order = await createOrder({
-      user_id: userId,
-      guest_email: userId ? null : (emailNorm || null),
-      guest_phone: userId ? null : phone,
-      status: 'pending',
-      total_amount: totalAmount,
-      shipping_method: shippingMethod,
-      shipping_city: shippingCity,
-      shipping_warehouse: shippingWarehouse,
-      shipping_address: shippingAddress,
-      payment_method: paymentMethod,
-      payment_status: 'pending',
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      email: emailNorm,
-      notes: `${notes ?? ''}${promoNote}`,
-      tracking_number: null,
+    const created = await createOrderWithStock({
+      draft: {
+        user_id: userId,
+        guest_email: userId ? null : (emailNorm || null),
+        guest_phone: userId ? null : phone,
+        status: 'pending',
+        total_amount: totalAmount,
+        shipping_method: shippingMethod,
+        shipping_city: shippingCity,
+        shipping_warehouse: shippingWarehouse,
+        shipping_address: shippingAddress,
+        payment_method: paymentMethod,
+        payment_status: 'pending',
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        email: emailNorm,
+        notes: `${notes ?? ''}${promoNote}`,
+        tracking_number: null,
+      },
+      lines,
+      gifts: giftLines.map((g) => ({ productId: g.productId, name: g.name, image: g.image })),
     })
 
-    for (const line of lines) {
-      await addOrderItem({
-        order_id: order.id,
-        product_id: line.productId,
-        product_name: line.productName,
-        product_image: line.productImage,
-        quantity: line.quantity,
-        price: line.price,
-      })
-    }
-
-    // Free promo masks as 0₴ lines (clearly labelled) so they appear on the order.
-    for (const g of giftLines) {
-      await addOrderItem({
-        order_id: order.id,
-        product_id: g.productId,
-        product_name: `Подарунок — ${g.name}`,
-        product_image: g.image,
-        quantity: 1,
-        price: 0,
-      })
+    if (!created.ok) {
+      return NextResponse.json({ error: created.error }, { status: created.status })
     }
 
     // Clear cart on success.
@@ -211,7 +188,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      orderId: order.id,
+      orderId: created.orderId,
       totalAmount,
       message: 'Замовлення успішно створено',
     })

@@ -96,6 +96,11 @@ function freshRead() {
  * cache is cleared so the next call retries rather than sticking to a broken state.
  */
 let schemaReady: Promise<void> | null = null
+/** Те саме для таблиці товарів — потрібне транзакції замовлення до BEGIN. */
+export async function ensureProductSchema(): Promise<void> {
+  if (usePostgres) await ensurePostgresSchema()
+}
+
 function ensurePostgresSchema(): Promise<void> {
   if (!schemaReady) {
     schemaReady = runSchemaSetup().catch((err) => {
@@ -717,7 +722,13 @@ export async function updateProduct(product: ProductRecord, includeImage: boolea
 /**
  * Atomically decrement stock if there's enough. Returns the new stock or
  * `null` if the requested quantity isn't available (either product is gone or
- * stock < qty). Use this BEFORE confirming an order so we never oversell.
+ * stock < qty).
+ *
+ * УВАГА: вона тільки зменшує залишок і відхиляє будь-яке qty <= 0 — повернути
+ * товар на склад через неї НЕ можна. Замовлення резервує залишки в транзакції
+ * (`createOrderWithStock` у lib/orderTransaction.ts), де скасування робить
+ * ROLLBACK; саме тому колишній «відкат» через tryDecrementStock(id, -qty)
+ * ніколи не працював.
  */
 export async function tryDecrementStock(productId: string, qty: number): Promise<number | null> {
   if (qty <= 0) return null
