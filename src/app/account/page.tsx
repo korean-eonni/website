@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useCart } from '@/contexts/CartContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
@@ -658,12 +659,16 @@ function AccountContent() {
   const [justSignedIn, setJustSignedIn] = useState(false)
   const router = useRouter()
   const { refresh: refreshAuth } = useAuth()
+  // Після входу кошик на сервері вже інший (гостьовий переїхав у профіль),
+  // тож перечитуємо його — інакше в шапці лишилися б старі цифри.
+  const { refreshCart } = useCart()
 
   // Confirm the sign-in for a moment, then drop the customer on the home page —
   // they came to log in, not to sit on the account screen.
   const handleAuthSuccess = async () => {
     setJustSignedIn(true)
     await checkAuth()
+    await refreshCart()
     setTimeout(() => router.push('/'), 1400)
   }
 

@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres'
 import { randomUUID } from 'crypto'
 import bcrypt from 'bcryptjs'
+import { maxOrderable } from '@/lib/stock'
 
 export type User = {
   id: string
@@ -628,32 +629,61 @@ export async function clearCart(sessionId: string, userId?: string): Promise<voi
   }
 }
 
+/**
+ * Переносить кошик гостя в його профіль після входу або реєстрації.
+ *
+ * Переносяться лише товари, які покупець справді може замовити: неактивні,
+ * позначені «Скоро в наявності» та розпродані позиції просто зникають, а
+ * кількість ніде не перевищує фактичний залишок. Якщо той самий товар уже
+ * лежить у кошику профілю, кількості додаються — але теж у межах залишку.
+ */
 export async function mergeGuestCartToUser(sessionId: string, userId: string): Promise<void> {
   await ensureUserSchema()
   const now = new Date().toISOString()
-  
-  // Get guest cart items
-  const { rows: guestItems } = await sql<CartItem>`
-    SELECT * FROM cart_items WHERE session_id = ${sessionId} AND user_id IS NULL
+
+  // Наявність беремо тим самим запитом, щоб не робити по запиту на товар.
+  const { rows: guestItems } = await sql`
+    SELECT ci.id, ci.product_id, ci.quantity,
+           p.stock_quantity, p.is_active, p.coming_soon
+    FROM cart_items ci
+    LEFT JOIN products p ON p.id = ci.product_id
+    WHERE ci.session_id = ${sessionId} AND ci.user_id IS NULL
   `
-  
+
   for (const item of guestItems) {
-    // Check if user already has this product
+    // 0 — товару немає, він неактивний або позначений «Скоро в наявності».
+    const limit = maxOrderable({
+      stock_quantity: item.stock_quantity,
+      coming_soon: item.coming_soon,
+      is_active: item.is_active,
+    })
+
+    if (limit < 1) {
+      // Переносити нічого — інакше покупець побачив би в профілі товар,
+      // який неможливо замовити.
+      await sql`DELETE FROM cart_items WHERE id = ${item.id}`
+      continue
+    }
+
     const { rows: existing } = await sql<CartItem>`
       SELECT * FROM cart_items WHERE user_id = ${userId} AND product_id = ${item.product_id}
     `
-    
+
     if (existing.length > 0) {
-      // Update quantity
+      const merged = Math.min(limit, Number(existing[0].quantity) + Number(item.quantity))
       await sql`
-        UPDATE cart_items 
-        SET quantity = ${existing[0].quantity + item.quantity}, updated_at = ${now}
+        UPDATE cart_items
+        SET quantity = ${merged}, updated_at = ${now}
         WHERE id = ${existing[0].id}
       `
       await sql`DELETE FROM cart_items WHERE id = ${item.id}`
     } else {
-      // Transfer to user
-      await sql`UPDATE cart_items SET user_id = ${userId}, updated_at = ${now} WHERE id = ${item.id}`
+      const quantity = Math.min(limit, Number(item.quantity))
+      await sql`
+        UPDATE cart_items
+        SET user_id = ${userId}, quantity = ${quantity}, updated_at = ${now}
+        WHERE id = ${item.id}
+      `
     }
   }
 }

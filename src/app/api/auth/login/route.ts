@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { getUserByEmailOrPhone, verifyPassword, createSession } from '@/lib/userStore'
+import { getUserByEmailOrPhone, verifyPassword, createSession, mergeGuestCartToUser } from '@/lib/userStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +44,18 @@ export async function POST(request: Request) {
       expires: new Date(session.expires_at),
       path: '/',
     })
+
+    // Кошик, зібраний до входу, переїжджає в профіль — інакше покупець
+    // втрачав його рівно тоді, коли реєструвався заради знижки. Помилка
+    // тут не має завалити вхід, тому лише пишемо в лог.
+    const guestSession = cookieStore.get('cart_session')?.value
+    if (guestSession) {
+      try {
+        await mergeGuestCartToUser(guestSession, user.id)
+      } catch (mergeError) {
+        console.error('Guest cart merge failed:', mergeError)
+      }
+    }
 
     return NextResponse.json({
       success: true,
