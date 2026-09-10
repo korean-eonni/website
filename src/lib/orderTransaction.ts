@@ -119,12 +119,12 @@ export async function createOrderWithStock(args: {
         id, user_id, guest_email, guest_phone, status, total_amount,
         shipping_method, shipping_city, shipping_warehouse, shipping_address,
         payment_method, payment_status, first_name, last_name, phone, email,
-        notes, tracking_number, created_at, updated_at
+        notes, tracking_number, cart_session, created_at, updated_at
       ) VALUES (
         ${orderId}, ${draft.user_id}, ${draft.guest_email}, ${draft.guest_phone}, ${draft.status}, ${draft.total_amount},
         ${draft.shipping_method}, ${draft.shipping_city}, ${draft.shipping_warehouse}, ${draft.shipping_address},
         ${draft.payment_method}, ${draft.payment_status}, ${draft.first_name}, ${draft.last_name}, ${draft.phone}, ${draft.email},
-        ${draft.notes}, ${draft.tracking_number}, ${now}, ${now}
+        ${draft.notes}, ${draft.tracking_number}, ${draft.cart_session ?? null}, ${now}, ${now}
       )
     `
 

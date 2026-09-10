@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { hasFreeShipping } from '@/lib/shipping'
 import { maxOrderable } from '@/lib/stock'
+import { RESERVATION_MINUTES } from '@/lib/reservationWindow'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -75,12 +76,29 @@ export default function CheckoutPage() {
   const [redirecting, setRedirecting] = useState(false)
   // Кошик перечитано з сервера вже на цій сторінці (а не колись раніше).
   const [cartChecked, setCartChecked] = useState(false)
+  // Замовлення, з оплатою якого щось не склалося: Platon повертає покупця на
+  // /checkout?order=…&payment=failed. Кошик при цьому цілий — його чистить
+  // лише підтверджена оплата.
+  const [failedOrderId, setFailedOrderId] = useState<string | null>(null)
+  const [retrying, setRetrying] = useState(false)
+  const [retryError, setRetryError] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
   // Skin-test bundle promo (10% off) — activated from /skin-test "add full routine".
   const [promo, setPromo] = useState<string | null>(null)
   const [promoItems, setPromoItems] = useState<string[]>([])
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search)
+      const id = q.get('order')
+      if (id && q.get('payment') === 'failed') setFailedOrderId(id)
+    } catch {
+      /* window недоступне */
+    }
+  }, [])
 
   // Наявність могла змінитися, поки покупець ходив сайтом або тримав
   // вкладку відкритою, тож перед формою перечитуємо кошик із сервера.
@@ -339,6 +357,62 @@ export default function CheckoutPage() {
     setStep(step + 1)
   }
 
+  /**
+   * Веде покупця на форму Platon. Повертає текст помилки, якщо навіть
+   * відкрити форму не вдалося — тоді кошик і замовлення лишаються на місці,
+   * і покупець може спробувати ще раз або вибрати інший спосіб оплати.
+   */
+  const payWithPlaton = async (orderId: string): Promise<string | null> => {
+    let payRes: Response
+    try {
+      payRes = await fetch('/api/platon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      })
+    } catch {
+      return 'Немає звʼязку з платіжним сервісом. Спробуйте ще раз або виберіть інший спосіб оплати.'
+    }
+
+    if (!payRes.ok) {
+      const data = await payRes.json().catch(() => null)
+      return (
+        (typeof data?.message === 'string' && data.message) ||
+        'Не вдалося відкрити сторінку оплати. Спробуйте ще раз або виберіть інший спосіб оплати.'
+      )
+    }
+
+    const { endpoint, fields } = await payRes.json()
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = endpoint
+    Object.entries(fields as Record<string, string>).forEach(([name, value]) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = name
+      input.value = String(value)
+      form.appendChild(input)
+    })
+    document.body.appendChild(form)
+    // Кошик НЕ чистимо: поки оплата не підтверджена, покупець не має нічого
+    // втратити. Його очистить callback Platon після успішної оплати.
+    form.submit()
+    return null
+  }
+
+  /** Знімає резерв складу під замовленням, яке так і не оплатили. */
+  const abandonOrder = async (orderId: string) => {
+    try {
+      await fetch('/api/platon/abandon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      })
+    } catch {
+      /* не критично: прострочений резерв однаково знімається автоматично */
+    }
+  }
+
   const handleSubmitOrder = async () => {
     setError(null)
     setLoading(true)
@@ -385,35 +459,17 @@ export default function CheckoutPage() {
         try { localStorage.removeItem('eonni_promo') } catch { /* ignore */ }
       }
 
-      // Online payment → hand off to Platon's hosted form. Do NOT clear the cart
-      // first: clearing empties `items`, which flips this page to the "Кошик
-      // порожній" view for a moment before the redirect. Show a redirect state
-      // instead and clear the cart in the background as we navigate away.
+      // Онлайн-оплата → передаємо покупця на форму Platon. Кошик лишається
+      // недоторканим, поки оплата не підтверджена.
       if (paymentMethod === 'platon') {
         setRedirecting(true)
-        const payRes = await fetch('/api/platon', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId }),
-        })
-        if (!payRes.ok) {
+        const failure = await payWithPlaton(orderId)
+        if (failure) {
+          // Замовлення навіть не дійшло до оплати — не тримаємо під нього товар.
+          await abandonOrder(orderId)
           setRedirecting(false)
-          throw new Error('Не вдалося ініціювати онлайн-оплату. Спробуйте інший спосіб.')
+          throw new Error(failure)
         }
-        const { endpoint, fields } = await payRes.json()
-        const form = document.createElement('form')
-        form.method = 'POST'
-        form.action = endpoint
-        Object.entries(fields as Record<string, string>).forEach(([name, value]) => {
-          const input = document.createElement('input')
-          input.type = 'hidden'
-          input.name = name
-          input.value = String(value)
-          form.appendChild(input)
-        })
-        document.body.appendChild(form)
-        void clearCart() // best-effort; we're navigating away to Platon
-        form.submit()
         return
       }
 
@@ -470,6 +526,70 @@ export default function CheckoutPage() {
             <p className="text-[#666]">Не закривайте сторінку — за мить відкриється захищена форма оплати Platon.</p>
           </div>
         </section>
+      </main>
+    )
+  }
+
+  if (failedOrderId) {
+    return (
+      <main className="min-h-screen bg-[#E2F9FF]">
+        <section className="py-16 sm:py-20">
+          <div className="max-w-[600px] mx-auto px-6 text-center">
+            <svg className="w-16 h-16 mx-auto text-[#9B2C2C] mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <circle cx="12" cy="12" r="9" />
+              <path strokeLinecap="round" d="M12 8v5M12 16h.01" />
+            </svg>
+            <h1 className="font-bebas text-[36px] sm:text-[44px] text-black mb-3">Оплата не пройшла</h1>
+            <p className="text-[#666] font-gilroy mb-2">
+              Замовлення <span className="font-semibold text-black">{failedOrderId}</span> створено,
+              але оплату не завершено. Кошик збережено — нічого не втрачено.
+            </p>
+            <p className="text-[#666] font-gilroy text-[14px] mb-8">
+              Товар зарезервовано за вами ще {RESERVATION_MINUTES} хв від моменту оформлення.
+              Далі він повертається в продаж.
+            </p>
+
+            {retryError && (
+              <div className="mb-6 rounded-[16px] border border-[#F5C2C2] bg-[#FDECEC] px-5 py-4 text-[14px] font-gilroy text-[#9B2C2C]">
+                {retryError}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                disabled={retrying || cancelling}
+                onClick={async () => {
+                  setRetryError(null)
+                  setRetrying(true)
+                  const failure = await payWithPlaton(failedOrderId)
+                  if (failure) {
+                    setRetrying(false)
+                    setRetryError(failure)
+                  }
+                }}
+                className="h-[52px] bg-[#4348AE] text-white font-semibold rounded-lg hover:bg-[#373B8A] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {retrying ? 'Відкриваємо оплату…' : 'Спробувати оплатити ще раз'}
+              </button>
+              <button
+                type="button"
+                disabled={retrying || cancelling}
+                onClick={async () => {
+                  setCancelling(true)
+                  // Знімаємо резерв одразу, щоб товар не чекав кінця строку.
+                  await abandonOrder(failedOrderId)
+                  await refreshCart()
+                  router.replace('/cart')
+                }}
+                className="h-[52px] bg-white border border-black text-black font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {cancelling ? 'Скасовуємо…' : 'Скасувати замовлення і повернутися до кошика'}
+              </button>
+            </div>
+          </div>
+        </section>
+        <Footer />
       </main>
     )
   }

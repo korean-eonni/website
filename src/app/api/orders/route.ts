@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { getSessionByToken, clearCart, userHasOrders, ensureUserSchema } from '@/lib/userStore'
 import { getProduct, ensureProductSchema } from '@/lib/productStore'
 import { createOrderWithStock } from '@/lib/orderTransaction'
+import { expireStaleReservations } from '@/lib/reservation'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
 import { isOutOfStock } from '@/lib/stock'
@@ -45,6 +46,15 @@ export async function POST(request: Request) {
     }
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Кошик порожній' }, { status: 400 })
+    }
+
+    // Спершу знімаємо прострочені резерви: покинута кимось оплата не повинна
+    // тримати товар і блокувати цього покупця. Робиться до перевірки наявності
+    // й не має права завалити замовлення, тому — best-effort.
+    try {
+      await expireStaleReservations()
+    } catch (sweepError) {
+      console.error('Failed to expire stale reservations:', sweepError)
     }
 
     // Resolve products from DB and compute total server-side. NEVER trust
@@ -108,6 +118,7 @@ export async function POST(request: Request) {
     // Identify user (if any). Needed before discounts — being logged in is itself
     // one, so the order total depends on it.
     const cookieStore = await cookies()
+    const cartSession = cookieStore.get('cart_session')?.value ?? null
     const token = cookieStore.get('session_token')?.value
     let userId: string | null = null
     if (token) {
@@ -163,6 +174,8 @@ export async function POST(request: Request) {
         email: emailNorm,
         notes: `${notes ?? ''}${promoNote}`,
         tracking_number: null,
+        // Щоб callback Platon міг очистити саме цей кошик після оплати.
+        cart_session: cartSession,
       },
       lines,
       gifts: giftLines.map((g) => ({ productId: g.productId, name: g.name, image: g.image })),
@@ -172,10 +185,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: created.error }, { status: created.status })
     }
 
-    // Clear cart on success.
-    const sessionId = cookieStore.get('cart_session')?.value
-    if (sessionId) {
-      await clearCart(sessionId, userId || undefined)
+    // Кошик очищаємо лише тоді, коли замовлення вже остаточне. Для онлайн-
+    // оплати воно таким ще не є: покупець може закрити сторінку Platon або
+    // отримати відмову банку — і залишитися з порожнім кошиком і без
+    // замовлення. Тому для 'platon' кошик чистить callback після
+    // підтвердженої оплати.
+    if (paymentMethod !== 'platon' && cartSession) {
+      await clearCart(cartSession, userId || undefined)
     }
 
     // Stock lives only in the database (the DB decrement above is authoritative).

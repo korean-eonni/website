@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Footer from '@/components/layout/Footer'
+import { useCart } from '@/contexts/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -36,6 +37,7 @@ export default function OrderSuccessPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshCart } = useCart()
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -57,6 +59,13 @@ export default function OrderSuccessPage() {
       fetchOrder()
     }
   }, [orderId])
+
+  // Кошик для онлайн-оплати чистить callback Platon уже після підтвердження,
+  // тож на цій сторінці треба просто перечитати його з сервера — інакше в
+  // шапці ще висіли б старі цифри.
+  useEffect(() => {
+    void refreshCart()
+  }, [refreshCart])
 
   const paymentMethodLabels: Record<string, string> = {
     cash_on_delivery: 'Накладний платіж',

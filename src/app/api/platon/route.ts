@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { buildPlatonAuthForm } from '@/lib/platon'
 import { getOrderById } from '@/lib/userStore'
+import {
+  RESERVATION_MINUTES,
+  releaseOrderStock,
+  reservationIsAlive,
+} from '@/lib/reservation'
 
 /**
  * POST /api/platon
@@ -28,6 +33,32 @@ export async function POST(request: Request) {
   }
   if (order.payment_status && order.payment_status !== 'pending') {
     return NextResponse.json({ error: 'order-already-paid' }, { status: 409 })
+  }
+  if (order.status === 'cancelled' || order.stock_released_at) {
+    return NextResponse.json(
+      {
+        error: 'reservation-expired',
+        message:
+          'Це замовлення скасовано, бо оплату не завершили вчасно. Оформіть замовлення ще раз — кошик збережено.',
+      },
+      { status: 409 },
+    )
+  }
+  // Повторна оплата можлива, поки живий резерв складу. Далі товар уже
+  // повернено іншим покупцям, тому тримати замовлення немає сенсу.
+  if (!reservationIsAlive(order)) {
+    await releaseOrderStock(order.id, {
+      status: 'cancelled',
+      paymentStatus: 'failed',
+      reason: `Резерв скасовано: оплату не завершено за ${RESERVATION_MINUTES} хв`,
+    }).catch((e) => console.error('Failed to release expired reservation:', e))
+    return NextResponse.json(
+      {
+        error: 'reservation-expired',
+        message: `Оплату потрібно завершити протягом ${RESERVATION_MINUTES} хвилин. Оформіть замовлення ще раз — кошик збережено.`,
+      },
+      { status: 409 },
+    )
   }
 
   const amount = Number(order.total_amount)

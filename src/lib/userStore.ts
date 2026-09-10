@@ -50,6 +50,12 @@ export type Order = {
   tracking_number: string | null
   created_at: string
   updated_at: string
+  /** Коли товар із цього замовлення повернули на склад (null — ще не повертали).
+   *  Не дає віддати той самий резерв двічі. */
+  stock_released_at?: string | null
+  /** Кошик, з якого зроблено замовлення: щоб callback Platon міг очистити саме
+   *  його після підтвердженої оплати (гість не має user_id). */
+  cart_session?: string | null
 }
 
 export type OrderItem = {
@@ -170,7 +176,13 @@ export async function ensureUserSchema() {
       );
     `,
   ])
-  
+
+  // Колонки, додані пізніше — на давно створеній таблиці їх ще немає.
+  await Promise.all([
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_released_at TEXT;`,
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cart_session TEXT;`,
+  ])
+
   schemaInitialized = true
 }
 
@@ -473,9 +485,21 @@ export async function getAllUsers(): Promise<User[]> {
  * замовлення, тож це єдине джерело правди і для сервера, і для того, що
  * бачить клієнт на сторінках кошика й оформлення.
  */
+/**
+ * Чи має клієнт замовлення, які «використали» знижку на перше замовлення.
+ *
+ * Скасовані та невдало оплачені замовлення не рахуються: покинута оплата не
+ * повинна позбавляти клієнта знижки на перше справжнє замовлення.
+ */
 export async function userHasOrders(userId: string): Promise<boolean> {
   await ensureUserSchema()
-  const { rows } = await sql`SELECT 1 FROM orders WHERE user_id = ${userId} LIMIT 1`
+  const { rows } = await sql`
+    SELECT 1 FROM orders
+    WHERE user_id = ${userId}
+      AND status <> 'cancelled'
+      AND payment_status <> 'failed'
+    LIMIT 1
+  `
   return rows.length > 0
 }
 

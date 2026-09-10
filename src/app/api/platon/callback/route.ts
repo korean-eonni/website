@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyPlatonCallback } from '@/lib/platon'
-import { getOrderById, updatePaymentStatus } from '@/lib/userStore'
+import { getOrderById, updatePaymentStatus, clearCart } from '@/lib/userStore'
+import { releaseOrderStock } from '@/lib/reservation'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,21 @@ export async function POST(request: Request) {
   // Only act while still pending; never downgrade an already-final status.
   if (order.payment_status === 'pending' && body.status === 'SALE') {
     await updatePaymentStatus(orderId, 'paid')
+    // Кошик чистимо саме тут: до підтвердженої оплати він мусив лишатися
+    // на місці, щоб покупець нічого не втратив при невдалій оплаті.
+    if (order.cart_session || order.user_id) {
+      await clearCart(order.cart_session ?? '', order.user_id ?? undefined).catch((e) =>
+        console.error('Failed to clear cart after payment:', e),
+      )
+    }
+  } else if (order.payment_status === 'pending' && body.status && body.status !== 'SALE') {
+    // Platon шле callback переважно на успіх, але якщо прийшла відмова —
+    // не тримаємо товар до кінця строку резерву, повертаємо одразу.
+    await releaseOrderStock(orderId, {
+      status: 'cancelled',
+      paymentStatus: 'failed',
+      reason: `Platon: оплата не пройшла (${String(body.status).slice(0, 40)})`,
+    }).catch((e) => console.error('Failed to release stock after failed payment:', e))
   }
 
   return new NextResponse('OK', { status: 200 })
