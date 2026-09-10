@@ -277,7 +277,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
             alt={product.name}
             fill
             className={`product-image object-contain p-3 transition-opacity duration-300 ${comingSoon ? 'opacity-50' : ''}`}
-            sizes="(min-width: 1280px) 288px, (min-width: 640px) 280px, 100vw"
+            sizes="(min-width: 1280px) 288px, (min-width: 640px) 280px, 50vw"
             loading="lazy"
             placeholder="blur"
             blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjg4IiBoZWlnaHQ9IjI4OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjhGN0ZCIi8+PC9zdmc+"

@@ -235,7 +235,9 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
                 alt={`${productName} - зображення ${index + 1}`}
                 fill
                 className="object-cover"
-                sizes="(min-width: 1024px) 25vw, 45vw"
+                // Мініатюри мають ~110 px на десктопі й ~90 px на телефоні —
+                // 25vw/45vw змушували браузер тягнути вчетверо більший файл.
+                sizes="(min-width: 1024px) 110px, 90px"
                 loading="lazy"
               />
             </button>
@@ -1569,7 +1571,7 @@ export default function ProductPage() {
         }
         const data = await response.json()
         setProduct(data)
-        
+
         if (data.volume_options) {
           const volumes = data.volume_options.split(',').map((v: string) => v.trim())
           if (volumes.length > 0) {
@@ -1577,18 +1579,25 @@ export default function ProductPage() {
           }
         }
 
-        // Fetch similar products (same category)
-        const similarResponse = await fetch(`/api/products?category=${encodeURIComponent(data.category || '')}&limit=6`)
-        if (similarResponse.ok) {
-          const similarData = await similarResponse.json()
-          setSimilarProducts(similarData.products || [])
-        }
+        // Головне вже є — знімаємо завантаження просто зараз. Раніше покупець
+        // дивився на спінер, поки по черзі доїдуть іще схожі товари й відгуки,
+        // хоча ні те, ні інше не потрібне для показу самої картки.
+        setLoading(false)
 
-        // Fetch reviews by the id the API returned, not the encoded URL segment.
-        await fetchReviews(data.id)
+        // Схожі товари та відгуки — паралельно й у фоні: вони не залежать
+        // одне від одного й нижче на сторінці.
+        void Promise.all([
+          fetch(`/api/products?category=${encodeURIComponent(data.category || '')}&limit=6`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((similar) => {
+              if (!similar) return
+              setSimilarProducts(Array.isArray(similar) ? similar : similar.products || [])
+            })
+            .catch(() => {}),
+          fetchReviews(data.id).catch(() => {}),
+        ])
       } catch (err) {
         setError('Товар не знайдено')
-      } finally {
         setLoading(false)
       }
     }

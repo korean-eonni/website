@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { loadSession } from '@/lib/sessionBootstrap'
 
 type AuthUser = {
   id: string
@@ -37,15 +38,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [hasOrders, setHasOrders] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(async () => {
+  /**
+   * `force` — перечитати з сервера. Перше читання при завантаженні сторінки
+   * ділиться одним запитом із кошиком (див. lib/sessionBootstrap), тож шапка
+   * більше не чекає на два послідовні запити.
+   */
+  const load = useCallback(async (force: boolean) => {
     try {
-      // `cache: 'no-store'` matters: a cached anonymous answer would keep the
-      // customer looking logged-out and quietly drop their discount.
-      const res = await fetch('/api/auth/me', { cache: 'no-store', credentials: 'same-origin' })
-      // 401 is the normal "not logged in" answer here, not an error worth logging.
-      const data = res.ok ? await res.json() : null
-      setUser(data?.user ?? null)
-      setHasOrders(!!data?.hasOrders)
+      const data = await loadSession(force)
+      setUser(data.user)
+      setHasOrders(data.hasOrders)
     } catch {
       setUser(null)
       setHasOrders(false)
@@ -54,8 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const refresh = useCallback(async () => {
+    await load(true)
+  }, [load])
+
   useEffect(() => {
-    void refresh()
+    void load(false)
 
     // Re-check when the tab becomes visible again. Covers signing in from another
     // tab, and a session that started or expired while this page sat open — the
@@ -69,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onVisible)
     }
-  }, [refresh])
+  }, [load, refresh])
 
   return (
     <AuthContext.Provider

@@ -46,8 +46,12 @@ export default function Hero() {
               alt={slide.title}
               fill
               className="object-cover"
+              // Єдине зображення, видиме одразу — тільки воно має priority.
               priority
-              quality={95}
+              sizes="100vw"
+              // 95 давало 237 КБ WebP на широкому екрані, 82 — 95 КБ; різниці
+              // на фотографії не видно, а на мобільному 4G це помітні секунди.
+              quality={82}
             />
             <div className="absolute inset-0 bg-black/5" />
           </div>

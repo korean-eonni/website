@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react'
 import { giftCountForSubtotal, giftMasksForSubtotal, GiftLine } from '@/lib/giftMasks'
+import { loadSession } from '@/lib/sessionBootstrap'
 
 type CartProduct = {
   id: string
@@ -90,9 +91,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [applyCartData])
 
+  // Перше читання ділиться одним запитом зі станом входу — раніше кожне
+  // відкриття сторінки коштувало двох окремих звернень до бази. Далі, після
+  // будь-якої зміни кошика, працює звичайний refreshCart.
   useEffect(() => {
-    refreshCart()
-  }, [refreshCart])
+    let cancelled = false
+    loadSession()
+      .then((data) => {
+        if (cancelled) return
+        applyCartData(data)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [applyCartData])
 
   // Чекаємо на відповідь і віддаємо її виклику: кнопка має право показати
   // «Додано» тільки після 200, а «Купити в один клік» — перейти на checkout
