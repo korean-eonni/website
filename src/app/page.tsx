@@ -8,10 +8,18 @@ import ReviewsSection from '@/components/sections/ReviewsSection'
 import SubscribeSection from '@/components/sections/SubscribeSection'
 import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
-import { listProducts } from '@/lib/productStore'
+import { listProducts, CARD_COLUMNS } from '@/lib/productStore'
 import { isUnavailable } from '@/lib/stock'
 
-export const dynamic = 'force-dynamic'
+/**
+ * Публічна сторінка — її вміст однаковий для всіх, тож він кешується й
+ * перебудовується не частіше ніж раз на 5 хвилин. Правка товару в адмінці
+ * скидає кеш одразу (revalidatePath), тож чекати на ці 5 хвилин не доводиться.
+ *
+ * Кошик, оформлення, оплата та профіль лишаються динамічними — вони окремі
+ * сторінки й цього кешу не бачать.
+ */
+export const revalidate = 300
 
 type ProductCard = {
   id: string
@@ -35,17 +43,17 @@ export default async function Home() {
     discount_amount: number | null
     image_path: string | null
     image_url: string | null
-    image_url_2: string | null
-    image_url_3: string | null
-    image_url_4: string | null
-    image_url_5: string | null
     is_new: number
     stock_quantity: number | null
+    coming_soon: number | null
+    is_active: number | null
   }
 
   const mapRow = (row: RawRow): ProductCard => {
     const mainImage = row.image_path || row.image_url || '/products/product-1.png'
-    const allImages = [mainImage, row.image_url_2, row.image_url_3, row.image_url_4, row.image_url_5].filter(Boolean) as string[]
+    // Каруселі на головній показують лише головне фото — решту галереї
+    // (фото 2-12) читає тільки сторінка товару.
+    const allImages = [mainImage]
     return {
       id: row.id,
       name: row.name,
@@ -60,8 +68,24 @@ export default async function Home() {
     }
   }
 
-  const newRows = (await listProducts('is_active = 1 AND is_new = 1')).slice(0, 12) as RawRow[]
-  const exclusiveRows = (await listProducts('is_active = 1 AND is_exclusive = 1')).slice(0, 12) as RawRow[]
+  // LIMIT робить база: раніше сюди приїжджав увесь список, щоб потім
+  // відрізати slice(0, 12). Обидва запити паралельні — вони незалежні.
+  //
+  // Сторінка тепер збирається наперед (ISR), тож недоступна база не має
+  // валити збірку: показуємо головну без каруселей, а наступна перебудова
+  // (не пізніше ніж за revalidate) поверне товари на місце.
+  let newRows: RawRow[] = []
+  let exclusiveRows: RawRow[] = []
+  try {
+    const [fresh, exclusive] = await Promise.all([
+      listProducts('is_active = 1 AND is_new = 1', CARD_COLUMNS, { limit: 12, cacheable: true }),
+      listProducts('is_active = 1 AND is_exclusive = 1', CARD_COLUMNS, { limit: 12, cacheable: true }),
+    ])
+    newRows = fresh as unknown as RawRow[]
+    exclusiveRows = exclusive as unknown as RawRow[]
+  } catch (error) {
+    console.error('[home] product query failed:', error)
+  }
 
   const newProducts = newRows.map(mapRow)
   const exclusiveProducts = exclusiveRows.map(mapRow)

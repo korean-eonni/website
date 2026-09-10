@@ -103,12 +103,49 @@ export async function ensureProductSchema(): Promise<void> {
 
 function ensurePostgresSchema(): Promise<void> {
   if (!schemaReady) {
-    schemaReady = runSchemaSetup().catch((err) => {
+    schemaReady = prepareSchema().catch((err) => {
       schemaReady = null
       throw err
     })
   }
   return schemaReady
+}
+
+/**
+ * Холодний запит більше не виконує DDL.
+ *
+ * Раніше кожен новий екземпляр функції прогонив CREATE TABLE і ~35 послідовних
+ * ALTER TABLE — по одному запиту до бази за раз. На холодному старті це давало
+ * кілька секунд затримки просто щоб відкрити каталог.
+ *
+ * Тепер один короткий запит до information_schema каже, чого бракує. Якщо все
+ * на місці (звичайний випадок) — жодного DDL. Якщо після деплою з'явилася нова
+ * колонка, вона додається один раз, і далі знову нічого.
+ *
+ * Перевірка самовідновна: нову колонку не треба додавати руками після деплою.
+ * Якщо колись захочеться прибрати й цей один запит — DB_SCHEMA_READY=1 вимикає
+ * перевірку повністю (тоді структуру доводиться оновлювати самостійно).
+ */
+async function prepareSchema(): Promise<void> {
+  if (process.env.DB_SCHEMA_READY === '1') return
+
+  const { rows } = await sql`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'products'
+  `
+  const present = new Set(rows.map((r) => String(r.column_name)))
+
+  // Таблиці ще немає взагалі — це перший запуск, робимо повну установку.
+  if (present.size === 0) {
+    await runSchemaSetup()
+    return
+  }
+
+  const missing = (PRODUCT_COLUMNS as readonly string[]).filter((c) => !present.has(c))
+  if (missing.length === 0) return
+
+  console.warn('[schema] products: додаю колонки', missing.join(', '))
+  await runSchemaSetup()
 }
 
 async function runSchemaSetup() {
@@ -300,25 +337,67 @@ export const PRODUCT_COLUMNS = [
 ] as const
 
 /**
+ * Поля, потрібні картці товару — у каталозі, на головній, у списках.
+ *
+ * Усе інше (описи, склад, клінічні дані, розділи сторінки товару, фото 2-12)
+ * читає лише сторінка самого товару.
+ */
+export const CARD_COLUMNS = [
+  'id', 'name',
+  'sale_price', 'original_price', 'discount_amount',
+  'image_url', 'image_path',
+  'brand', 'category', 'subcategory', 'subcategory_2', 'subcategory_3',
+  'tags', 'skin_type', 'volume_options', 'rating',
+  'is_new', 'is_exclusive', 'coming_soon', 'stock_quantity', 'is_active',
+  'created_at',
+] as const
+
+export type ListOptions = {
+  /** LIMIT — скільки рядків узяти. */
+  limit?: number
+  /** OFFSET — з якого рядка почати (для пагінації). */
+  offset?: number
+  /**
+   * true — читання можна кешувати (публічна сторінка з ISR).
+   * За замовчуванням кожне читання позначається як динамічне, бо адмінка,
+   * кошик і замовлення мусять бачити базу такою, якою вона є цю секунду.
+   */
+  cacheable?: boolean
+}
+
+/**
  * List products.
  *
  * `columns` limits the SELECT to the fields the caller actually renders. The
  * product table carries very large text fields (descriptions, the six product
- * page sections, full ingredient lists), so `SELECT *` moves ~1 MB for 144
+ * page sections, full ingredient lists), so `SELECT *` moves ~1.4 MB for 141
  * products — 20× more than a listing screen needs. Only column names from
- * PRODUCT_COLUMNS are accepted, so this can never become an injection point.
+ * PRODUCT_COLUMNS are accepted, so this can never become an injection point;
+ * limit/offset так само проходять через Number(), а не підставляються рядком.
  */
-export async function listProducts(where?: string, columns?: readonly string[]) {
-  freshRead()
+export async function listProducts(
+  where?: string,
+  columns?: readonly string[],
+  options: ListOptions = {},
+) {
+  if (!options.cacheable) freshRead()
   const allowed = columns?.filter((c) => (PRODUCT_COLUMNS as readonly string[]).includes(c))
   const select = allowed && allowed.length ? allowed.join(', ') : '*'
+
+  const limit = Number.isFinite(Number(options.limit)) && Number(options.limit) > 0
+    ? Math.min(500, Math.floor(Number(options.limit)))
+    : null
+  const offset = Number.isFinite(Number(options.offset)) && Number(options.offset) > 0
+    ? Math.floor(Number(options.offset))
+    : 0
+  const range = `${limit ? ` LIMIT ${limit}` : ''}${limit && offset ? ` OFFSET ${offset}` : ''}`
 
   if (usePostgres) {
     await ensurePostgresSchema()
     const query = `
       SELECT ${select} FROM products
       ${where ? `WHERE ${where}` : ''}
-      ORDER BY created_at DESC
+      ORDER BY created_at DESC${range}
     `
     const result = await sql.query(query)
     return result.rows as ProductRecord[]
@@ -329,7 +408,7 @@ export async function listProducts(where?: string, columns?: readonly string[]) 
     `
     SELECT ${select} FROM products
     ${where ? `WHERE ${where}` : ''}
-    ORDER BY created_at DESC
+    ORDER BY created_at DESC${range}
   `
   )
   return stmt.all() as ProductRecord[]

@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getProduct, saveProduct, ProductRecord } from '@/lib/productStore'
+import { revalidatePath } from 'next/cache'
 import {
   ADMIN_COOKIE,
   ADMIN_COOKIE_OPTIONS,
@@ -113,6 +114,11 @@ async function updateProductAction(formData: FormData) {
   for (const url of removed) {
     await deleteProductImage(url)
   }
+
+  // 5) Публічні сторінки кешуються — скидаємо кеш, щоб зміна була видима одразу.
+  revalidatePath('/')
+  revalidatePath('/catalog')
+  revalidatePath(`/product/${id}`)
 
   redirect('/admin?success=product-updated')
 }

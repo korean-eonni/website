@@ -93,16 +93,11 @@ const CONCERN_KEYWORDS: Record<string, { label: string; keywords: string[] }> = 
 type Product = {
   id: string
   name: string
-  short_description: string | null
   sale_price: number | null
   original_price: number | null
   discount_amount: number | null
   image_url: string | null
   image_path: string | null
-  image_url_2: string | null
-  image_url_3: string | null
-  image_url_4: string | null
-  image_url_5: string | null
   is_new: number
   is_exclusive: number
   category: string | null
@@ -116,8 +111,8 @@ type Product = {
   volume_options: string | null
   stock_quantity: number | null
   coming_soon?: string | number | boolean | null
+  is_active?: number | null
   skin_type: string | null
-  ingredients: string | null
   rating: number | null
 }
 
@@ -217,7 +212,9 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
   const [notifyContact, setNotifyContact] = useState('')
   const [notifyStatus, setNotifyStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
   const mainImage = product.image_url || product.image_path || '/products/product-1.png'
-  const allImages = [mainImage, product.image_url_2, product.image_url_3, product.image_url_4, product.image_url_5].filter(Boolean) as string[]
+  // Каталог возить лише головне фото: галерея (фото 2-12) важила помітну
+  // частину сторінки, а показувалась тільки при наведенні.
+  const allImages = [mainImage]
   const [hoveredIndex, setHoveredIndex] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -520,6 +517,30 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
   const [skinTypeOpen, setSkinTypeOpen] = useState(true)
   const [brandOpen, setBrandOpen] = useState(true)
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
+  // Склад товарів — найдовше текстове поле, а потрібне лише цьому фільтру.
+  // Тому воно не їде разом із каталогом, а довантажується, коли покупець
+  // уперше розгортає «Інгредієнти».
+  const [ingredientsById, setIngredientsById] = useState<Record<string, string>>({})
+  const [ingredientsLoading, setIngredientsLoading] = useState(false)
+  const ingredientsRequested = useRef(false)
+
+  useEffect(() => {
+    if (!ingredientsOpen || ingredientsRequested.current) return
+    ingredientsRequested.current = true
+    setIngredientsLoading(true)
+    fetch('/api/products?fields=id,ingredients')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        const arr: Array<{ id: string; ingredients: string | null }> = Array.isArray(data)
+          ? data
+          : data.products || []
+        const map: Record<string, string> = {}
+        for (const row of arr) if (row.ingredients) map[row.id] = row.ingredients
+        setIngredientsById(map)
+      })
+      .catch(() => {})
+      .finally(() => setIngredientsLoading(false))
+  }, [ingredientsOpen])
   const [volumeOpen, setVolumeOpen] = useState(true)
   
   // Computed max price
@@ -635,8 +656,9 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
           if (trimmed) volumes.add(trimmed)
         })
       }
-      if (p.ingredients) {
-        p.ingredients.split(',').forEach(i => {
+      const productIngredients = ingredientsById[p.id]
+      if (productIngredients) {
+        productIngredients.split(',').forEach(i => {
           const trimmed = i.trim()
           if (trimmed) ingredients.add(trimmed)
         })
@@ -660,7 +682,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
       }),
       ingredients: Array.from(ingredients).filter(Boolean).sort(),
     }
-  }, [products, categoryParam])
+  }, [products, categoryParam, ingredientsById])
 
   // Filter products
   // Everything except the stock tab, so each tab can be counted on its own.
@@ -678,12 +700,11 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
             p.name,
             p.brand,
             p.tags,
-            p.short_description,
             p.category,
             p.subcategory,
             p.subcategory_2,
             p.subcategory_3,
-            p.ingredients,
+            ingredientsById[p.id],
           ]
             .filter(Boolean)
             .join(' ')
@@ -736,7 +757,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     if (concernParam && CONCERN_KEYWORDS[concernParam]) {
       const kws = CONCERN_KEYWORDS[concernParam].keywords
       result = result.filter(p => {
-        const hay = [p.name, p.short_description, p.tags, p.skin_type, p.ingredients]
+        const hay = [p.name, p.tags, p.skin_type, ingredientsById[p.id]]
           .filter(Boolean).join(' ').toLowerCase()
         return kws.some(k => hay.includes(k))
       })
@@ -787,7 +808,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
           const productTypes = p.skin_type.split(',').map(s => s.trim())
           if (selectedSkinTypes.some(st => productTypes.some(pt => pt.includes(st)))) return true
         }
-        const hay = [p.name, p.short_description, p.tags, p.ingredients, p.subcategory, p.subcategory_2, p.subcategory_3]
+        const hay = [p.name, p.tags, ingredientsById[p.id], p.subcategory, p.subcategory_2, p.subcategory_3]
           .filter(Boolean).join(' ').toLowerCase()
         return selectedSkinTypes.some(label => (SKIN_TYPE_KEYWORDS[label] ?? []).some(k => hay.includes(k)))
       })
@@ -808,14 +829,15 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     // Ingredients filter
     if (selectedIngredients.length > 0) {
       result = result.filter(p => {
-        if (!p.ingredients) return false
-        const productIngredients = p.ingredients.toLowerCase()
-        return selectedIngredients.some(i => productIngredients.includes(i.toLowerCase()))
+        const productIngredients = ingredientsById[p.id]
+        if (!productIngredients) return false
+        const hay = productIngredients.toLowerCase()
+        return selectedIngredients.some(i => hay.includes(i.toLowerCase()))
       })
     }
 
     return result
-  }, [products, searchParam, categoryParam, newParam, exclusiveParam, concernParam, saleParam, tagParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, selectedCategories, selectedSubcategories, onSaleOnly, minRating])
+  }, [products, searchParam, categoryParam, newParam, exclusiveParam, concernParam, saleParam, tagParam, priceRange, selectedSkinTypes, selectedBrands, selectedVolumes, selectedIngredients, selectedCategories, selectedSubcategories, onSaleOnly, minRating, ingredientsById])
 
   // How many of the current selection sit in each stock tab. Drives both hiding
   // empty tabs and stepping back from one that would show nothing.
@@ -1178,9 +1200,17 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
                   </FilterSection>
                 )}
                 
-                {/* Ingredients filter */}
-                {filterOptions.ingredients.length > 0 && (
+                {/* Ingredients filter — список приїжджає окремим запитом, коли
+                    покупець уперше розгортає цей розділ. Тому сама секція
+                    показується завжди: інакше її нічим було б відкрити. */}
+                {(
                   <FilterSection title="За активними компонентами" isOpen={ingredientsOpen} onToggle={() => setIngredientsOpen(!ingredientsOpen)}>
+                    {ingredientsLoading && (
+                      <p className="text-[14px] text-[#666] py-1">Завантаження…</p>
+                    )}
+                    {!ingredientsLoading && filterOptions.ingredients.length === 0 && (
+                      <p className="text-[14px] text-[#666] py-1">Немає даних про склад</p>
+                    )}
                     {visibleIngredients.map(ing => (
                       <Checkbox
                         key={ing}

@@ -9,6 +9,7 @@ import {
   makeAdminToken,
 } from '@/lib/adminAuth'
 import { deleteProduct, listProducts, saveProduct } from '@/lib/productStore'
+import { revalidatePath } from 'next/cache'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import { brands } from '@/data/brands'
 import { productFromForm } from '@/lib/productForm'
@@ -98,6 +99,7 @@ async function addProductAction(formData: FormData) {
     redirect('/admin?error=db-insert-failed')
   }
 
+  revalidatePublicPages(id)
   redirect('/admin?success=product-added')
 }
 
@@ -109,8 +111,20 @@ async function deleteProductAction(formData: FormData) {
   const id = String(formData.get('id') || '')
   if (!id) redirect('/admin')
   await deleteProduct(id)
+  revalidatePublicPages(id)
   redirect('/admin')
 }
+
+/**
+ * Публічні сторінки кешуються (ISR), тому після кожної зміни товару їх треба
+ * перебудувати — інакше правка з адмінки з'явилася б лише за кілька хвилин.
+ */
+function revalidatePublicPages(productId?: string) {
+  revalidatePath('/')
+  revalidatePath('/catalog')
+  if (productId) revalidatePath(`/product/${productId}`)
+}
+
 
 export default async function AdminPage({
   searchParams,

@@ -1,9 +1,17 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import CatalogContent from './CatalogContent'
-import { listProducts } from '@/lib/productStore'
+import { listProducts, CARD_COLUMNS } from '@/lib/productStore'
 
-export const dynamic = 'force-dynamic'
+/**
+ * Публічна сторінка — її вміст однаковий для всіх, тож він кешується й
+ * перебудовується не частіше ніж раз на 5 хвилин. Правка товару в адмінці
+ * скидає кеш одразу (revalidatePath), тож чекати на ці 5 хвилин не доводиться.
+ *
+ * Кошик, оформлення, оплата та профіль лишаються динамічними — вони окремі
+ * сторінки й цього кешу не бачать.
+ */
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Каталог корейської косметики',
@@ -47,19 +55,21 @@ function CatalogSkeleton() {
   )
 }
 
+/**
+ * Рівно те, що потрібно картці й фільтрам каталогу.
+ *
+ * Довгі поля (опис, склад, клінічні дані, розділи сторінки товару, фото 2-12)
+ * сюди не потрапляють: вони не показуються в каталозі, але важили більшу
+ * частину сторінки.
+ */
 type CatalogProduct = {
   id: string
   name: string
-  short_description: string | null
   sale_price: number | null
   original_price: number | null
   discount_amount: number | null
   image_url: string | null
   image_path: string | null
-  image_url_2: string | null
-  image_url_3: string | null
-  image_url_4: string | null
-  image_url_5: string | null
   is_new: number
   is_exclusive: number
   category: string | null
@@ -71,28 +81,23 @@ type CatalogProduct = {
   volume_options: string | null
   stock_quantity: number | null
   coming_soon: number | null
+  is_active: number | null
   skin_type: string | null
-  ingredients: string | null
   rating: number | null
 }
 
 export default async function CatalogPage() {
   let products: CatalogProduct[] = []
   try {
-    const rawProducts = await listProducts('is_active = 1')
+    const rawProducts = await listProducts('is_active = 1', CARD_COLUMNS, { cacheable: true })
     products = rawProducts.map(p => ({
       id: p.id,
       name: p.name,
-      short_description: p.short_description,
       sale_price: p.sale_price,
       original_price: p.original_price,
       discount_amount: p.discount_amount,
       image_url: p.image_url,
       image_path: p.image_path,
-      image_url_2: p.image_url_2 ?? null,
-      image_url_3: p.image_url_3 ?? null,
-      image_url_4: p.image_url_4 ?? null,
-      image_url_5: p.image_url_5 ?? null,
       is_new: p.is_new,
       is_exclusive: p.is_exclusive,
       category: p.category,
@@ -104,8 +109,8 @@ export default async function CatalogPage() {
       volume_options: p.volume_options,
       stock_quantity: p.stock_quantity,
       coming_soon: p.coming_soon ?? null,
+      is_active: p.is_active ?? 1,
       skin_type: p.skin_type,
-      ingredients: p.ingredients,
       rating: p.rating,
     }))
   } catch {
