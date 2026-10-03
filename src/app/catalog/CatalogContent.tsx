@@ -876,9 +876,12 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     const sorted = [...result]
     switch (sortBy) {
       case 'color':
-        // Default: discounted products first, then group by packaging colour
-        // (rainbow), vivid to pale within a family.
+        // Default: new arrivals first, then discounted products, then group by
+        // packaging colour (rainbow), vivid to pale within a family.
         sorted.sort((a, b) => {
+          const na = a.is_new === 1 ? 0 : 1
+          const nb = b.is_new === 1 ? 0 : 1
+          if (na !== nb) return na - nb
           const da = (a.discount_amount ?? 0) > 0 ? 0 : 1
           const db = (b.discount_amount ?? 0) > 0 ? 0 : 1
           if (da !== db) return da - db
