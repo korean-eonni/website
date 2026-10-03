@@ -253,7 +253,6 @@ export default async function AdminPage({
               <textarea
                 name="name"
                 required
-                maxLength={120}
               
                 rows={2}
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
@@ -280,7 +279,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">SKU</label>
               <textarea
                 name="sku"
-                maxLength={40}
               
                 rows={1}
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
@@ -290,7 +288,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Штрихкод</label>
               <textarea
                 name="barcode"
-                maxLength={40}
               
                 rows={1}
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
@@ -332,7 +329,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Короткий опис</label>
               <textarea
                 name="short_description"
-                maxLength={160}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
@@ -340,7 +336,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Довгий опис</label>
               <textarea
                 name="long_description"
-                maxLength={5000}
                 className="w-full min-h-[120px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
@@ -350,7 +345,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Спосіб застосування</label>
               <textarea
                 name="usage_instructions"
-                maxLength={2000}
                 rows={3}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
@@ -359,7 +353,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Клінічно підтверджено</label>
               <textarea
                 name="clinical_proof"
-                maxLength={2000}
                 rows={3}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
@@ -368,7 +361,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Які проблеми вирішує</label>
               <textarea
                 name="solves_problems"
-                maxLength={2000}
                 rows={3}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
@@ -377,7 +369,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Ключові інгредієнти</label>
               <textarea
                 name="key_ingredients"
-                maxLength={2000}
                 rows={3}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
@@ -395,7 +386,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Сумісність та застереження</label>
               <textarea
                 name="compatibility"
-                maxLength={2000}
                 rows={3}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
@@ -406,7 +396,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Об'єм / Варіанти</label>
               <textarea
                 name="volume_options"
-                maxLength={200}
                 placeholder="20 мл, 40 мл, 80 мл"
               
                 rows={1}
@@ -417,7 +406,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Серія</label>
               <textarea
                 name="series"
-                maxLength={100}
               
                 rows={1}
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
@@ -427,7 +415,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Вік</label>
               <textarea
                 name="age_group"
-                maxLength={40}
                 placeholder="18+ / 25+ / Всі віки"
               
                 rows={1}
@@ -438,7 +425,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Тип шкіри</label>
               <textarea
                 name="skin_type"
-                maxLength={100}
                 placeholder="Жирна / Суха / Усі типи"
               
                 rows={1}
@@ -449,7 +435,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Класифікація</label>
               <textarea
                 name="classification"
-                maxLength={100}
                 placeholder="Натуральна / Професійна"
               
                 rows={1}
@@ -460,7 +445,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Інгредієнти (повний склад)</label>
               <textarea
                 name="ingredients"
-                maxLength={3000}
                 rows={3}
                 className="w-full min-h-[80px] border border-[#CCCCCC] rounded-lg px-3 py-2"
               />

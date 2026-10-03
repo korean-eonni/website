@@ -222,7 +222,7 @@ export default async function AdminEditPage({
 
             <Field label="Назва *" wide>
               <textarea
-                name="name" required defaultValue={product.name} maxLength={200} 
+                name="name" required defaultValue={product.name} 
                 rows={2}
                 className={areaCls}
               />
@@ -253,21 +253,21 @@ export default async function AdminEditPage({
             </Field>
             <Field label="SKU">
               <textarea
-                name="sku" defaultValue={product.sku || ''} maxLength={40} 
+                name="sku" defaultValue={product.sku || ''} 
                 rows={1}
                 className={areaCls}
               />
             </Field>
             <Field label="Штрихкод">
               <textarea
-                name="barcode" defaultValue={product.barcode || ''} maxLength={40} 
+                name="barcode" defaultValue={product.barcode || ''} 
                 rows={1}
                 className={areaCls}
               />
             </Field>
             <Field label="Серія">
               <textarea
-                name="series" defaultValue={product.series || ''} maxLength={100} 
+                name="series" defaultValue={product.series || ''} 
                 rows={1}
                 className={areaCls}
               />
@@ -294,7 +294,7 @@ export default async function AdminEditPage({
             </Field>
             <Field label="Об'єм / варіанти">
               <textarea
-                name="volume_options" defaultValue={product.volume_options || ''} maxLength={200} 
+                name="volume_options" defaultValue={product.volume_options || ''} 
                 rows={1}
                 className={areaCls}
               />
@@ -310,21 +310,21 @@ export default async function AdminEditPage({
             {/* ---------- ХАРАКТЕРИСТИКИ ---------- */}
             <Field label="Вік">
               <textarea
-                name="age_group" defaultValue={product.age_group || ''} maxLength={40} 
+                name="age_group" defaultValue={product.age_group || ''} 
                 rows={1}
                 className={areaCls}
               />
             </Field>
             <Field label="Тип шкіри">
               <textarea
-                name="skin_type" defaultValue={product.skin_type || ''} maxLength={100} 
+                name="skin_type" defaultValue={product.skin_type || ''} 
                 rows={1}
                 className={areaCls}
               />
             </Field>
             <Field label="Класифікація">
               <textarea
-                name="classification" defaultValue={product.classification || ''} maxLength={100} 
+                name="classification" defaultValue={product.classification || ''} 
                 rows={1}
                 className={areaCls}
               />
