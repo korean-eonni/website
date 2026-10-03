@@ -324,8 +324,6 @@ export default async function AdminPage({
               <label className="block text-sm mb-2">Теги (через кому)</label>
               <textarea
                 name="tags"
-                maxLength={200}
-              
                 rows={1}
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />

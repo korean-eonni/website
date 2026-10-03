@@ -301,7 +301,7 @@ export default async function AdminEditPage({
             </Field>
             <Field label="Теги (через кому)">
               <textarea
-                name="tags" defaultValue={product.tags || ''} maxLength={400} 
+                name="tags" defaultValue={product.tags || ''}
                 rows={1}
                 className={areaCls}
               />
