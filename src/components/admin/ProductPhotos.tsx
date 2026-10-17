@@ -48,12 +48,29 @@ export default function ProductPhotos({ initial, max, required }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** Keep the real <input type="file"> in sync with the pending list. */
+  /**
+   * Keep the real <input type="file"> in sync with the pending list, so a
+   * reorder or removal submits exactly what is on screen.
+   *
+   * Some mobile browsers (notably older iOS Safari) accept the DataTransfer
+   * constructor but silently drop files added to it — `dt.files` comes back
+   * empty. Assigning that empty list would WIPE the user's native selection,
+   * so the product saved with zero photos and "Додати" looked like it did
+   * nothing. Only overwrite `input.files` when the rebuild preserved every
+   * file; otherwise leave the browser's own selection untouched.
+   */
   const syncInput = (files: Pending[]) => {
-    if (!inputRef.current || typeof DataTransfer === 'undefined') return
-    const dt = new DataTransfer()
-    files.forEach((p) => dt.items.add(p.file))
-    inputRef.current.files = dt.files
+    const input = inputRef.current
+    if (!input || typeof DataTransfer === 'undefined') return
+    try {
+      const dt = new DataTransfer()
+      files.forEach((p) => dt.items.add(p.file))
+      if (dt.files.length === files.length) {
+        input.files = dt.files
+      }
+    } catch {
+      // input.files is not assignable here — keep the native selection.
+    }
   }
 
   const room = max - urls.length - pending.length

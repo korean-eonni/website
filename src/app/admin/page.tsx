@@ -192,6 +192,16 @@ export default async function AdminPage({
         reason={searchParams?.reason}
       />
       <div className="max-w-[1200px] mx-auto">
+        {searchParams?.error === 'name-required' && (
+          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
+            ✗ Вкажіть назву товару.
+          </div>
+        )}
+        {searchParams?.error === 'image-required' && (
+          <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
+            ✗ Додайте хоча б одне фото товару.
+          </div>
+        )}
         {searchParams?.error === 'image-upload-failed' && (
           <div className="mb-6 rounded-lg border border-[#B91C1C] bg-[#FEE2E2] px-4 py-3 text-[14px] text-[#7F1D1D]">
             ✗ Не вдалося завантажити фото. Спробуй ще раз.
