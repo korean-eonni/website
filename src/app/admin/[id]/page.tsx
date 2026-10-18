@@ -21,8 +21,7 @@ import {
   compactGallery,
   deleteProductImage,
   galleryFromRecord,
-  nextImageIndex,
-  uploadProductImage,
+  isOwnProductBlobUrl,
 } from '@/lib/productImages'
 
 type ProductRow = ProductRecord
@@ -48,9 +47,7 @@ async function updateProductAction(formData: FormData) {
   const existing = await getProduct(id)
   if (!existing) redirect('/admin')
 
-  const name = String(formData.get('name') || '').trim() || existing.name
-
-  // 1) The admin submits the exact order they arranged, plus what they removed.
+  // 1) Parse the hidden gallery fields the photo editor submits.
   const parseList = (raw: FormDataEntryValue | null): string[] => {
     try {
       const parsed = JSON.parse(String(raw ?? '[]'))
@@ -62,45 +59,21 @@ async function updateProductAction(formData: FormData) {
 
   const currentGallery = galleryFromRecord(existing as unknown as Record<string, unknown>)
     .filter((u): u is string => !!u)
-  const submittedOrder = parseList(formData.get('gallery_order'))
-  // Only trust URLs the product actually owns, so a tampered field cannot
-  // inject a foreign image; fall back to the stored order if nothing came in.
-  const ordered = submittedOrder.filter((u) => currentGallery.includes(u))
-  const kept = ordered.length || formData.has('gallery_order') ? ordered : currentGallery
-  const removed = parseList(formData.get('gallery_removed')).filter((u) =>
-    currentGallery.includes(u) && !kept.includes(u)
+
+  // Photos are uploaded straight to Blob from the browser (a Server Action body
+  // is capped at 4.5 MB on Vercel — too small for phone photos), so the
+  // submitted order already holds both the existing photos and any just added.
+  // Trust only our own product-folder URLs — the existing ones already qualify
+  // — so a tampered field cannot inject a foreign image. Fall back to the
+  // stored gallery if the field never arrived at all.
+  const submittedOrder = parseList(formData.get('gallery_order')).filter(
+    (u) => currentGallery.includes(u) || isOwnProductBlobUrl(u)
+  )
+  const gallery = compactGallery(
+    formData.has('gallery_order') ? submittedOrder : currentGallery
   )
 
-  // 2) Append newly uploaded photos after the existing ones.
-  let gallery = compactGallery(kept)
-  const newFiles = (formData.getAll('images') as File[]).filter(
-    (f) => f && typeof f === 'object' && f.size > 0
-  )
-
-  if (newFiles.length) {
-    const used = gallery.filter(Boolean).length
-    const room = MAX_PRODUCT_IMAGES - used
-    // File names continue past the highest index already stored, so a new upload
-    // can never overwrite a photo that is still in the gallery.
-    let nameIndex = nextImageIndex(currentGallery)
-    try {
-      for (let i = 0; i < Math.min(newFiles.length, room); i++) {
-        const url = await uploadProductImage({
-          data: newFiles[i],
-          productId: id,
-          productName: name,
-          slot: nameIndex++,
-        })
-        gallery[used + i] = url
-      }
-    } catch (err) {
-      console.error('[admin/updateProduct] image upload failed:', err)
-      redirect(`/admin/${id}?error=image-upload-failed`)
-    }
-    gallery = compactGallery(gallery)
-  }
-
-  // 3) Save every field in one write.
+  // 2) Save every field in one write.
   const product = productFromForm(formData, { id, gallery, existing })
 
   try {
@@ -110,7 +83,12 @@ async function updateProductAction(formData: FormData) {
     redirect(`/admin/${id}?error=save-failed`)
   }
 
-  // 4) Only after a successful save, drop removed photos from storage.
+  // 3) Only after a successful save, drop photos that are gone — existing ones
+  // the admin removed and photos uploaded this session then taken back out —
+  // from Blob. deleteProductImage ignores anything not in our storage.
+  const removed = Array.from(
+    new Set([...currentGallery, ...parseList(formData.get('gallery_removed'))])
+  ).filter((u) => !gallery.includes(u))
   for (const url of removed) {
     await deleteProductImage(url)
   }
@@ -228,7 +206,12 @@ export default async function AdminEditPage({
               />
             </Field>
 
-            <ProductPhotos initial={gallery.filter(Boolean) as string[]} max={MAX_PRODUCT_IMAGES} />
+            <ProductPhotos
+              initial={gallery.filter(Boolean) as string[]}
+              max={MAX_PRODUCT_IMAGES}
+              productId={product.id}
+              productName={product.name}
+            />
 
             {/* ---------- ОСНОВНЕ ---------- */}
             <TaxonomyFields

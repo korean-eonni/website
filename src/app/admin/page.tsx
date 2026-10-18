@@ -13,7 +13,12 @@ import { revalidatePath } from 'next/cache'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import { brands } from '@/data/brands'
 import { productFromForm } from '@/lib/productForm'
-import { compactGallery, uploadProductImage, MAX_PRODUCT_IMAGES } from '@/lib/productImages'
+import {
+  compactGallery,
+  deleteProductImage,
+  isOwnProductBlobUrl,
+  MAX_PRODUCT_IMAGES,
+} from '@/lib/productImages'
 import AdminFlash from '@/components/admin/AdminFlash'
 import ProductSearchBox from '@/components/admin/ProductSearchBox'
 import TaxonomyFields from '@/components/admin/TaxonomyFields'
@@ -47,6 +52,16 @@ async function logoutAction() {
   redirect('/admin')
 }
 
+/** Parse a hidden JSON field (gallery order / removed) into a string list. */
+function parseGalleryList(raw: FormDataEntryValue | null): string[] {
+  try {
+    const parsed = JSON.parse(String(raw ?? '[]'))
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []
+  } catch {
+    return []
+  }
+}
+
 async function addProductAction(formData: FormData) {
   'use server'
   if (!isAuthed()) {
@@ -58,39 +73,25 @@ async function addProductAction(formData: FormData) {
     redirect('/admin?error=name-required')
   }
 
-  // Photos go straight into our own Blob storage — no Google Drive, no Sheet.
-  const rawFiles = formData.getAll('images') as File[]
-  const photoFiles: File[] = rawFiles
-    .filter((f) => f && typeof f === 'object' && f.size > 0)
-    .slice(0, MAX_PRODUCT_IMAGES)
+  // The form generated this id and photos were uploaded under products/<id>/,
+  // so reuse it; fall back to a fresh one only if it is somehow missing.
+  const formId = String(formData.get('id') || '').trim()
+  const id = formId || randomUUID()
 
-  if (photoFiles.length === 0) {
+  // Photos are already in our Blob storage — the browser uploaded them straight
+  // there (a Server Action body is capped at 4.5 MB on Vercel, too small for
+  // phone photos). The form only carries their URLs; trust only our own
+  // product-folder URLs so a tampered field cannot inject a foreign image.
+  const gallery = compactGallery(
+    parseGalleryList(formData.get('gallery_order')).filter(isOwnProductBlobUrl)
+  )
+
+  if (gallery.filter(Boolean).length === 0) {
     redirect('/admin?error=image-required')
   }
 
-  const id = randomUUID()
-  const photoUrls: string[] = []
-  try {
-    for (let i = 0; i < photoFiles.length; i++) {
-      const url = await uploadProductImage({
-        data: photoFiles[i],
-        productId: id,
-        productName: name,
-        slot: i + 1,
-      })
-      photoUrls.push(url)
-    }
-  } catch (err) {
-    console.error('[admin/addProduct] image upload failed:', err)
-    redirect('/admin?error=image-upload-failed')
-  }
-
   // Everything the form knows about the product, written in one place.
-  const product = productFromForm(formData, {
-    id,
-    gallery: compactGallery(photoUrls),
-    existing: null,
-  })
+  const product = productFromForm(formData, { id, gallery, existing: null })
 
   try {
     await saveProduct(product)
@@ -98,6 +99,12 @@ async function addProductAction(formData: FormData) {
     console.error('[admin/addProduct] DB insert failed:', err)
     redirect('/admin?error=db-insert-failed')
   }
+
+  // A photo picked and then removed before saving is still in Blob — drop it.
+  const removed = parseGalleryList(formData.get('gallery_removed'))
+    .filter(isOwnProductBlobUrl)
+    .filter((u) => !gallery.includes(u))
+  for (const url of removed) await deleteProductImage(url)
 
   revalidatePublicPages(id)
   redirect('/admin?success=product-added')
@@ -168,6 +175,10 @@ export default async function AdminPage({
       </main>
     )
   }
+
+  // New product's id, generated up front so the gallery can upload photos under
+  // products/<id>/ before the product row exists; addProductAction reuses it.
+  const newId = randomUUID()
 
   // The table below renders nine fields — fetching the full record (including
   // every description and section) would move ~1 MB instead of ~45 KB.
@@ -258,17 +269,18 @@ export default async function AdminPage({
             className="grid gap-4 md:grid-cols-2"
             encType="multipart/form-data"
           >
+            <input type="hidden" name="id" value={newId} />
             <div className="md:col-span-2">
               <label className="block text-sm mb-2">Назва *</label>
               <textarea
                 name="name"
                 required
-              
+
                 rows={2}
                 className="w-full border border-[#CCCCCC] rounded-lg px-3 py-2"
               />
             </div>
-            <ProductPhotos initial={[]} max={MAX_PRODUCT_IMAGES} required />
+            <ProductPhotos initial={[]} max={MAX_PRODUCT_IMAGES} required productId={newId} />
             <TaxonomyFields taxonomy={taxonomy} />
             <div>
               <label className="block text-sm mb-2">Бренд</label>

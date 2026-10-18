@@ -172,6 +172,19 @@ export function isOwnBlobUrl(url: string | null | undefined): boolean {
   return !!url && url.includes('.blob.vercel-storage.com')
 }
 
+/**
+ * True when the URL is a product photo in our own Blob storage.
+ *
+ * Photos are now uploaded straight from the browser to Blob (the file never
+ * passes through a Server Action, which Vercel caps at 4.5 MB). The admin form
+ * then submits only the resulting URLs, so the server must accept a URL it did
+ * not create itself — but ONLY when it is our Blob and under `products/`, so a
+ * tampered field can never inject a foreign image.
+ */
+export function isOwnProductBlobUrl(url: string | null | undefined): boolean {
+  return isOwnBlobUrl(url) && /\/products\//.test(url as string)
+}
+
 /** Delete a photo from Blob. External (e.g. Google) URLs are ignored. */
 export async function deleteProductImage(url: string | null | undefined): Promise<void> {
   if (!isOwnBlobUrl(url)) return
