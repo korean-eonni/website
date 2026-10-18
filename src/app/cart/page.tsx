@@ -8,7 +8,7 @@ import { FREE_SHIPPING_THRESHOLD, hasFreeShipping } from '@/lib/shipping'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
-import { isUnavailable, maxOrderable, stockHint } from '@/lib/stock'
+import { isUnavailable, maxOrderable } from '@/lib/stock'
 
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
@@ -207,21 +207,11 @@ export default function CartPage() {
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             disabled={item.quantity >= maxOrderable(item.product ?? {})}
-                            title={
-                              item.quantity >= maxOrderable(item.product ?? {})
-                                ? `Залишилося ${maxOrderable(item.product ?? {})} шт.`
-                                : undefined
-                            }
                             className="w-10 h-10 flex items-center justify-center text-[#666] hover:text-black transition-colors disabled:text-[#CCC] disabled:cursor-not-allowed disabled:hover:text-[#CCC]"
                           >
                             +
                           </button>
                         </div>
-                        {stockHint(item.product ?? {}) && (
-                          <span className="text-[12px] text-[#9B2C2C] whitespace-nowrap">
-                            {stockHint(item.product ?? {})}
-                          </span>
-                        )}
                       </div>
 
                       {/* Total */}

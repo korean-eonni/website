@@ -225,11 +225,6 @@ export default function CartDropdown() {
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             disabled={item.quantity >= maxOrderable(item.product ?? {})}
-                            title={
-                              item.quantity >= maxOrderable(item.product ?? {})
-                                ? `Залишилося ${maxOrderable(item.product ?? {})} шт.`
-                                : undefined
-                            }
                             className="w-7 h-7 flex items-center justify-center text-[#666] hover:text-black transition-colors disabled:text-[#CCC] disabled:cursor-not-allowed disabled:hover:text-[#CCC]"
                           >
                             +

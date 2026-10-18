@@ -18,16 +18,17 @@ function parseQuantity(value: unknown, { min = 1 }: { min?: number } = {}): numb
   return n
 }
 
-/** What the customer is told when they ask for more than the shelf holds. */
+/**
+ * What the customer is told when they ask for more than the shelf holds.
+ * Deliberately never states the exact stock left — customers should not see
+ * how many units remain.
+ */
 function tooManyMessage(stock: number, alreadyInCart: number): string {
   const canAdd = Math.max(0, stock - alreadyInCart)
   if (alreadyInCart > 0 && canAdd === 0) {
-    return `Залишилося ${stock} шт — усе вже у вашому кошику.`
+    return 'Усе доступне вже у вашому кошику.'
   }
-  if (alreadyInCart > 0) {
-    return `Залишилося ${stock} шт, у кошику вже ${alreadyInCart} — можна додати ще ${canAdd}.`
-  }
-  return `Залишилося ${stock} шт — більше замовити не можна.`
+  return 'Більше цього товару замовити не можна.'
 }
 
 async function getSessionId(): Promise<{ sessionId: string; userId?: string }> {

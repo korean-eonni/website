@@ -65,9 +65,6 @@ export function isUnavailable(p: AvailabilityFields): boolean {
   return !isPurchasable(p)
 }
 
-/** Нижче цього залишку показуємо покупцеві, скільки одиниць лишилося. */
-export const LOW_STOCK_HINT = 10
-
 /**
  * Скільки одиниць товару реально можна замовити: 0 — товар недоступний.
  * Той самий ліміт перевіряє POST/PATCH /api/cart, тому кнопка «+» і сервер
@@ -78,13 +75,6 @@ export function maxOrderable(p: AvailabilityFields): number {
   const n = Math.floor(Number(p.stock_quantity))
   if (!Number.isFinite(n) || n < 1) return 0
   return Math.min(99, n)
-}
-
-/** «Залишилося X шт.» — лише коли залишок малий і про нього варто попередити. */
-export function stockHint(p: AvailabilityFields): string | null {
-  const n = maxOrderable(p)
-  if (n < 1 || n > LOW_STOCK_HINT) return null
-  return `Залишилося ${n} шт.`
 }
 
 /**

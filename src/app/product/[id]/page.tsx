@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import { decodeRouteId } from '@/lib/routeParams'
-import { isPurchasable, isUnavailable, maxOrderable, stockHint } from '@/lib/stock'
+import { isPurchasable, isUnavailable, maxOrderable } from '@/lib/stock'
 
 type Product = {
   id: string
@@ -119,7 +119,6 @@ function QuantitySelector({
       <button
         onClick={() => onQuantityChange(Math.min(max, quantity + 1))}
         disabled={atMax}
-        title={atMax ? `Залишилося ${max} шт.` : undefined}
         className="text-[20px] text-black hover:text-[#7C83C9] transition-colors disabled:text-[#CCCCCC] disabled:cursor-not-allowed disabled:hover:text-[#CCCCCC]"
         aria-label="Increase quantity"
       >
@@ -1799,9 +1798,6 @@ export default function ProductPage() {
               <div className="mb-6">
                 <label className="block text-[14px] text-[#666666] mb-2">Кількість</label>
                 <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} max={orderLimit} />
-                {stockHint(product) && (
-                  <p className="mt-2 text-[13px] font-semibold text-[#9B2C2C]">{stockHint(product)}</p>
-                )}
               </div>
 
               <div className="flex flex-col gap-3 mt-auto">

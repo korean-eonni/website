@@ -104,7 +104,7 @@ export async function createOrderWithStock(args: {
           status: 409,
           error:
             left > 0
-              ? `Недостатньо на складі: ${name} — залишилося ${left} шт.`
+              ? `Недостатньо на складі: ${name}`
               : `Товару немає в наявності: ${name}`,
         }
       }
