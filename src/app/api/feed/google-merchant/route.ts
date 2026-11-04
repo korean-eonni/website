@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { listProducts } from '@/lib/productStore'
 import { createHash } from 'crypto'
 
-// Google limits g:id to 50 chars; shorten long ids with a stable hash suffix
+// Google limits g:id to 50 bytes; keep ids ASCII-only and short, with a stable hash suffix
 function feedId(raw: string): string {
-  if (raw.length <= 50) return raw
+  if (/^[!-~]{1,50}$/.test(raw)) return raw
   const hash = createHash('sha1').update(raw).digest('hex').slice(0, 8)
-  return `${raw.slice(0, 41)}-${hash}`
+  const ascii = raw.replace(/[^!-~]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+  return `${ascii.slice(0, 41).replace(/-$/, '')}-${hash}`
 }
 
 export const revalidate = 3600 // refresh feed hourly
