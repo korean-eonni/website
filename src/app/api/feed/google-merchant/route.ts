@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server'
 import { listProducts } from '@/lib/productStore'
+import { createHash } from 'crypto'
+
+// Google limits g:id to 50 chars; shorten long ids with a stable hash suffix
+function feedId(raw: string): string {
+  if (raw.length <= 50) return raw
+  const hash = createHash('sha1').update(raw).digest('hex').slice(0, 8)
+  return `${raw.slice(0, 41)}-${hash}`
+}
 
 export const revalidate = 3600 // refresh feed hourly
 
@@ -46,7 +54,7 @@ export async function GET() {
         stripHtml(p.long_description) ||
         p.name
       const image = p.image_url || p.image_path || `${SITE_URL}/logo.svg`
-      const id = escapeXml(p.sku || p.id)
+      const id = escapeXml(feedId(String(p.sku || p.id)))
       const title = escapeXml(p.name).slice(0, 150)
       const desc = escapeXml(description).slice(0, 5000)
       const brand = p.brand ? escapeXml(p.brand) : 'Eonni'
