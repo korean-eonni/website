@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import Magnetic from '@/components/ui/Magnetic'
 import type { GiftLine } from '@/lib/giftMasks'
+import { PromoGiftRow } from '@/components/cart/PromoGift'
 import { maxOrderable } from '@/lib/stock'
 
 export default function CartDropdown() {
@@ -260,6 +261,8 @@ export default function CartDropdown() {
                     </button>
                   </div>
                 ))}
+
+                <div className="px-4"><PromoGiftRow compact /></div>
 
                 {/* Gift masks — read-only, one free mask per 1000₴ */}
                 {giftMasks.map((g) => (

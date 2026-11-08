@@ -3,6 +3,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react'
 import { giftCountForSubtotal, giftMasksForSubtotal, GiftLine } from '@/lib/giftMasks'
 import { loadSession } from '@/lib/sessionBootstrap'
+import { PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
+
+const PROMO_KEY = 'eonni_gift_promo'
 
 type CartProduct = {
   id: string
@@ -38,6 +41,13 @@ type CartContextType = {
   giftMasks: GiftLine[]
   /** Latest batch of newly-earned masks to fly into the cart icon (or null). */
   giftFly: GiftFly | null
+  /** Застосований одноразовий промокод (або null). */
+  promoCode: string | null
+  /** Назва подарунка за промокодом — лише коли товарів від 3000 ₴. */
+  promoGift: string | null
+  /** Перевіряє код; повертає текст помилки або null, якщо застосовано. */
+  applyPromo: (code: string) => Promise<string | null>
+  removePromo: () => void
   /** Повертає true лише тоді, коли сервер підтвердив додавання. */
   addToCart: (productId: string, quantity?: number) => Promise<boolean>
   updateQuantity: (itemId: string, quantity: number) => Promise<void>
@@ -63,6 +73,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => { subtotalRef.current = subtotal }, [subtotal])
 
   const giftMasks = useMemo(() => giftMasksForSubtotal(subtotal), [subtotal])
+
+  const [promo, setPromo] = useState<{ code: string; gift: string } | null>(null)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PROMO_KEY)
+      if (raw) setPromo(JSON.parse(raw))
+    } catch { /* ignore */ }
+  }, [])
+  const applyPromo = useCallback(async (code: string): Promise<string | null> => {
+    try {
+      const res = await fetch('/api/promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok || !d?.ok) return typeof d?.error === 'string' ? d.error : 'Не вдалося перевірити промокод'
+      const next = { code: String(d.code), gift: String(d.gift) }
+      setPromo(next)
+      try { localStorage.setItem(PROMO_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+      return null
+    } catch {
+      return 'Немає звʼязку з сервером. Спробуйте ще раз.'
+    }
+  }, [])
+  const removePromo = useCallback(() => {
+    setPromo(null)
+    try { localStorage.removeItem(PROMO_KEY) } catch { /* ignore */ }
+  }, [])
+  const promoOn = !!promo && subtotal >= PROMO_MIN_SUBTOTAL
 
   // Informational only — clear it on its own so messages can't pile up.
   useEffect(() => {
@@ -250,6 +290,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         loading,
         giftMasks,
         giftFly,
+        promoCode: promoOn && promo ? promo.code : null,
+        promoGift: promoOn && promo ? promo.gift : null,
+        applyPromo,
+        removePromo,
         addToCart,
         updateQuantity,
         removeItem,

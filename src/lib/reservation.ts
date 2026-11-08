@@ -1,3 +1,4 @@
+import { ensurePromoSchema } from '@/lib/promoStore'
 import { db, sql } from '@vercel/postgres'
 import type { Order } from '@/lib/userStore'
 import { ensureUserSchema } from '@/lib/userStore'
@@ -49,6 +50,7 @@ export async function releaseOrderStock(
 
   await ensureProductSchema()
   await ensureUserSchema()
+  await ensurePromoSchema()
 
   const client = await db.connect()
   try {
@@ -98,6 +100,9 @@ export async function releaseOrderStock(
         WHERE id = ${item.product_id}
       `
     }
+
+    // Скасоване замовлення звільняє свій промокод — ним можна скористатися знову.
+    await client.sql`DELETE FROM promo_redemptions WHERE order_id = ${orderId}`
 
     const note = options.reason ? `${order.notes ?? ''} | ${options.reason}` : (order.notes ?? null)
     await client.sql`

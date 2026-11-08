@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { isUnavailable, maxOrderable } from '@/lib/stock'
+import PromoCodeBox, { PromoGiftRow } from '@/components/cart/PromoGift'
 
 export default function CartPage() {
   const { items, itemCount, subtotal, loading, updateQuantity, removeItem, clearCart, giftMasks } = useCart()
@@ -252,6 +253,8 @@ export default function CartPage() {
                       <span className="hidden md:block w-8" />
                     </div>
                   ))}
+
+                  <PromoGiftRow />
                 </div>
 
                 {/* Clear Cart */}
@@ -338,7 +341,11 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  <div className="mt-6 flex justify-between items-center">
+                  <div className="mt-6">
+                    <PromoCodeBox />
+                  </div>
+
+                  <div className="flex justify-between items-center">
                     <span className="text-[18px] font-medium">Разом:</span>
                     <span className="font-bebas text-[32px] text-black">₴{total.toFixed(0)}</span>
                   </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { PromoGiftRow } from '@/components/cart/PromoGift'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
@@ -71,7 +72,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, subtotal, clearCart, giftMasks, loading: cartLoading, refreshCart } = useCart()
+  const { items, subtotal, clearCart, giftMasks, loading: cartLoading, refreshCart, promoCode: giftPromoCode, removePromo } = useCart()
   const { discountEligible } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
   // Кошик перечитано з сервера вже на цій сторінці (а не колись раніше).
@@ -432,6 +433,7 @@ export default function CheckoutPage() {
             : address || null,
         paymentMethod,
         promoCode: promoActive ? 'SKINTEST10' : null,
+        giftPromoCode,
         notes,
         // Send ONLY product id + quantity. Server re-fetches prices and
         // computes the total — never trust client-supplied amounts.
@@ -453,6 +455,8 @@ export default function CheckoutPage() {
       }
 
       const { orderId } = await res.json()
+
+      if (giftPromoCode) removePromo()
 
       // Promo is single-use — clear it so it doesn't apply to a later order.
       if (promoActive) {
@@ -1175,6 +1179,8 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   ))}
+
+                  <PromoGiftRow compact />
                 </div>
 
                 {/* Totals */}

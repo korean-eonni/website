@@ -6,6 +6,8 @@ import { createOrderWithStock } from '@/lib/orderTransaction'
 import { expireStaleReservations } from '@/lib/reservation'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
+import { normalizePromoCode, promoGiftFor, PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
+import { ensurePromoSchema } from '@/lib/promoStore'
 import { isOutOfStock } from '@/lib/stock'
 
 export const dynamic = 'force-dynamic'
@@ -115,6 +117,23 @@ export async function POST(request: Request) {
     // not reserve it here (a mask being low on stock must never block an order).
     const giftLines = giftMasksForSubtotal(totalAmount)
 
+    // Одноразовий промокод із подарунком — лише від PROMO_MIN_SUBTOTAL ₴ товарів.
+    // Чи він ще вільний, остаточно вирішує транзакція (унікальний ключ).
+    const giftCode = normalizePromoCode(data.giftPromoCode)
+    const giftCodeName = giftCode ? promoGiftFor(giftCode) : null
+    if (giftCode && !giftCodeName) {
+      return NextResponse.json({ error: 'Такого промокоду не існує' }, { status: 400 })
+    }
+    if (giftCode && totalAmount < PROMO_MIN_SUBTOTAL) {
+      return NextResponse.json(
+        { error: `Промокод діє на замовлення від ₴${PROMO_MIN_SUBTOTAL}` },
+        { status: 400 }
+      )
+    }
+    const promoGifts = giftCodeName
+      ? [{ productId: `promo:${giftCode}`, name: `${giftCodeName} (промокод ${giftCode})`, image: '/icons/gift.svg' }]
+      : []
+
     // Identify user (if any). Needed before discounts — being logged in is itself
     // one, so the order total depends on it.
     const cookieStore = await cookies()
@@ -154,6 +173,7 @@ export async function POST(request: Request) {
     // Подарункові маски додаються тією ж транзакцією, але не резервуються.
     await ensureProductSchema()
     await ensureUserSchema()
+    await ensurePromoSchema()
 
     const created = await createOrderWithStock({
       draft: {
@@ -178,7 +198,11 @@ export async function POST(request: Request) {
         cart_session: cartSession,
       },
       lines,
-      gifts: giftLines.map((g) => ({ productId: g.productId, name: g.name, image: g.image })),
+      gifts: [
+        ...giftLines.map((g) => ({ productId: g.productId, name: g.name, image: g.image })),
+        ...promoGifts,
+      ],
+      promoCode: giftCodeName ? giftCode : null,
     })
 
     if (!created.ok) {

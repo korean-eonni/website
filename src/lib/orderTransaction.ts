@@ -45,8 +45,10 @@ export async function createOrderWithStock(args: {
   /** Подарунки не резервуються: їх запас ведеться вручну, і брак маски
    *  ніколи не має блокувати замовлення. */
   gifts: OrderGift[]
+  /** Одноразовий промокод (уже перевірений). Записується тією ж транзакцією. */
+  promoCode?: string | null
 }): Promise<CreateOrderResult> {
-  const { draft, lines, gifts } = args
+  const { draft, lines, gifts, promoCode } = args
 
   // Скільки одиниць кожного товару потрібно всього — той самий товар може
   // прийти двома позиціями, і перевіряти їх окремо було б неправильно.
@@ -140,6 +142,18 @@ export async function createOrderWithStock(args: {
         INSERT INTO order_items (id, order_id, product_id, product_name, product_image, quantity, price, created_at)
         VALUES (${randomUUID()}, ${orderId}, ${gift.productId}, ${'Подарунок — ' + gift.name}, ${gift.image}, ${1}, ${0}, ${now})
       `
+    }
+
+    if (promoCode) {
+      const used = await client.sql`
+        INSERT INTO promo_redemptions (code, order_id, created_at)
+        VALUES (${promoCode}, ${orderId}, ${now})
+        ON CONFLICT (code) DO NOTHING
+      `
+      if (used.rowCount === 0) {
+        await client.sql`ROLLBACK`
+        return { ok: false, status: 409, error: `Промокод ${promoCode} уже використано` }
+      }
     }
 
     await client.sql`COMMIT`
