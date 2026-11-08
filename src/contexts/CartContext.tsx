@@ -45,6 +45,9 @@ type CartContextType = {
   promoCode: string | null
   /** Назва подарунка за промокодом — лише коли товарів від 3000 ₴. */
   promoGift: string | null
+  /** Товар-подарунок у каталозі (для фото й посилання). */
+  promoGiftProductId: string | null
+  promoGiftImage: string | null
   /** Перевіряє код; повертає текст помилки або null, якщо застосовано. */
   applyPromo: (code: string) => Promise<string | null>
   removePromo: () => void
@@ -74,11 +77,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const giftMasks = useMemo(() => giftMasksForSubtotal(subtotal), [subtotal])
 
-  const [promo, setPromo] = useState<{ code: string; gift: string } | null>(null)
+  const [promo, setPromo] = useState<{ code: string; gift: string; productId?: string | null; image?: string | null } | null>(null)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(PROMO_KEY)
-      if (raw) setPromo(JSON.parse(raw))
+      if (raw) {
+        const saved = JSON.parse(raw)
+        setPromo(saved)
+        // Збережені до появи фото — оновлюємо, щоб підтягнути товар.
+        if (saved?.code && !saved.productId) {
+          fetch('/api/promo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: saved.code }) })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+              if (!d?.ok) return
+              const next = { code: String(d.code), gift: String(d.gift), productId: d.productId ?? null, image: d.image ?? null }
+              setPromo(next)
+              try { localStorage.setItem(PROMO_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+            })
+            .catch(() => {})
+        }
+      }
     } catch { /* ignore */ }
   }, [])
   const applyPromo = useCallback(async (code: string): Promise<string | null> => {
@@ -90,7 +108,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok || !d?.ok) return typeof d?.error === 'string' ? d.error : 'Не вдалося перевірити промокод'
-      const next = { code: String(d.code), gift: String(d.gift) }
+      const next = {
+        code: String(d.code),
+        gift: String(d.gift),
+        productId: typeof d.productId === 'string' ? d.productId : null,
+        image: typeof d.image === 'string' ? d.image : null,
+      }
       setPromo(next)
       try { localStorage.setItem(PROMO_KEY, JSON.stringify(next)) } catch { /* ignore */ }
       return null
@@ -292,6 +315,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         giftFly,
         promoCode: promoOn && promo ? promo.code : null,
         promoGift: promoOn && promo ? promo.gift : null,
+        promoGiftProductId: promoOn && promo ? promo.productId ?? null : null,
+        promoGiftImage: promoOn && promo ? promo.image ?? null : null,
         applyPromo,
         removePromo,
         addToCart,

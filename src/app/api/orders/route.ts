@@ -6,7 +6,7 @@ import { createOrderWithStock } from '@/lib/orderTransaction'
 import { expireStaleReservations } from '@/lib/reservation'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
-import { normalizePromoCode, promoGiftFor, PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
+import { giftProductIdFor, normalizePromoCode, promoGiftFor, PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
 import { ensurePromoSchema } from '@/lib/promoStore'
 import { isOutOfStock } from '@/lib/stock'
 
@@ -130,8 +130,14 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+    const giftProductId = giftCodeName ? giftProductIdFor(giftCodeName) : null
+    const giftProduct = giftProductId ? await getProduct(giftProductId).catch(() => null) : null
     const promoGifts = giftCodeName
-      ? [{ productId: `promo:${giftCode}`, name: `${giftCodeName} (промокод ${giftCode})`, image: '/icons/gift.svg' }]
+      ? [{
+          productId: giftProduct && giftProductId ? giftProductId : `promo:${giftCode}`,
+          name: `${giftCodeName} (промокод ${giftCode})`,
+          image: (giftProduct?.image_url ?? giftProduct?.image_path ?? null) || '/icons/gift.svg',
+        }]
       : []
 
     // Identify user (if any). Needed before discounts — being logged in is itself

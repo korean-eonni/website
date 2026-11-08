@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
 import { PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
 
@@ -18,16 +20,27 @@ export function GiftIcon({ className = 'w-full h-full' }: { className?: string }
 
 /** Рядок подарунка за промокодом у списку товарів кошика. */
 export function PromoGiftRow({ compact = false }: { compact?: boolean }) {
-  const { promoGift, promoCode } = useCart()
+  const { promoGift, promoCode, promoGiftProductId, promoGiftImage } = useCart()
   if (!promoGift) return null
   const box = compact ? 'w-[64px] h-[64px]' : 'w-[100px] h-[100px]'
+  const href = promoGiftProductId ? `/product/${promoGiftProductId}` : null
+  const photo = (
+    <div className={`${box} relative rounded-lg bg-white ring-1 ring-[#FFD6E6] flex-shrink-0 overflow-hidden`}>
+      {promoGiftImage ? (
+        <Image src={promoGiftImage} alt={promoGift} fill className="object-cover" sizes="100px" />
+      ) : (
+        <div className="w-full h-full bg-[#FFF3F7] p-3"><GiftIcon /></div>
+      )}
+      {/* маленький подаруночок у кутку */}
+      <span className="absolute top-1 left-1 w-6 h-6 rounded-full bg-white/90 p-0.5 shadow-sm"><GiftIcon /></span>
+    </div>
+  )
+  const title = <p className={`font-gilroy ${compact ? 'text-[14px]' : 'text-[16px]'} text-black line-clamp-2 ${href ? 'hover:text-[#4348AE]' : ''}`}>{promoGift}</p>
   return (
     <div className={`${compact ? 'py-3' : 'py-6'} flex items-center gap-4`}>
-      <div className={`${box} rounded-lg bg-[#FFF3F7] ring-1 ring-[#FFD6E6] flex-shrink-0 p-3`}>
-        <GiftIcon />
-      </div>
+      {href ? <Link href={href}>{photo}</Link> : photo}
       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <p className={`font-gilroy ${compact ? 'text-[14px]' : 'text-[16px]'} text-black line-clamp-2`}>{promoGift}</p>
+        {href ? <Link href={href}>{title}</Link> : title}
         <span className="inline-flex w-fit items-center rounded-full bg-[#FFE8F0] px-2.5 py-0.5 text-[12px] font-semibold text-[#E84A8A]">
           Подарунок за промокодом {promoCode}
         </span>

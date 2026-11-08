@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { normalizePromoCode, promoGiftFor } from '@/lib/promoCodes'
+import { giftProductIdFor, normalizePromoCode, promoGiftFor } from '@/lib/promoCodes'
+import { getProduct } from '@/lib/productStore'
 import { isPromoUsed } from '@/lib/promoStore'
 
 export const dynamic = 'force-dynamic'
@@ -15,5 +16,13 @@ export async function POST(request: Request) {
   if (await isPromoUsed(code)) {
     return NextResponse.json({ error: 'Цей промокод уже використано' }, { status: 409 })
   }
-  return NextResponse.json({ ok: true, code, gift })
+  const productId = giftProductIdFor(gift)
+  const product = productId ? await getProduct(productId).catch(() => null) : null
+  return NextResponse.json({
+    ok: true,
+    code,
+    gift,
+    productId: product ? productId : null,
+    image: product ? (product.image_url ?? product.image_path ?? null) : null,
+  })
 }

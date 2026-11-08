@@ -116,12 +116,30 @@ const PROMO_GIFTS: Record<string, string> = {
   CHEONG: 'Medicube, Deep Vita C Glutathione Mask',
   MALGEUM: 'Medicube, Deep Vita C Glutathione Mask',
   SUNGAN: 'Medicube, Deep Vita C Glutathione Mask',
-  // LACTOFIT, Probiotic Gold (10×2 г)
-  ONMA: 'LACTOFIT, Probiotic Gold (10×2 г)',
-  ONNURI: 'LACTOFIT, Probiotic Gold (10×2 г)',
-  YEOWON: 'LACTOFIT, Probiotic Gold (10×2 г)',
-  GOUNBIT: 'LACTOFIT, Probiotic Gold (10×2 г)',
-  NARAN: 'LACTOFIT, Probiotic Gold (10×2 г)',
+  // LACTOFIT, Probiotic Gold (10 стіків × 2 г)
+  ONMA: 'LACTOFIT, Probiotic Gold (10 стіків × 2 г)',
+  ONNURI: 'LACTOFIT, Probiotic Gold (10 стіків × 2 г)',
+  YEOWON: 'LACTOFIT, Probiotic Gold (10 стіків × 2 г)',
+  GOUNBIT: 'LACTOFIT, Probiotic Gold (10 стіків × 2 г)',
+  NARAN: 'LACTOFIT, Probiotic Gold (10 стіків × 2 г)',
+}
+
+/** Товар у каталозі для кожного подарунка — звідти беруться фото й посилання. */
+const GIFT_PRODUCTS: Record<string, string> = {
+  'Medicube, Deep Vita C Pad (10 шт.)': 'medicube-deep-vita-c-pad-тонер-пади-з-ві-80',
+  'Medicube, Red Centellaca Mask': 'medicube-red-centella-mask-заспокійлива--90',
+  'Medicube, PDRN Pink Vita Coating Mask': 'medicube-pdrn-pink-vita-coating-mask-тка-91',
+  'Medicube, PDRN Pink Peptide Serum Mask': 'c4c01cd1-cff1-49dc-b98d-01fea1f5d274',
+  'Medicube, Zero Keratin Pad': 'medicube-zero-keratin-pad-ферментні-пад--76',
+  'Medicube, PDRN Pink One Day Serum': 'medicube-pdrn-pink-one-day-serum-концент-40',
+  'Medicube, PDRN Lip Sleeping Mask': 'medicube-pdrn-lip-sleeping-mask-нічна-ма-43',
+  'Medicube, Deep Vita C Glutathione Mask': 'medicube-deep-vita-c-glutathione-brighte-85',
+  // Продаємо лише упаковку — на сторінці товару покупець бачить її повністю.
+  'LACTOFIT, Probiotic Gold (10 стіків × 2 г)': 'lactofit-probiotic-gold-синбіотичний-ком-107',
+}
+
+export function giftProductIdFor(gift: string): string | null {
+  return GIFT_PRODUCTS[gift] ?? null
 }
 
 export function normalizePromoCode(raw: unknown): string {
