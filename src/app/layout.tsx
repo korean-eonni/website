@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header'
 import SupportFAB from '@/components/SupportFAB'
 import LenisProvider from '@/components/providers/LenisProvider'
 import MicrosoftClarity from '@/components/analytics/MicrosoftClarity'
+import GoogleTag from '@/components/analytics/GoogleTag'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua').trim().replace(/\/$/, '')
 const SITE_NAME = 'Eonni — Корейська косметика в Києві'
@@ -192,6 +193,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <MicrosoftClarity />
+        <GoogleTag />
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
