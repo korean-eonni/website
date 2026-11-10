@@ -1,10 +1,10 @@
 import Script from 'next/script'
 
 /**
- * Google tag for Google Ads (account 335-726-8384).
+ * Google tag for Google Ads (account 383-223-2274).
  * Snippet as provided by Google Ads on campaign signup.
  */
-const GOOGLE_TAG_ID = 'GTM-TC98WPHH'
+const GOOGLE_TAG_ID = 'GTM-54X4FBLM'
 
 export default function GoogleTag() {
   return (
