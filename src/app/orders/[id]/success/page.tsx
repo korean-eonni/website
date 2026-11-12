@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer'
 import { useCart } from '@/contexts/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
+import { GOOGLE_ADS_PURCHASE_SEND_TO } from '@/components/analytics/GoogleTag'
 
 type Order = {
   id: string
@@ -59,6 +60,31 @@ export default function OrderSuccessPage() {
       fetchOrder()
     }
   }, [orderId])
+
+  // Google Ads: конверсія «Покупка» — один раз на замовлення, із сумою і номером.
+  useEffect(() => {
+    if (!order || order.payment_status === 'failed') return
+    const key = `ads_conv_${order.id}`
+    try {
+      if (localStorage.getItem(key)) return
+    } catch {}
+    const w = window as unknown as { gtag?: (...args: unknown[]) => void; dataLayer?: unknown[] }
+    const params = {
+      send_to: GOOGLE_ADS_PURCHASE_SEND_TO,
+      value: Number(order.total_amount) || 0,
+      currency: 'UAH',
+      transaction_id: String(order.id),
+    }
+    if (typeof w.gtag === 'function') {
+      w.gtag('event', 'conversion', params)
+    } else {
+      w.dataLayer = w.dataLayer || []
+      w.dataLayer.push(['event', 'conversion', params])
+    }
+    try {
+      localStorage.setItem(key, '1')
+    } catch {}
+  }, [order])
 
   // Кошик для онлайн-оплати чистить callback Platon уже після підтвердження,
   // тож на цій сторінці треба просто перечитати його з сервера — інакше в
