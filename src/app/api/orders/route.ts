@@ -1,3 +1,4 @@
+import { sanitizeAdAttribution } from '@/lib/adAttribution'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getSessionByToken, clearCart, userHasOrders, ensureUserSchema } from '@/lib/userStore'
@@ -202,6 +203,8 @@ export async function POST(request: Request) {
         tracking_number: null,
         // Щоб callback Platon міг очистити саме цей кошик після оплати.
         cart_session: cartSession,
+        // Клік з Google Ads (ключове слово, кампанія), якщо замовлення прийшло з реклами.
+        ad_attribution: sanitizeAdAttribution(data.adAttribution),
       },
       lines,
       gifts: [

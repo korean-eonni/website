@@ -246,6 +246,12 @@ export default async function AdminPage({
             >
               Запити на товар
             </a>
+            <a
+              href="/admin/google-ads"
+              className="h-10 px-4 rounded-lg border border-[#4348AE] text-[#4348AE] uppercase text-[14px] flex items-center hover:bg-[#F5F3FF] transition-colors"
+            >
+              Google Ads
+            </a>
             <form action={logoutAction}>
               <button
                 type="submit"

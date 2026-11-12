@@ -56,6 +56,8 @@ export type Order = {
   /** Кошик, з якого зроблено замовлення: щоб callback Platon міг очистити саме
    *  його після підтвердженої оплати (гість не має user_id). */
   cart_session?: string | null
+  /** JSON of the Google Ads click that led to this order (see adAttribution.ts). */
+  ad_attribution?: string | null
 }
 
 export type OrderItem = {
@@ -181,6 +183,7 @@ export async function ensureUserSchema() {
   await Promise.all([
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_released_at TEXT;`,
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cart_session TEXT;`,
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS ad_attribution TEXT;`,
   ])
 
   schemaInitialized = true
@@ -471,6 +474,15 @@ export async function getOrderItems(orderId: string): Promise<OrderItem[]> {
 export async function getAllOrders(limit = 100): Promise<Order[]> {
   await ensureUserSchema()
   const { rows } = await sql<Order>`SELECT * FROM orders ORDER BY created_at DESC LIMIT ${limit}`
+  return rows
+}
+
+/** Orders that came from a Google Ads click (have ad_attribution), newest first. */
+export async function getGoogleAdsOrders(limit = 500): Promise<Order[]> {
+  await ensureUserSchema()
+  const { rows } = await sql<Order>`
+    SELECT * FROM orders WHERE ad_attribution IS NOT NULL ORDER BY created_at DESC LIMIT ${limit}
+  `
   return rows
 }
 

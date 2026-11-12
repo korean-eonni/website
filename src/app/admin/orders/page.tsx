@@ -168,6 +168,12 @@ export default async function AdminOrdersPage({
           >
             База покупців
           </Link>
+          <Link
+            href="/admin/google-ads"
+            className="px-4 py-2.5 text-[15px] font-medium border-b-2 -mb-px transition-colors border-transparent text-[#666] hover:text-black"
+          >
+            Google Ads
+          </Link>
         </div>
 
         {tab === 'orders' ? (

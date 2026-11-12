@@ -13,6 +13,7 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import PhoneInput from '@/components/ui/PhoneInput'
+import { readAdAttribution } from '@/lib/adAttribution'
 
 type ShippingMethod = 'nova_poshta' | 'ukrposhta'
 type PaymentMethod = 'platon' | 'card' | 'cash_on_delivery' | 'bank_transfer'
@@ -435,6 +436,7 @@ export default function CheckoutPage() {
         promoCode: promoActive ? 'SKINTEST10' : null,
         giftPromoCode,
         notes,
+        adAttribution: readAdAttribution(),
         // Send ONLY product id + quantity. Server re-fetches prices and
         // computes the total — never trust client-supplied amounts.
         items: items.map(item => ({
