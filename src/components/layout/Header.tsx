@@ -311,6 +311,7 @@ export default function Header() {
     { label: 'Який в тебе тип шкіри? Пройти тест', href: '/skin-test' },
     { label: 'Бренди', href: '/brands', hasDropdown: true, dropdownItems: brandLinks },
     { label: 'Про нас', href: '/about', hasDropdown: true, dropdownItems: aboutLinks },
+    { label: 'Акції та подарунки', href: '/promotions' },
     { label: 'Знижки', href: '/catalog?sale=true' },
     { label: 'Блог', href: '/blog' },
   ]
@@ -324,6 +325,7 @@ export default function Header() {
     { label: 'Догляд за потребами', href: '/catalog', children: concernLinks },
     { label: 'Який в тебе тип шкіри? Пройти тест', href: '/skin-test' },
     { label: 'Бренди', href: '/brands', children: brandLinks },
+    { label: 'Акції та подарунки', href: '/promotions' },
     { label: 'Знижки', href: '/catalog?sale=true' },
     { label: 'Про нас', href: '/about' },
   ]
