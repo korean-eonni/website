@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import { useAuth } from '@/contexts/AuthContext'
+import RegisterOffer from '@/components/checkout/RegisterOffer'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { hasFreeShipping } from '@/lib/shipping'
 import { maxOrderable } from '@/lib/stock'
@@ -725,6 +726,15 @@ export default function CheckoutPage() {
                       <label className="block text-[14px] text-[#666] mb-2">Телефон *</label>
                       <PhoneInput value={phone} onChange={setPhone} required />
                     </div>
+
+                    <RegisterOffer
+                      firstName={firstName}
+                      lastName={lastName}
+                      email={email}
+                      phone={phone}
+                      onEmail={setEmail}
+                      savings={memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))}
+                    />
 
                     <button
                       onClick={handleNextStep}
