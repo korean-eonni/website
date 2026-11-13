@@ -5,7 +5,8 @@ import { maxOrderable } from '@/lib/stock'
 
 export type User = {
   id: string
-  email: string
+  /** null — акаунт зареєстровано лише за номером телефону. */
+  email: string | null
   password_hash: string
   first_name: string | null
   last_name: string | null
@@ -184,13 +185,15 @@ export async function ensureUserSchema() {
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_released_at TEXT;`,
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cart_session TEXT;`,
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS ad_attribution TEXT;`,
+    // Реєстрація лише за телефоном: пошта більше не обовʼязкова.
+    sql`ALTER TABLE users ALTER COLUMN email DROP NOT NULL;`,
   ])
 
   schemaInitialized = true
 }
 
 // User functions
-export async function createUser(email: string, password: string, firstName?: string, lastName?: string, phone?: string): Promise<User> {
+export async function createUser(email: string | null, password: string, firstName?: string, lastName?: string, phone?: string): Promise<User> {
   await ensureUserSchema()
   const now = new Date().toISOString()
   const id = randomUUID()
@@ -198,12 +201,12 @@ export async function createUser(email: string, password: string, firstName?: st
 
   await sql`
     INSERT INTO users (id, email, password_hash, first_name, last_name, phone, created_at, updated_at)
-    VALUES (${id}, ${email.toLowerCase()}, ${passwordHash}, ${firstName || null}, ${lastName || null}, ${phone || null}, ${now}, ${now})
+    VALUES (${id}, ${email ? email.toLowerCase() : null}, ${passwordHash}, ${firstName || null}, ${lastName || null}, ${phone || null}, ${now}, ${now})
   `
 
   return {
     id,
-    email: email.toLowerCase(),
+    email: email ? email.toLowerCase() : null,
     password_hash: passwordHash,
     first_name: firstName || null,
     last_name: lastName || null,

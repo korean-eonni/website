@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createUser, getUserByEmail, createSession, mergeGuestCartToUser } from '@/lib/userStore'
+import { createUser, getUserByEmail, getUserByEmailOrPhone, createSession, mergeGuestCartToUser } from '@/lib/userStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,22 +8,31 @@ export async function POST(request: Request) {
   try {
     const { email, password, firstName, lastName, phone } = await request.json()
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email та пароль обов\'язкові' }, { status: 400 })
+    const emailNorm = typeof email === 'string' && email.trim() ? email.trim() : null
+    const phoneNorm = typeof phone === 'string' && phone.trim() ? phone.trim() : null
+    const phoneDigits = (phoneNorm || '').replace(/\D/g, '')
+
+    // Достатньо пошти АБО телефону — більшість покупців лишає лише номер.
+    if ((!emailNorm && phoneDigits.length < 9) || !password) {
+      return NextResponse.json({ error: 'Вкажіть телефон або email та пароль' }, { status: 400 })
+    }
+    if (emailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+      return NextResponse.json({ error: 'Невірний формат email' }, { status: 400 })
     }
 
     if (password.length < 6) {
       return NextResponse.json({ error: 'Пароль має бути не менше 6 символів' }, { status: 400 })
     }
 
-    // Check if user already exists
-    const existingUser = await getUserByEmail(email)
-    if (existingUser) {
+    if (emailNorm && (await getUserByEmail(emailNorm))) {
       return NextResponse.json({ error: 'Користувач з таким email вже існує' }, { status: 400 })
+    }
+    if (phoneDigits.length >= 9 && (await getUserByEmailOrPhone(phoneNorm as string))) {
+      return NextResponse.json({ error: 'Користувач з таким номером телефону вже існує' }, { status: 400 })
     }
 
     // Create user
-    const user = await createUser(email, password, firstName, lastName, phone)
+    const user = await createUser(emailNorm, password, firstName, lastName, phoneNorm || undefined)
 
     // Create session
     const session = await createSession(user.id)

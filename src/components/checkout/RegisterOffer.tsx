@@ -16,14 +16,12 @@ export default function RegisterOffer({
   lastName,
   email,
   phone,
-  onEmail,
   savings,
 }: {
   firstName: string
   lastName: string
   email: string
   phone: string
-  onEmail: (v: string) => void
   savings: number
 }) {
   const { user, loading, refresh } = useAuth()
@@ -42,6 +40,7 @@ export default function RegisterOffer({
         <p className="font-semibold text-[16px] text-[#1E7B4A]">Вітаємо, ви зареєстровані!</p>
         <p className="mt-1 text-[14px] text-[#2F5D45]">
           Знижку 10% на перше замовлення застосовано{savings > 0 ? ` — ви економите ₴${savings.toFixed(0)}` : ''}. Нову суму видно в підсумку замовлення.
+          Відстежувати замовлення можна у своєму кабінеті, вхід — за номером телефону та паролем.
         </p>
       </div>
     )
@@ -51,7 +50,7 @@ export default function RegisterOffer({
 
   const submit = async () => {
     setError(null)
-    if (!emailOk) return setError('Вкажіть email — він потрібен для входу в кабінет')
+    if (!phoneOk && !emailOk) return setError('Вкажіть номер телефону')
     if (password.length < 6) return setError('Пароль має бути не менше 6 символів')
     setBusy(true)
     try {
@@ -59,7 +58,7 @@ export default function RegisterOffer({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: email.trim(),
+          email: emailOk ? email.trim() : undefined,
           password,
           firstName: firstName.trim() || undefined,
           lastName: lastName.trim() || undefined,
@@ -71,7 +70,7 @@ export default function RegisterOffer({
         const msg = typeof d?.error === 'string' ? d.error : 'Не вдалося зареєструватися'
         setError(
           msg.includes('вже існує')
-            ? 'Цей email уже зареєстровано. Увійдіть у кабінет, щоб отримати знижку.'
+            ? 'Ви вже зареєстровані. Увійдіть у кабінет, щоб отримати знижку.'
             : msg
         )
         return
@@ -93,24 +92,19 @@ export default function RegisterOffer({
       <p className="mt-1 text-[14px] text-[#7A3550]">
         Реєстрація за вашими даними{savings > 0 ? ` — і ви заощадите ₴${savings.toFixed(0)} уже на цьому замовленні` : ''}. Залишилося лише придумати пароль.
       </p>
+      <ul className="mt-2 space-y-0.5 text-[14px] text-[#7A3550]">
+        <li>✓ −10% на перше замовлення</li>
+        <li>✓ Відстежуйте замовлення у своєму кабінеті</li>
+      </ul>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr,1fr,auto]">
-        {!emailOk && (
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => onEmail(e.target.value)}
-            placeholder="Ваш email"
-            className="h-[46px] px-4 rounded-lg border border-[#E8B4C8] bg-white text-[15px] outline-none focus:border-[#E84A8A]"
-          />
-        )}
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Придумайте пароль (від 6 символів)"
           autoComplete="new-password"
-          className={`h-[46px] px-4 rounded-lg border border-[#E8B4C8] bg-white text-[15px] outline-none focus:border-[#E84A8A] ${emailOk ? 'sm:col-span-2' : ''}`}
+          className={`h-[46px] px-4 rounded-lg border border-[#E8B4C8] bg-white text-[15px] outline-none focus:border-[#E84A8A] sm:col-span-2`}
         />
         <button
           type="button"

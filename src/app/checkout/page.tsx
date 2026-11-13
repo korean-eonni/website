@@ -732,7 +732,6 @@ export default function CheckoutPage() {
                       lastName={lastName}
                       email={email}
                       phone={phone}
-                      onEmail={setEmail}
                       savings={memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))}
                     />
 

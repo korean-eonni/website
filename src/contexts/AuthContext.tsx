@@ -5,7 +5,7 @@ import { loadSession } from '@/lib/sessionBootstrap'
 
 type AuthUser = {
   id: string
-  email: string
+  email: string | null
   first_name: string | null
   last_name: string | null
   phone: string | null

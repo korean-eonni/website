@@ -95,6 +95,11 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
           setLoading(false)
           return
         }
+        if (phone.replace(/\D/g, '').length < 12) {
+          setError('Вкажіть номер телефону')
+          setLoading(false)
+          return
+        }
         if (password.length < 6) {
           setError('Пароль має бути не менше 6 символів')
           setLoading(false)
@@ -228,12 +233,11 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
         ) : (
           <div>
-            <label className="block text-[14px] text-[#666] mb-2">Email *</label>
+            <label className="block text-[14px] text-[#666] mb-2">Email <span className="text-[#999]">(необов&apos;язково)</span></label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
               className="w-full h-[50px] px-4 border border-[#BBBBBB] rounded-lg font-gilroy text-[16px] outline-none focus:border-[#4348AE] transition-colors"
               placeholder="your@email.com"
             />
@@ -242,8 +246,8 @@ function AuthForm({ onSuccess }: { onSuccess: () => void }) {
         
         {mode === 'register' && (
           <div>
-            <label className="block text-[14px] text-[#666] mb-2">Телефон</label>
-            <PhoneInput value={phone} onChange={setPhone} />
+            <label className="block text-[14px] text-[#666] mb-2">Телефон *</label>
+            <PhoneInput value={phone} onChange={setPhone} required />
           </div>
         )}
         
@@ -387,12 +391,12 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
       {/* Who is signed in + the way out */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
-          <AccountAvatar userId={user.id} initials={(user.first_name?.[0] || user.email[0]).toUpperCase()} />
+          <AccountAvatar userId={user.id} initials={(user.first_name?.[0] || user.email?.[0] || user.phone?.replace(/\D/g, '').slice(-1) || '?').toUpperCase()} />
           <div>
             <h1 className="font-bebas text-[28px] sm:text-[32px] text-black">
               {user.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Мій акаунт'}
             </h1>
-            <p className="text-[#666] text-[13px] sm:text-[14px]">{user.email}</p>
+            <p className="text-[#666] text-[13px] sm:text-[14px]">{user.email || user.phone}</p>
           </div>
         </div>
         <button
@@ -553,7 +557,7 @@ function UserDashboard({ user, onLogout }: { user: User; onLogout: () => void })
               ) : (
                 <div className="space-y-3 text-[15px]">
                   <p><span className="text-[#666]">Ім&apos;я: </span>{[user.first_name, user.last_name].filter(Boolean).join(' ') || '—'}</p>
-                  <p><span className="text-[#666]">Email: </span>{user.email}</p>
+                  <p><span className="text-[#666]">Email: </span>{user.email || '—'}</p>
                   <p><span className="text-[#666]">Телефон: </span>{user.phone || '—'}</p>
                 </div>
               )}

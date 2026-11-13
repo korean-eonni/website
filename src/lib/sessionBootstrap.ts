@@ -23,7 +23,7 @@ export type CartProductSnapshot = {
 export type SessionSnapshot = {
   user: {
     id: string
-    email: string
+    email: string | null
     first_name: string | null
     last_name: string | null
     phone: string | null
