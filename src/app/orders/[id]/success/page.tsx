@@ -32,6 +32,31 @@ type OrderItem = {
   price: number
 }
 
+/** Ukrainian phone → E.164 (+380XXXXXXXXX), or undefined if it doesn't look valid. */
+function toE164(phone: string | null | undefined): string | undefined {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (/^380\d{9}$/.test(digits)) return `+${digits}`
+  if (/^0\d{9}$/.test(digits)) return `+38${digits}`
+  if (/^\d{9}$/.test(digits)) return `+380${digits}`
+  return undefined
+}
+
+/** user_data for Google Ads enhanced conversions (hashed by gtag before sending). */
+function buildEnhancedConversionData(order: Order) {
+  const email = (order.email || '').trim().toLowerCase()
+  const phone = toE164(order.phone)
+  const first = (order.first_name || '').trim()
+  const last = (order.last_name || '').trim()
+  if (!email && !phone) return null
+  return {
+    ...(email ? { email } : {}),
+    ...(phone ? { phone_number: phone } : {}),
+    ...(first || last
+      ? { address: { first_name: first, last_name: last, country: 'UA' } }
+      : {}),
+  }
+}
+
 export default function OrderSuccessPage() {
   const params = useParams()
   const orderId = params.id as string
@@ -75,10 +100,15 @@ export default function OrderSuccessPage() {
       currency: 'UAH',
       transaction_id: String(order.id),
     }
+    // Розширені конверсії: gtag сам нормалізує й хешує (SHA-256) ці дані перед
+    // відправкою — у Google не йде відкритий email чи телефон.
+    const userData = buildEnhancedConversionData(order)
     if (typeof w.gtag === 'function') {
+      if (userData) w.gtag('set', 'user_data', userData)
       w.gtag('event', 'conversion', params)
     } else {
       w.dataLayer = w.dataLayer || []
+      if (userData) w.dataLayer.push(['set', 'user_data', userData])
       w.dataLayer.push(['event', 'conversion', params])
     }
     try {
