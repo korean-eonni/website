@@ -35,6 +35,8 @@ type ProductRow = {
   is_new: number
   is_exclusive: number
   created_at: string
+  image_url: string | null
+  image_path: string | null
 }
 
 async function loginAction(formData: FormData) {
@@ -193,6 +195,8 @@ export default async function AdminPage({
     'is_new',
     'is_exclusive',
     'created_at',
+    'image_url',
+    'image_path',
   ])) as ProductRow[]
 
   return (
@@ -556,7 +560,22 @@ export default async function AdminPage({
                     data-product-row
                     data-search={`${product.name} ${product.category || ''} ${product.id}`.toLowerCase()}
                   >
-                    <td className="py-3 pr-4 max-w-[280px] break-words">{product.name}</td>
+                    <td className="py-3 pr-4 max-w-[340px]">
+                      <div className="flex items-center gap-3">
+                        {product.image_url || product.image_path ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={(product.image_url || product.image_path) as string}
+                            alt=""
+                            loading="lazy"
+                            className="w-12 h-12 flex-shrink-0 rounded-lg object-cover bg-[#F5F5F5] ring-1 ring-[#EFEFEF]"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 flex-shrink-0 rounded-lg bg-[#F5F5F5] ring-1 ring-[#EFEFEF]" />
+                        )}
+                        <span className="break-words">{product.name}</span>
+                      </div>
+                    </td>
                     <td className="py-3 pr-4">{product.category || '—'}</td>
                     <td className="py-3 pr-4">
                       {product.sale_price !== null ? `₴${product.sale_price}` : '—'}
