@@ -64,9 +64,9 @@ export default function CartPage() {
   const memberDiscount = discountEligible
     ? memberDiscountForLines(items.map(i => ({ price: i.product?.sale_price, quantity: i.quantity })))
     : 0
-  const memberApplied = memberDiscount >= promoDiscount && memberDiscount > 0
-  const promoActive = promoEligible && !memberApplied && promoDiscount > 0
-  const discount = Math.max(memberDiscount, promoDiscount)
+  const memberApplied = memberDiscount > 0
+  const promoActive = promoEligible && promoDiscount > 0
+  const discount = memberDiscount + (promoActive ? promoDiscount : 0)
   const total = subtotal - discount
 
   return (

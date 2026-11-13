@@ -154,7 +154,7 @@ export async function POST(request: Request) {
 
     // Discounts are decided here, from the session and a fixed rule set — never
     // from anything the client sends, so a tampered request can't invent its own.
-    // They do NOT stack: the customer simply gets whichever one is worth more.
+    // They stack: skin-test −10% plus first-order member −10%.
     const promoCode = typeof data.promoCode === 'string' ? data.promoCode.trim() : ''
     // Знижка зареєстрованим діє ЛИШЕ на перше замовлення — якщо в клієнта вже
     // є хоч одне, вона не застосовується.
@@ -164,13 +164,12 @@ export async function POST(request: Request) {
       promoCode === 'SKINTEST10' && totalAmount > 0 ? Math.round(totalAmount * 0.1) : 0
 
     let promoNote = ''
-    const discount = Math.max(memberDiscount, promoDiscount)
+    // Знижки СУМУЮТЬСЯ: skin-test (−10%) + перше замовлення зареєстрованого (−10%).
+    const discount = memberDiscount + promoDiscount
     if (discount > 0) {
       totalAmount = totalAmount - discount
-      promoNote =
-        memberDiscount >= promoDiscount
-          ? ` | ${MEMBER_DISCOUNT_LABEL} (−₴${discount})`
-          : ` | Промокод SKINTEST10: −10% (−₴${discount})`
+      if (memberDiscount > 0) promoNote += ` | ${MEMBER_DISCOUNT_LABEL} (−₴${memberDiscount})`
+      if (promoDiscount > 0) promoNote += ` | Промокод SKINTEST10: −10% (−₴${promoDiscount})`
     }
 
     // Резерв залишків, саме замовлення та його позиції — однією транзакцією.
