@@ -8,7 +8,8 @@ import {
   isAuthed,
   makeAdminToken,
 } from '@/lib/adminAuth'
-import { deleteProduct, listProducts, saveProduct } from '@/lib/productStore'
+import { deleteProduct, listProducts, saveProduct, setProductFlag } from '@/lib/productStore'
+import FlagToggle from '@/components/admin/FlagToggle'
 import { revalidatePath } from 'next/cache'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import { brands } from '@/data/brands'
@@ -110,6 +111,15 @@ async function addProductAction(formData: FormData) {
 
   revalidatePublicPages(id)
   redirect('/admin?success=product-added')
+}
+
+async function toggleFlagAction(id: string, flag: 'is_new' | 'is_exclusive', on: boolean) {
+  'use server'
+  if (!isAuthed()) throw new Error('unauthorized')
+  if (!id || (flag !== 'is_new' && flag !== 'is_exclusive')) throw new Error('bad-request')
+  await setProductFlag(id, flag, on)
+  revalidatePublicPages(id)
+  revalidatePath('/admin')
 }
 
 async function deleteProductAction(formData: FormData) {
@@ -605,6 +615,10 @@ export default async function AdminPage({
                           Видалити
                         </button>
                       </ConfirmableForm>
+                      </div>
+                      <div className="mt-2 flex flex-col gap-1">
+                        <FlagToggle key={`n${product.is_new}`} id={product.id} flag="is_new" label="Новинки" initial={!!product.is_new} action={toggleFlagAction} />
+                        <FlagToggle key={`e${product.is_exclusive}`} id={product.id} flag="is_exclusive" label="Ексклюзив" initial={!!product.is_exclusive} action={toggleFlagAction} />
                       </div>
                     </td>
                   </tr>

@@ -871,3 +871,16 @@ export async function deleteProduct(id: string) {
   const db = getDb()
   db.prepare('DELETE FROM products WHERE id = ?').run(id)
 }
+
+/** Швидке перемикання «Новинки» / «Ексклюзив» зі списку в адмінці. */
+export async function setProductFlag(id: string, flag: 'is_new' | 'is_exclusive', on: boolean) {
+  const v = on ? 1 : 0
+  const now = new Date().toISOString()
+  if (usePostgres) {
+    await ensurePostgresSchema()
+    if (flag === 'is_new') await sql`UPDATE products SET is_new = ${v}, updated_at = ${now} WHERE id = ${id}`
+    else await sql`UPDATE products SET is_exclusive = ${v}, updated_at = ${now} WHERE id = ${id}`
+    return
+  }
+  getDb().prepare(`UPDATE products SET ${flag} = ?, updated_at = ? WHERE id = ?`).run(v, now, id)
+}
