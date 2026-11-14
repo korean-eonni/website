@@ -82,11 +82,6 @@ export async function GET() {
       <g:google_product_category>Health &amp; Beauty &gt; Personal Care &gt; Cosmetics</g:google_product_category>
       <g:product_type>${escapeXml(p.category || 'Корейська косметика')}</g:product_type>
       <g:mpn>${id}</g:mpn>
-      <g:shipping>
-        <g:country>UA</g:country>
-        <g:service>Standard</g:service>
-        <g:price>70.00 UAH</g:price>
-      </g:shipping>
     </item>`
     })
     .join('')
