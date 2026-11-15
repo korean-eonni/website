@@ -85,7 +85,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const saved = JSON.parse(raw)
         setPromo(saved)
         // Збережені до появи фото — оновлюємо, щоб підтягнути товар.
-        if (saved?.code && !saved.productId) {
+        if (saved?.code) {
           fetch('/api/promo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: saved.code }) })
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => {

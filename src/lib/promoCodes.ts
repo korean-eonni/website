@@ -98,12 +98,12 @@ const PROMO_GIFTS: Record<string, string> = {
   ONBIT: 'Medicube, Zero Keratin Pad',
   HYUN: 'Medicube, Zero Keratin Pad',
   // Medicube, PDRN Pink One Day Serum
-  SARAM: 'Medicube, PDRN Pink One Day Serum',
-  ONMAE: 'Medicube, PDRN Pink One Day Serum',
-  HWARI: 'Medicube, PDRN Pink One Day Serum',
-  BORAM: 'Medicube, PDRN Pink One Day Serum',
-  AREUMI: 'Medicube, PDRN Pink One Day Serum',
-  DASOM: 'Medicube, PDRN Pink One Day Serum',
+  SARAM: 'Medicube, PDRN Pink One Day Serum (5 шт.)',
+  ONMAE: 'Medicube, PDRN Pink One Day Serum (5 шт.)',
+  HWARI: 'Medicube, PDRN Pink One Day Serum (5 шт.)',
+  BORAM: 'Medicube, PDRN Pink One Day Serum (5 шт.)',
+  AREUMI: 'Medicube, PDRN Pink One Day Serum (5 шт.)',
+  DASOM: 'Medicube, PDRN Pink One Day Serum (5 шт.)',
   // Medicube, PDRN Lip Sleeping Mask
   SEOL: 'Medicube, PDRN Lip Sleeping Mask',
   CHOBOM: 'Medicube, PDRN Lip Sleeping Mask',
@@ -131,7 +131,7 @@ const GIFT_PRODUCTS: Record<string, string> = {
   'Medicube, PDRN Pink Vita Coating Mask': 'medicube-pdrn-pink-vita-coating-mask-тка-91',
   'Medicube, PDRN Pink Peptide Serum Mask': 'c4c01cd1-cff1-49dc-b98d-01fea1f5d274',
   'Medicube, Zero Keratin Pad': 'medicube-zero-keratin-pad-ферментні-пад--76',
-  'Medicube, PDRN Pink One Day Serum': 'medicube-pdrn-pink-one-day-serum-концент-40',
+  'Medicube, PDRN Pink One Day Serum (5 шт.)': 'medicube-pdrn-pink-one-day-serum-концент-40',
   'Medicube, PDRN Lip Sleeping Mask': 'medicube-pdrn-lip-sleeping-mask-нічна-ма-43',
   'Medicube, Deep Vita C Glutathione Mask': 'medicube-deep-vita-c-glutathione-brighte-85',
   // Продаємо лише упаковку — на сторінці товару покупець бачить її повністю.
