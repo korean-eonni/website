@@ -60,21 +60,17 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  // Favicon strategy:
-  //   • /logo-icon.svg — square (1:1) version of the wordmark for tabs/PWA.
-  //     Google's SERP favicon crawler REQUIRES a square icon — the original
-  //     /logo.svg is 139×56 (rectangular) so Google rejects it and falls back
-  //     to the generic globe. Square wrapper fixes that.
-  //   • /icon-96.png, /icon-192.png, /favicon.ico — raster fallbacks at the
-  //     "multiple of 48" sizes Google specifically looks for.
+  // Favicon: the round eonni logo (same as in Google Ads), square PNGs at the
+  // "multiple of 48" sizes Google's SERP favicon crawler looks for. The old
+  // wordmark icon was unreadable at favicon size.
   icons: {
     icon: [
-      { url: '/logo-icon.svg', type: 'image/svg+xml' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-96.png', sizes: '96x96', type: 'image/png' },
-      { url: '/favicon.ico', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-circle-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-circle-96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/icon-circle-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
     ],
-    apple: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
     shortcut: '/favicon.ico',
   },
   alternates: {
@@ -127,8 +123,8 @@ const organizationJsonLd = {
   name: 'Eonni',
   alternateName: 'Eonni — Корейська косметика',
   url: SITE_URL,
-  logo: `${SITE_URL}/logo.svg`,
-  image: `${SITE_URL}/icon-192.png`,
+  logo: `${SITE_URL}/icon-circle-512.png`,
+  image: `${SITE_URL}/icon-circle-512.png`,
   description: SITE_DESCRIPTION,
   priceRange: '₴',
   currenciesAccepted: 'UAH',

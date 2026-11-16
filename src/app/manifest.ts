@@ -13,12 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'uk-UA',
     orientation: 'portrait',
     icons: [
-      {
-        src: '/logo.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
-        purpose: 'any',
-      },
+      { src: '/icon-circle-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icon-circle-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
   }
 }
