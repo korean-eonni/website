@@ -36,7 +36,7 @@ function stripHtml(html: string | null | undefined): string {
  *
  * Feed spec: https://support.google.com/merchants/answer/7052112
  */
-export async function GET() {
+export async function GET(request: Request) {
   let products
   try {
     products = await listProducts('is_active = 1')
@@ -45,8 +45,20 @@ export async function GET() {
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 
-  const items = products
-    .filter((p) => p.sale_price && p.sale_price > 0)
+  // Optional ?limit=N — temporary cap while the Merchant Center account is
+  // restricted (Google allows max 100 products during a suspension). Keeps the
+  // products with the most stock.
+  const limitParam = Number(new URL(request.url).searchParams.get('limit'))
+  const limit = Number.isInteger(limitParam) && limitParam > 0 ? limitParam : null
+
+  let feedProducts = products.filter((p) => p.sale_price && p.sale_price > 0)
+  if (limit) {
+    feedProducts = [...feedProducts]
+      .sort((a, b) => (b.stock_quantity ?? 0) - (a.stock_quantity ?? 0))
+      .slice(0, limit)
+  }
+
+  const items = feedProducts
     .map((p) => {
       const inStock = !!(p.stock_quantity && p.stock_quantity > 0)
       const availability = inStock ? 'in_stock' : 'preorder'
