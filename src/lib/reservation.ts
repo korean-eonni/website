@@ -156,6 +156,7 @@ export async function expireStaleReservations(): Promise<{ expired: string[] }> 
       AND payment_status = 'pending'
       AND status = 'pending'
       AND stock_released_at IS NULL
+      AND payment_returned_at IS NULL
       AND created_at < ${cutoff}
     LIMIT 50
   `

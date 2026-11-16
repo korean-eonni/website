@@ -269,9 +269,15 @@ function OrderCard({ o, registered }: { o: Order; registered: boolean }) {
           <p className="text-[12px] text-[#666] mt-1">
             {PAYMENT_METHOD_LABELS[o.payment_method] || o.payment_method}
           </p>
-          <p className="text-[12px] text-[#666]">
-            {PAYMENT_STATUS_LABELS[o.payment_status] || o.payment_status}
-          </p>
+          {o.payment_status === 'pending' && o.payment_returned_at ? (
+            <p className="text-[12px] font-semibold text-[#047857]">
+              Оплачено онлайн — перевірте в Platon
+            </p>
+          ) : (
+            <p className="text-[12px] text-[#666]">
+              {PAYMENT_STATUS_LABELS[o.payment_status] || o.payment_status}
+            </p>
+          )}
           <span
             className={`inline-block mt-2 text-[12px] font-medium px-2 py-[2px] rounded-full ${
               STATUS_COLORS[o.status] || 'bg-[#F1F1F1] text-[#666]'

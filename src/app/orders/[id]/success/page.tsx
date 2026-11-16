@@ -86,6 +86,14 @@ export default function OrderSuccessPage() {
     }
   }, [orderId])
 
+  // Оплата карткою: покупець повернувся з Platon на «Дякуємо» — повідомляємо
+  // сайт, щоб замовлення не скасувалося автоматично, поки чекаємо підтвердження
+  // від Platon (і щоб в адмінці було видно «Оплачено онлайн»).
+  useEffect(() => {
+    if (!order || order.payment_method !== 'platon' || order.payment_status !== 'pending') return
+    fetch(`/api/orders/${order.id}/returned`, { method: 'POST' }).catch(() => {})
+  }, [order])
+
   // Google Ads: конверсія «Покупка» — один раз на замовлення, із сумою і номером.
   useEffect(() => {
     if (!order || order.payment_status === 'failed') return

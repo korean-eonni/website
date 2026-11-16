@@ -208,7 +208,21 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
         <section className="bg-white rounded-2xl border border-[#E5E5E5] p-5 mt-4">
           <h2 className="text-[15px] font-semibold mb-2">Оплата</h2>
           <Row label="Спосіб">{PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method}</Row>
-          <Row label="Статус">{PAYMENT_STATUS_LABELS[order.payment_status] || order.payment_status}</Row>
+          <Row label="Статус">
+            {order.payment_status === 'pending' && order.payment_returned_at ? (
+              <span className="font-semibold text-[#047857]">
+                Оплачено онлайн — перевірте надходження в кабінеті Platon
+              </span>
+            ) : (
+              PAYMENT_STATUS_LABELS[order.payment_status] || order.payment_status
+            )}
+          </Row>
+          {order.payment_status === 'pending' && order.payment_returned_at && (
+            <p className="text-[12px] text-[#666] mt-1">
+              Покупець після оплати побачив «Дякуємо за замовлення», але Platon ще не надіслав
+              підтвердження. Якщо гроші надійшли — поставте статус оплати «Оплачено».
+            </p>
+          )}
         </section>
 
         {/* Items */}

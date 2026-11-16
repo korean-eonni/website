@@ -124,7 +124,7 @@ export default async function AdminGoogleAdsPage() {
                     <div className="text-right">
                       <div className="font-bebas text-[28px] leading-none">₴{Number(o.total_amount).toFixed(0)}</div>
                       <div className="text-[12px] text-[#666] mt-1">
-                        {STATUS[o.status] || o.status} · оплата: {PAY[o.payment_status] || o.payment_status}
+                        {STATUS[o.status] || o.status} · оплата: {o.payment_status === 'pending' && o.payment_returned_at ? 'оплачено онлайн (перевірте в Platon)' : PAY[o.payment_status] || o.payment_status}
                       </div>
                     </div>
                   </div>

@@ -59,6 +59,10 @@ export type Order = {
   cart_session?: string | null
   /** JSON of the Google Ads click that led to this order (see adAttribution.ts). */
   ad_attribution?: string | null
+  /** Коли покупець повернувся з Platon на сторінку «Дякуємо» (оплата карткою).
+   *  Це ще НЕ підтвердження оплати (його дає лише callback Platon), але таке
+   *  замовлення не скасовується автоматично й позначається в адмінці. */
+  payment_returned_at?: string | null
 }
 
 export type OrderItem = {
@@ -185,6 +189,7 @@ export async function ensureUserSchema() {
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_released_at TEXT;`,
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cart_session TEXT;`,
     sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS ad_attribution TEXT;`,
+    sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_returned_at TEXT;`,
     // Реєстрація лише за телефоном: пошта більше не обовʼязкова.
     sql`ALTER TABLE users ALTER COLUMN email DROP NOT NULL;`,
   ])
@@ -551,6 +556,16 @@ export async function updateOrderStatus(id: string, status: Order['status'], tra
   } else {
     await sql`UPDATE orders SET status = ${status}, updated_at = ${now} WHERE id = ${id}`
   }
+}
+
+/** Покупець повернувся з Platon на «Дякуємо»: записуємо час (лише перший раз). */
+export async function markPaymentReturned(id: string): Promise<void> {
+  await ensureUserSchema()
+  const now = new Date().toISOString()
+  await sql`
+    UPDATE orders SET payment_returned_at = ${now}, updated_at = ${now}
+    WHERE id = ${id} AND payment_returned_at IS NULL
+  `
 }
 
 export async function updatePaymentStatus(id: string, paymentStatus: Order['payment_status']): Promise<void> {
