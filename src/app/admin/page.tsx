@@ -10,6 +10,7 @@ import {
 } from '@/lib/adminAuth'
 import { deleteProduct, listProducts, saveProduct, setProductFlag } from '@/lib/productStore'
 import FlagToggle from '@/components/admin/FlagToggle'
+import AddProductDraft from '@/components/admin/AddProductDraft'
 import { revalidatePath } from 'next/cache'
 import ConfirmableForm from '@/components/admin/ConfirmableForm'
 import { brands } from '@/data/brands'
@@ -290,6 +291,7 @@ export default async function AdminPage({
             encType="multipart/form-data"
           >
             <input type="hidden" name="id" value={newId} />
+            <AddProductDraft added={searchParams?.success === 'product-added'} />
             <div className="md:col-span-2">
               <label className="block text-sm mb-2">Назва *</label>
               <textarea
