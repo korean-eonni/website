@@ -239,7 +239,7 @@ export default function ExclusiveProducts({ products }: ExclusiveProductsProps) 
               href="/catalog?exclusive=true"
               className="inline-flex items-center justify-center bg-[#BCC2F4] hover:bg-[#A8B0E8] text-black font-semibold text-[14px] sm:text-[15px] tracking-[0.05em] px-6 sm:px-10 py-3 sm:py-4 rounded-[12px] transition-colors duration-300 uppercase self-start"
             >
-              Купити
+              Подивитись все
             </Link>
           </Magnetic>
         </div>
