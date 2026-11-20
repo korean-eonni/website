@@ -18,6 +18,13 @@
  */
 export type GiftMask = { productId: string; name: string; image: string }
 
+/**
+ * Promo switch. false = the promo is OFF everywhere: no gift rows in the cart,
+ * checkout or orders, no fly-to-cart animation, no mention in the announcement
+ * bar or on /promotions. Set back to true to bring the promo back as it was.
+ */
+export const GIFT_MASKS_ENABLED = false
+
 export const GIFT_THRESHOLD = 1000
 export const GIFT_MAX = 25
 
@@ -54,6 +61,7 @@ export type GiftLine = GiftMask & { seq: number }
 
 /** How many free masks a given subtotal earns (0..25). */
 export function giftCountForSubtotal(subtotal: number): number {
+  if (!GIFT_MASKS_ENABLED) return 0
   if (!subtotal || subtotal < GIFT_THRESHOLD) return 0
   return Math.min(Math.floor(subtotal / GIFT_THRESHOLD), GIFT_MAX)
 }

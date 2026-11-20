@@ -74,6 +74,13 @@ export const BLACK_FRIDAY_IDS = new Set<string>([
   'lactofit-probiotic-liver-care-пробіотик--108',
 ])
 
+/** 'before' until 22.11, 'active' 22.11–02.12, 'after' from 03.12 (Kyiv time). */
+export function blackFridayPhase(now: number = Date.now()): 'before' | 'active' | 'after' {
+  if (now < START) return 'before'
+  if (now >= END) return 'after'
+  return 'active'
+}
+
 export function promoLabel(id: string | null | undefined, discount: number | null | undefined): string | null {
   if (!id || !discount || discount <= 0) return null
   if (!BLACK_FRIDAY_IDS.has(id)) return null

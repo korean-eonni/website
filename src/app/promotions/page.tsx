@@ -3,12 +3,12 @@ import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
-import { GIFT_THRESHOLD } from '@/lib/giftMasks'
+import { GIFT_MASKS_ENABLED, GIFT_THRESHOLD } from '@/lib/giftMasks'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/promotions' },
   title: 'Акції та подарунки | Eonni — корейська косметика',
-  description: `Маска Medicube у подарунок за кожні ${GIFT_THRESHOLD} ₴, безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴, −10% на перше замовлення для зареєстрованих і −10% на догляд після skin-test.`,
+  description: `${GIFT_MASKS_ENABLED ? `Маска Medicube у подарунок за кожні ${GIFT_THRESHOLD} ₴, б` : 'Б'}езкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴, −10% на перше замовлення для зареєстрованих і −10% на догляд після skin-test.`,
   openGraph: {
     title: 'Акції та подарунки | Eonni',
     description: `Подарунки, безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴ і знижки 10%.`,
@@ -17,8 +17,9 @@ export const metadata: Metadata = {
   },
 }
 
-const promos = [
+const allPromos = [
   {
+    gift: true,
     icon: '🎁',
     tone: '#FFE8F0',
     title: `Маска Medicube у подарунок до кожних ${GIFT_THRESHOLD} ₴`,
@@ -54,6 +55,8 @@ const promos = [
     cta: { label: 'Перейти до каталогу', href: '/catalog' },
   },
 ]
+
+const promos = allPromos.filter((p) => GIFT_MASKS_ENABLED || !('gift' in p && p.gift))
 
 export default function PromotionsPage() {
   return (
