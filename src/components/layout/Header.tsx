@@ -10,7 +10,7 @@ import CartDropdown from '@/components/cart/CartDropdown'
 import Magnetic from '@/components/ui/Magnetic'
 import { brands } from '@/data/brands'
 import { useAuth } from '@/contexts/AuthContext'
-import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
+import { buildAnnouncements } from '@/lib/announcements'
 
 const PAPER = 'rgba(255, 252, 245, 0.85)'
 const PAPER_BORDER = 'rgba(0, 0, 0, 0.06)'
@@ -865,11 +865,7 @@ export default function Header() {
 }
 
 function PromoStrip({ promoRef }: { promoRef: React.RefObject<HTMLDivElement> }) {
-  const promoItems = [
-    '10% ЗНИЖКИ НА ПЕРШЕ ЗАМОВЛЕННЯ',
-    'ЗА КОЖНІ 1000 ГРН — МАСКА MEDICUBE У ПОДАРУНОК',
-    `БЕЗКОШТОВНА ДОСТАВКА ВІД ${FREE_SHIPPING_THRESHOLD} ГРН`,
-  ]
+  const promoItems = buildAnnouncements()
 
   return (
     <div ref={promoRef} className="overflow-hidden mt-1">
