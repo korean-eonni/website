@@ -8,6 +8,8 @@
 export const BLACK_FRIDAY_LABEL = "Чорна п'ятниця"
 const START = Date.parse('2026-11-22T00:00:00+02:00')
 const END = Date.parse('2026-12-03T00:00:00+02:00')
+export const BLACK_FRIDAY_START = START
+export const BLACK_FRIDAY_END = END
 
 export const BLACK_FRIDAY_IDS = new Set<string>([
   '6a110a83-49c2-47b2-a19d-c7d038c4a7b2',
