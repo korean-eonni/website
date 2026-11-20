@@ -11,6 +11,7 @@ import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import { decodeRouteId } from '@/lib/routeParams'
 import { isPurchasable, isUnavailable, maxOrderable } from '@/lib/stock'
+import { promoLabel } from '@/lib/promo'
 
 type Product = {
   id: string
@@ -1424,7 +1425,7 @@ function SimilarProductsSection({ products, currentProductId }: { products: Simi
                     {product.discount_amount ? (
                       <div className="absolute top-3 left-3 z-[4] flex flex-col items-start gap-1.5">
                         <span className="h-[34px] px-3.5 rounded-[8px] bg-[#E84A8A] text-white text-[17px] font-bold tracking-[0.02em] flex items-center shadow-[0_6px_16px_rgba(232,74,138,0.5)]">
-                          −{product.discount_amount}%
+                          −{product.discount_amount}%{promoLabel(product.id, product.discount_amount) ? <span className="ml-1.5 whitespace-nowrap">{promoLabel(product.id, product.discount_amount)}</span> : null}
                         </span>
                       </div>
                     ) : null}
@@ -1711,7 +1712,7 @@ export default function ProductPage() {
                       ₴{product.original_price}
                     </span>
                     <span className="text-[14px] font-bold text-white bg-[#E84A8A] rounded-[6px] px-2 py-0.5">
-                      −{product.discount_amount}%
+                      −{product.discount_amount}%{promoLabel(product.id, product.discount_amount) ? <span className="ml-1.5 whitespace-nowrap">{promoLabel(product.id, product.discount_amount)}</span> : null}
                     </span>
                   </>
                 )}

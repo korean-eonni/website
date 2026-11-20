@@ -10,6 +10,7 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { promoLabel } from '@/lib/promo'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
@@ -294,7 +295,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
           {product.discount_amount != null && product.discount_amount > 0 && (
             <div className="absolute top-3 left-3 z-[4] flex flex-col items-start gap-1.5">
               <span className="h-[32px] px-3 rounded-[8px] bg-[#E84A8A] text-white text-[15px] font-bold flex items-center shadow-[0_3px_10px_rgba(232,74,138,0.45)]">
-                −{product.discount_amount}%
+                −{product.discount_amount}%{promoLabel(product.id, product.discount_amount) ? <span className="ml-1.5 whitespace-nowrap">{promoLabel(product.id, product.discount_amount)}</span> : null}
               </span>
             </div>
           )}

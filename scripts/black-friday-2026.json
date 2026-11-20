@@ -1,0 +1,560 @@
+[
+ {
+  "id": "6a110a83-49c2-47b2-a19d-c7d038c4a7b2",
+  "name": "Torriden, Cellmazing Firming Patch (2 патчі в упаковці)",
+  "pct": 10,
+  "old_sale": 199,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 179
+ },
+ {
+  "id": "medicube-zero-pore-toner-тонер-з-aha-bha-35",
+  "name": "Medicube, Zero Pore Toner",
+  "pct": 10,
+  "old_sale": 790,
+  "old_original": 1000,
+  "old_discount": 10,
+  "new_sale": 711
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-capsule-crea-0",
+  "name": "Medicube, PDRN Pink Collagen Capsule Cream (55 г)",
+  "pct": 10,
+  "old_sale": 1199,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1079
+ },
+ {
+  "id": "medicube-zero-pore-blackhead-mud-mask-гл-31",
+  "name": "Medicube, Zero Pore Blackhead Mud Mask (100 г)",
+  "pct": 10,
+  "old_sale": 750,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 675
+ },
+ {
+  "id": "medicube-collagen-jelly-cream-желе-крем--38",
+  "name": "Medicube, Collagen Jelly Cream (50 мл)",
+  "pct": 10,
+  "old_sale": 899,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 809
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-bubble-serum-148",
+  "name": "Medicube, PDRN Pink Collagen Bubble Serum + Toning Gel Toner Pad",
+  "pct": 10,
+  "old_sale": 2000,
+  "old_original": 2450,
+  "old_discount": 15,
+  "new_sale": 1800
+ },
+ {
+  "id": "medicube-rosemary-pdrn-hair-scalp-condit-96",
+  "name": "Medicube, Rosemary PDRN Hair & Scalp Conditioner (250 мл)",
+  "pct": 10,
+  "old_sale": 1250,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1125
+ },
+ {
+  "id": "medicube-vita-eye-gel-serum-гель-сироват-89",
+  "name": "Medicube, Kojic Acid Turmeric Vita Eye Gel Serum (30 мл)",
+  "pct": 10,
+  "old_sale": 880,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 792
+ },
+ {
+  "id": "medicube-red-clear-capsule-body-lotion-з-50",
+  "name": "Medicube, Red Clear Capsule Body Lotion (230 мл)",
+  "pct": 10,
+  "old_sale": 1299,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1169
+ },
+ {
+  "id": "medicube-txa-niacinamide-15-serum-сирова-59",
+  "name": "Medicube, TXA Niacinamide 15 Serum (30 мл)",
+  "pct": 10,
+  "old_sale": 850,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 765
+ },
+ {
+  "id": "4cc8ea60-e973-49af-99c9-69f10f95947c",
+  "name": "Medicube, Zero Pore Pad Mild (70 педів)",
+  "pct": 10,
+  "old_sale": 950,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 855
+ },
+ {
+  "id": "medicube-collagen-glow-booster-milk-seru-67",
+  "name": "Medicube, Collagen Glow Booster Milk Serum (15 мл)",
+  "pct": 10,
+  "old_sale": 1399,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1259
+ },
+ {
+  "id": "medicube-deep-vita-a-retinol-serum-антив-66",
+  "name": "Medicube, Deep Vita A Retinol Serum (30 мл)",
+  "pct": 10,
+  "old_sale": 1320,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1188
+ },
+ {
+  "id": "medicube-deep-vita-c-glutathione-brighte-85",
+  "name": "Medicube, Deep Vita C Glutathione Brightening Mask",
+  "pct": 15,
+  "old_sale": 160,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 136
+ },
+ {
+  "id": "medicube-hyaluronic-moisturizing-capsule-30",
+  "name": "Medicube, Hyaluronic Moisturizing Capsule Cream (55 г)",
+  "pct": 15,
+  "old_sale": 1100,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 935
+ },
+ {
+  "id": "594b717f-2ca9-44e9-b65b-c885bacdfee9",
+  "name": "Medicube, Deep Vita C Ampoule Mask",
+  "pct": 15,
+  "old_sale": 189,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 161
+ },
+ {
+  "id": "9f202dbb-970c-457c-b9cd-2487d5cfc28d",
+  "name": "Medicube, Hyaluronic Multi Peptide Serum Mask",
+  "pct": 15,
+  "old_sale": 189,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 161
+ },
+ {
+  "id": "1d784a1a-8926-4237-bf5b-cbc4fd8b5927",
+  "name": "Medicube, Zero Pore One Day Peptide Serum Mask",
+  "pct": 15,
+  "old_sale": 189,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 161
+ },
+ {
+  "id": "medicube-zero-foam-cleanser-пінка-для-гл-28",
+  "name": "Medicube, Zero Foam Cleanser (120 мл)",
+  "pct": 15,
+  "old_sale": 850,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 722
+ },
+ {
+  "id": "medicube-pdrn-pink-caffeine-night-wrappi-20",
+  "name": "Medicube, PDRN Pink Caffeine Night Wrapping Mask (75 мл)",
+  "pct": 15,
+  "old_sale": 1399,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1189
+ },
+ {
+  "id": "medicube-pdrn-pink-niacinamide-milky-ton-2",
+  "name": "Medicube, PDRN Pink Niacinamide Milky Toner (150 мл)",
+  "pct": 15,
+  "old_sale": 1050,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 892
+ },
+ {
+  "id": "medicube-super-cica-daily-quick-mask-екс-27",
+  "name": "Medicube, Super Cica Daily Quick Mask",
+  "pct": 15,
+  "old_sale": 1150,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 978
+ },
+ {
+  "id": "medicube-zero-pore-sa-clear-capsule-clea-34",
+  "name": "Medicube, Zero Pore SA Clear Capsule Cleansing Foam",
+  "pct": 15,
+  "old_sale": 750,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 638
+ },
+ {
+  "id": "unove-deep-damage-repair-shampoo-шампунь-128",
+  "name": "UNOVE, Deep Damage Repair Shampoo",
+  "pct": 15,
+  "old_sale": 1150,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 978
+ },
+ {
+  "id": "medicube-pdrn-pink-hyaluronic-moisturizi-52",
+  "name": "Medicube, PDRN Pink Hyaluronic Moisturizing Cream (50 мл)",
+  "pct": 15,
+  "old_sale": 1199,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1019
+ },
+ {
+  "id": "medicube-collagen-milk-toning-wrapping-m-74",
+  "name": "Medicube, Collagen Milk Toning Wrapping Mask (75 мл)",
+  "pct": 15,
+  "old_sale": 1350,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1148
+ },
+ {
+  "id": "6c821cf7-c668-4c79-a956-3a327219985b",
+  "name": "Medicube, EGF NAD Firming Gel Mask",
+  "pct": 15,
+  "old_sale": 310,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 264
+ },
+ {
+  "id": "medicube-deep-lifting-peptide-eye-cream--17",
+  "name": "Medicube, Deep Lifting Peptide Eye Cream",
+  "pct": 15,
+  "old_sale": 1499,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1274
+ },
+ {
+  "id": "cj-wellcare-melamate-gummy-жувальні-марм-139",
+  "name": "CJ WELLCARE, MelaMate Gummy (20 мармеладок)",
+  "pct": 15,
+  "old_sale": 950,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 808
+ },
+ {
+  "id": "torriden-solid-in-ceramide-lip-essence-е-123",
+  "name": "Torriden, Solid-In Ceramide Lip Essence",
+  "pct": 15,
+  "old_sale": 270,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 230
+ },
+ {
+  "id": "medicube-zero-pore-cream-2-0-зволожуючий-68",
+  "name": "Medicube, Zero Pore Cream 2.0 (50 мл)",
+  "pct": 15,
+  "old_sale": 1250,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1062
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-bubble-serum-73",
+  "name": "Medicube, PDRN Pink Collagen Bubble Serum (95 мл)",
+  "pct": 15,
+  "old_sale": 1160,
+  "old_original": 1290,
+  "old_discount": 10,
+  "new_sale": 986
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-exosome-shot-7",
+  "name": "Medicube, PDRN Pink Collagen Exosome Shot 7500 (30 мл)",
+  "pct": 15,
+  "old_sale": 1100,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 935
+ },
+ {
+  "id": "ca2cf274-e057-475d-a3c8-0476b8c7c148",
+  "name": "BB LAB, White Collagen (3 г × 30 стіків)",
+  "pct": 15,
+  "old_sale": 1300,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1105
+ },
+ {
+  "id": "mediheal-collagen-ampoule-pad-антивікові-109",
+  "name": "Mediheal, Collagen Ampoule Pad (100+100 педів)",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "mediheal-madecassoside-blemish-pad-заспо-112",
+  "name": "Mediheal, Madecassoside Blemish Pad (100+100 педів)",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "mediheal-phyto-enzyme-peeling-pad-фермен-115",
+  "name": "Mediheal, Phyto-Enzyme Peeling Pad",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "bioheal-boh-probioderm-collagen-remodeli-134",
+  "name": "BioHeal BOH, Probioderm Collagen Remodeling Serum Gel Mask",
+  "pct": 20,
+  "old_sale": 330,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 264
+ },
+ {
+  "id": "medicube-pdrn-lip-sleeping-mask-нічна-ма-43",
+  "name": "Medicube, PDRN Lip Sleeping Mask",
+  "pct": 20,
+  "old_sale": 650,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 520
+ },
+ {
+  "id": "medicube-deep-vita-c-daily-quick-mask-зв-44",
+  "name": "Medicube, Deep Vita C Daily Quick Mask",
+  "pct": 20,
+  "old_sale": 1520,
+  "old_original": 1900,
+  "old_discount": 20,
+  "new_sale": 1216
+ },
+ {
+  "id": "ce81910d-f4f4-48c2-ae0f-bd3ba03741bc",
+  "name": "MelaMate Gummies Variety Pack (40 шт)",
+  "pct": 20,
+  "old_sale": 1550,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1240
+ },
+ {
+  "id": "medicube-kojic-acid-turmeric-vita-capsul-84",
+  "name": "Medicube, Kojic Acid Turmeric Vita Capsule Cream (53 г)",
+  "pct": 20,
+  "old_sale": 1487,
+  "old_original": 1750,
+  "old_discount": 15,
+  "new_sale": 1190
+ },
+ {
+  "id": "medicube-kojic-acid-turmeric-vita-jelly--86",
+  "name": "Medicube, Kojic Acid Turmeric Vita Jelly Mist Serum (100 мл)",
+  "pct": 20,
+  "old_sale": 1059,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 847
+ },
+ {
+  "id": "medicube-pdrn-pink-tension-up-mask-pdrn--5",
+  "name": "Medicube, PDRN Pink Tension Up Mask",
+  "pct": 20,
+  "old_sale": 320,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 256
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-glow-jelly-s-51",
+  "name": "Medicube, PDRN Pink Collagen Glow Jelly Serum (30 мл)",
+  "pct": 20,
+  "old_sale": 999,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 799
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-gel-mask-pdr-4",
+  "name": "Medicube, PDRN Pink Collagen Gel Mask",
+  "pct": 20,
+  "old_sale": 250,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 200
+ },
+ {
+  "id": "medicube-kojic-acid-turmeric-pad-пади-з--81",
+  "name": "Medicube, Kojic Acid Turmeric Pad (70 педів)",
+  "pct": 20,
+  "old_sale": 920,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 736
+ },
+ {
+  "id": "medicube-red-foam-cleanser-пінка-для-вми-63",
+  "name": "Medicube, Red Foam Cleanser (120 мл)",
+  "pct": 25,
+  "old_sale": 979,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 734
+ },
+ {
+  "id": "medicube-zero-pore-pad-2-0-двосторонні-т-45",
+  "name": "Medicube, Zero Pore Pad 2.0 (70 педів)",
+  "pct": 25,
+  "old_sale": 1200,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 900
+ },
+ {
+  "id": "medicube-red-succinic-acid-peeling-pad-п-70",
+  "name": "Medicube, Red Succinic Acid Peeling Pad (70 педів)",
+  "pct": 25,
+  "old_sale": 1150,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 862
+ },
+ {
+  "id": "medicube-pdrn-pink-niacinamide-whip-clea-1",
+  "name": "Medicube, PDRN Pink Niacinamide Whip Cleanser (120 г)",
+  "pct": 25,
+  "old_sale": 960,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 720
+ },
+ {
+  "id": "medicube-pdrn-pink-collagen-toning-gel-t-6",
+  "name": "Medicube, PDRN Pink Collagen Toning Gel Toner Pad (70 шт)",
+  "pct": 25,
+  "old_sale": 1150,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 862
+ },
+ {
+  "id": "medicube-deep-vita-c-pad-тонер-пади-з-ві-53",
+  "name": "Medicube, Deep Vita C Pad (70 педів)",
+  "pct": 25,
+  "old_sale": 1368,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1026
+ },
+ {
+  "id": "medicube-hyaluronic-multi-peptide-serum--18",
+  "name": "Medicube, Hyaluronic Multi Peptide Serum (30 мл)",
+  "pct": 25,
+  "old_sale": 1280,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 960
+ },
+ {
+  "id": "medicube-kojic-acid-turmeric-toning-clea-88",
+  "name": "Medicube, Kojic Acid Turmeric Toning Cleanser (120 г)",
+  "pct": 25,
+  "old_sale": 870,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 652
+ },
+ {
+  "id": "medicube-pdrn-pink-vita-coating-mask-тка-91",
+  "name": "Medicube, PDRN Pink Vita Coating Mask",
+  "pct": 30,
+  "old_sale": 160,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 112
+ },
+ {
+  "id": "medicube-red-centella-mask-заспокійлива--90",
+  "name": "Medicube, Red Centella Mask",
+  "pct": 30,
+  "old_sale": 160,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 112
+ },
+ {
+  "id": "c4c01cd1-cff1-49dc-b98d-01fea1f5d274",
+  "name": "Medicube, PDRN Pink Peptide Serum Mask",
+  "pct": 30,
+  "old_sale": 169,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 118
+ },
+ {
+  "id": "medicube-collagen-lifting-mask-тканинна--26",
+  "name": "Medicube, Collagen Lifting Mask",
+  "pct": 30,
+  "old_sale": 189,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 132
+ },
+ {
+  "id": "medicube-deep-peptide-radiance-mask-анти-41",
+  "name": "Medicube, Deep Peptide Radiance Mask",
+  "pct": 30,
+  "old_sale": 189,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 132
+ },
+ {
+  "id": "medicube-zero-pore-cooling-mask-зеро-пор-19",
+  "name": "Medicube, Zero Pore Cooling Mask",
+  "pct": 30,
+  "old_sale": 189,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 132
+ },
+ {
+  "id": "lactofit-probiotic-liver-care-пробіотик--108",
+  "name": "Lactofit, Probiotic Liver Care (60 стіків × 2 г)",
+  "pct": 30,
+  "old_sale": 1589,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1112
+ }
+]
