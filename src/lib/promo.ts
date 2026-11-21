@@ -91,3 +91,22 @@ export function promoLabel(id: string | null | undefined, discount: number | nul
   if (now < START || now >= END) return null
   return BLACK_FRIDAY_LABEL
 }
+
+/**
+ * Порядок товарів «Чорної п'ятниці»: найбільші знижки — ближче до початку, але
+ * без «стіни» з одного типу. Маски мають −30% і інакше займали б увесь верх,
+ * тож поруч не ставимо два товари одного типу, якщо є чим розбавити.
+ */
+export function mixBlackFriday<T>(items: T[], type: (x: T) => string, discount: (x: T) => number): T[] {
+  const left = [...items].sort((a, b) => discount(b) - discount(a))
+  const out: T[] = []
+  while (left.length) {
+    const prev = out.length ? type(out[out.length - 1]) : null
+    const prev2 = out.length > 1 ? type(out[out.length - 2]) : null
+    let i = left.findIndex((x) => type(x) !== prev && type(x) !== prev2)
+    if (i < 0) i = left.findIndex((x) => type(x) !== prev)
+    if (i < 0) i = 0
+    out.push(left.splice(i, 1)[0])
+  }
+  return out
+}

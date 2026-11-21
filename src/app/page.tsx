@@ -11,7 +11,7 @@ import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { listProducts, CARD_COLUMNS } from '@/lib/productStore'
 import { isUnavailable } from '@/lib/stock'
-import { blackFridayPhase, BLACK_FRIDAY_IDS } from '@/lib/promo'
+import { blackFridayPhase, BLACK_FRIDAY_IDS, mixBlackFriday } from '@/lib/promo'
 
 /**
  * Публічна сторінка — її вміст однаковий для всіх, тож він кешується й
@@ -49,6 +49,8 @@ export default async function Home() {
     stock_quantity: number | null
     coming_soon: number | null
     is_active: number | null
+    category?: string | null
+    subcategory?: string | null
   }
 
   const mapRow = (row: RawRow): ProductCard => {
@@ -97,10 +99,13 @@ export default async function Home() {
 
   const newProducts = newRows.map(mapRow)
   const exclusiveProducts = exclusiveRows.map(mapRow)
-  // In stock first, then the biggest discount first.
-  const bfProducts = bfRows
-    .map(mapRow)
-    .sort((a, b) => Number(a.comingSoon) - Number(b.comingSoon) || (b.discount ?? 0) - (a.discount ?? 0))
+  // In stock first; within that, big discounts first but mixed by type
+  // (otherwise the −30% masks fill the whole top of the carousel).
+  const bfTypeOf = (r: RawRow) => r.subcategory || r.category || ''
+  const bfDisc = (r: RawRow) => Number(r.discount_amount) || 0
+  const bfAvail = bfRows.filter((r) => !mapRow(r).comingSoon)
+  const bfSoon = bfRows.filter((r) => mapRow(r).comingSoon)
+  const bfProducts = [...mixBlackFriday(bfAvail, bfTypeOf, bfDisc), ...mixBlackFriday(bfSoon, bfTypeOf, bfDisc)].map(mapRow)
 
   return (
     <main className="min-h-screen -mt-[86px]">

@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { blackFridayPhase, BLACK_FRIDAY_IDS } from '@/lib/promo'
+import { blackFridayPhase, BLACK_FRIDAY_IDS, mixBlackFriday } from '@/lib/promo'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
@@ -917,8 +917,12 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     // найбільші знижки першими. Лише для типового сортування — якщо покупець
     // сам вибрав «за ціною» чи «новинки», порядок лишається його.
     if (sortBy === 'color' && blackFridayPhase() !== 'after') {
-      const bf = (p: Product) => (isBlackFriday(p) ? 0 : 1)
-      sorted.sort((a, b) => bf(a) - bf(b) || (bf(a) === 0 ? (b.discount_amount ?? 0) - (a.discount_amount ?? 0) : 0))
+      const bfItems = sorted.filter(isBlackFriday)
+      if (bfItems.length) {
+        const mixed = mixBlackFriday(bfItems, (p) => p.subcategory || p.category || '', (p) => p.discount_amount ?? 0)
+        const rest = sorted.filter((p) => !isBlackFriday(p))
+        return { items: [...mixed, ...rest], relaxedStock: relaxed }
+      }
     }
 
     return { items: sorted, relaxedStock: relaxed }
