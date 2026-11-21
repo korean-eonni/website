@@ -17,15 +17,57 @@ const BG = '#CBBDF4'
 const SCRIPT_SPACE = 'clamp(96px, 15vh, 170px)'
 
 /**
- * Clickable TV screens on the desktop photo (public/black-friday/bf-cart-v11.webp,
- * 1774×887). Values are % of the photo box; the products are baked into the
- * photo, these links only make each TV open its product.
+ * Clickable TV screens. The products are baked into the photo; these links
+ * only make each TV open its product. Boxes are % of the photo:
+ * `d` — desktop photo (1774×887), `m` — phone crop (930×880, x 790…1720).
  */
-const SCREEN_LINKS = [
-  { href: '/product/c4c01cd1-cff1-49dc-b98d-01fea1f5d274', label: 'Medicube PDRN Pink Peptide Serum Mask −30%', left: 62.8, top: 2.5, width: 12.6, height: 18.5 },
-  { href: '/product/medicube-zero-pore-pad-2-0-двосторонні-т-45', label: 'Medicube Zero Pore Pad 2.0 −25%', left: 56.3, top: 25.5, width: 11.1, height: 17.6 },
-  { href: '/product/medicube-kojic-acid-turmeric-vita-capsul-84', label: 'Medicube Kojic Acid Turmeric Vita Capsule Cream −20%', left: 69.4, top: 25.3, width: 10.7, height: 18.8 },
+type Box = { left: number; top: number; width: number; height: number }
+const SCREEN_LINKS: { href: string; label: string; d: Box; m: Box }[] = [
+  {
+    href: '/product/c4c01cd1-cff1-49dc-b98d-01fea1f5d274',
+    label: 'Medicube PDRN Pink Peptide Serum Mask −30%',
+    d: { left: 62.7, top: 2.8, width: 12.6, height: 17.7 },
+    m: { left: 34.6, top: 2.8, width: 24.1, height: 17.8 },
+  },
+  {
+    href: '/product/medicube-zero-pore-pad-2-0-двосторонні-т-45',
+    label: 'Medicube Zero Pore Pad 2.0 −25%',
+    d: { left: 55.9, top: 25.7, width: 11.8, height: 18.2 },
+    m: { left: 21.6, top: 25.9, width: 22.5, height: 18.3 },
+  },
+  {
+    href: '/product/medicube-kojic-acid-turmeric-vita-capsul-84',
+    label: 'Medicube Kojic Acid Turmeric Vita Capsule Cream −20%',
+    d: { left: 69.0, top: 25.3, width: 11.4, height: 19.5 },
+    m: { left: 46.7, top: 25.5, width: 21.7, height: 19.7 },
+  },
 ]
+
+function ScreenLinks({ mobile = false }: { mobile?: boolean }) {
+  return (
+    <>
+      {SCREEN_LINKS.map((l) => {
+        const b = mobile ? l.m : l.d
+        return (
+          <Link
+            key={l.href}
+            href={l.href}
+            aria-label={l.label}
+            title="Перейти до товару"
+            className="group absolute z-10 cursor-pointer rounded-[14%] transition-all duration-300 hover:bg-white/15 hover:shadow-[0_0_0_3px_rgba(255,255,255,0.85),0_0_22px_6px_rgba(232,74,138,0.45)]"
+            style={{ left: `${b.left}%`, top: `${b.top}%`, width: `${b.width}%`, height: `${b.height}%` }}
+          >
+            {!mobile && (
+              <span className="pointer-events-none absolute left-1/2 -bottom-3 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-full bg-[#E84A8A] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-white opacity-0 shadow-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                Дивитись товар
+              </span>
+            )}
+          </Link>
+        )
+      })}
+    </>
+  )
+}
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -111,15 +153,7 @@ export default function BlackFridaySlide() {
       {/* The photo sits under the header and leaves room below it for the script line. */}
       <div className="hidden md:block absolute right-0 xl:right-[8vw] aspect-[2/1]" style={{ top: 88, height: `calc(100% - 88px - ${SCRIPT_SPACE})` }}>
         <Image src="/black-friday/bf-cart-v11.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
-        {SCREEN_LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            aria-label={l.label}
-            className="absolute rounded-[18px] transition-shadow hover:shadow-[0_0_0_3px_rgba(232,74,138,0.55)]"
-            style={{ left: `${l.left}%`, top: `${l.top}%`, width: `${l.width}%`, height: `${l.height}%` }}
-          />
-        ))}
+        <ScreenLinks />
         <span
           className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
           style={{
@@ -137,8 +171,9 @@ export default function BlackFridaySlide() {
           sale
         </span>
       </div>
-      <div className="hidden md:flex relative h-full max-w-[1440px] mx-auto px-8 lg:px-12 items-center pt-16">
-        <div className="max-w-[46%] lg:max-w-[560px]">{text}</div>
+      {/* pointer-events-none on the full-width wrapper, so it does not cover the clickable TVs */}
+      <div className="hidden md:flex pointer-events-none relative h-full max-w-[1440px] mx-auto px-8 lg:px-12 items-center pt-16">
+        <div className="pointer-events-auto max-w-[46%] lg:max-w-[560px]">{text}</div>
       </div>
 
       {/* ── Phone: cart photo on top, text below ── */}
@@ -146,6 +181,7 @@ export default function BlackFridaySlide() {
         {/* Cart centred; the handwritten line sits under it, below the back (handle-side) wheels. */}
         <div className="relative mx-auto h-[218px] w-[230px] shrink-0">
           <Image src="/black-friday/bf-cart-mobile-v11.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
+          <ScreenLinks mobile />
           <span
             className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
             style={{
