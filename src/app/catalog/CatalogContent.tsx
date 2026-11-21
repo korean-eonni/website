@@ -10,11 +10,12 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { promoLabel, blackFridayPhase, BLACK_FRIDAY_IDS } from '@/lib/promo'
+import { blackFridayPhase, BLACK_FRIDAY_IDS } from '@/lib/promo'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
 import { isUnavailable } from '@/lib/stock'
+import DiscountBadge from '@/components/DiscountBadge'
 
 // Pre-computed dominant packaging colour per product id (see
 // scripts/compute-product-colors.mjs). Used for the default "by colour" order:
@@ -299,9 +300,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
           {/* Top-left discount badge */}
           {product.discount_amount != null && product.discount_amount > 0 && (
             <div className="absolute top-3 left-3 z-[4] flex flex-col items-start gap-1.5">
-              <span className="h-[32px] px-3 rounded-[8px] bg-[#E84A8A] text-white text-[15px] font-bold flex items-center shadow-[0_3px_10px_rgba(232,74,138,0.45)]">
-                −{product.discount_amount}%{promoLabel(product.id, product.discount_amount) ? <span className="ml-1.5 whitespace-nowrap">{promoLabel(product.id, product.discount_amount)}</span> : null}
-              </span>
+              <DiscountBadge id={product.id} discount={product.discount_amount} />
             </div>
           )}
 
@@ -1387,7 +1386,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
               ) : (
                 <>
                   {bfShown.length > 0 && (
-                    <div className="mb-8 sm:mb-12 -mx-1 sm:mx-0 rounded-[24px] sm:rounded-[40px] bg-[#CBBDF4] px-3 py-6 sm:px-8 sm:py-10 shadow-[0_10px_40px_-12px_rgba(90,60,160,0.35)]">
+                    <div className="mb-8 sm:mb-12 -mx-1 sm:mx-0 rounded-[24px] sm:rounded-[40px] bg-[#CBBDF4] px-2 py-6 sm:px-8 sm:py-10 shadow-[0_10px_40px_-12px_rgba(90,60,160,0.35)]">
                       <h2 className="font-bebas uppercase text-black text-[36px] leading-[40px] sm:text-[56px] sm:leading-[60px] mb-5 sm:mb-8">
                         Чорна п&apos;ятниця
                       </h2>

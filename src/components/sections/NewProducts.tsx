@@ -3,11 +3,11 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { promoLabel } from '@/lib/promo'
 import { useCart } from '@/contexts/CartContext'
 import FloatingIcons from '@/components/FloatingIcons'
 import Magnetic from '@/components/ui/Magnetic'
 import WishlistButton from '@/components/WishlistButton'
+import DiscountBadge from '@/components/DiscountBadge'
 
 export interface Product {
   id: string
@@ -105,9 +105,7 @@ function ProductCard({ product, addingId, addedId, onAddToCart }: {
           {/* Top-left discount badge */}
           {product.discount && (
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-[4] flex flex-col items-start gap-1 sm:gap-1.5">
-              <span className="h-[24px] sm:h-[32px] px-2.5 sm:px-3 rounded-[6px] sm:rounded-[8px] bg-[#E84A8A] text-white text-[13px] sm:text-[15px] font-bold flex items-center shadow-[0_3px_10px_rgba(232,74,138,0.45)]">
-                −{product.discount}%{promoLabel(product.id, product.discount) ? <span className="ml-1.5 whitespace-nowrap">{promoLabel(product.id, product.discount)}</span> : null}
-              </span>
+              <DiscountBadge id={product.id} discount={product.discount} />
             </div>
           )}
 
