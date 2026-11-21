@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GOOGLE_ADS_PURCHASE_SEND_TO } from '@/components/analytics/GoogleTag'
+import { forgetPendingPayment } from '@/components/PendingPaymentWatcher'
 
 type Order = {
   id: string
@@ -82,6 +83,7 @@ export default function OrderSuccessPage() {
     }
 
     if (orderId) {
+      forgetPendingPayment()
       fetchOrder()
     }
   }, [orderId])

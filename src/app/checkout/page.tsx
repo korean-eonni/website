@@ -15,6 +15,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import PhoneInput from '@/components/ui/PhoneInput'
 import { readAdAttribution } from '@/lib/adAttribution'
+import { rememberPendingPayment, forgetPendingPayment } from '@/components/PendingPaymentWatcher'
 
 type ShippingMethod = 'nova_poshta' | 'ukrposhta'
 type PaymentMethod = 'platon' | 'card' | 'cash_on_delivery' | 'bank_transfer'
@@ -97,7 +98,10 @@ export default function CheckoutPage() {
     try {
       const q = new URLSearchParams(window.location.search)
       const id = q.get('order')
-      if (id && q.get('payment') === 'failed') setFailedOrderId(id)
+      if (id && q.get('payment') === 'failed') {
+        setFailedOrderId(id)
+        forgetPendingPayment()
+      }
     } catch {
       /* window недоступне */
     }
@@ -399,6 +403,9 @@ export default function CheckoutPage() {
     document.body.appendChild(form)
     // Кошик НЕ чистимо: поки оплата не підтверджена, покупець не має нічого
     // втратити. Його очистить callback Platon після успішної оплати.
+    // Якщо повернення з банку/Platon зламається, сайт однаково знайде це
+    // замовлення, коли покупець відкриє його знову (PendingPaymentWatcher).
+    rememberPendingPayment(orderId)
     form.submit()
     return null
   }

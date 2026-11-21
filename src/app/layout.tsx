@@ -9,6 +9,7 @@ import LenisProvider from '@/components/providers/LenisProvider'
 import MicrosoftClarity from '@/components/analytics/MicrosoftClarity'
 import GoogleTag from '@/components/analytics/GoogleTag'
 import AdAttributionCapture from '@/components/analytics/AdAttributionCapture'
+import PendingPaymentWatcher from '@/components/PendingPaymentWatcher'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua').trim().replace(/\/$/, '')
 const SITE_NAME = 'Eonni — Корейська косметика в Києві'
@@ -200,6 +201,7 @@ export default function RootLayout({
               <div className="h-[86px]" />
               {children}
               <SupportFAB />
+              <PendingPaymentWatcher />
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
