@@ -2,6 +2,7 @@ import Hero from '@/components/sections/Hero'
 import HomeIntro from '@/components/sections/HomeIntro'
 import FeaturedIn from '@/components/sections/FeaturedIn'
 import NewProducts from '@/components/sections/NewProducts'
+import BlackFridayProducts from '@/components/sections/BlackFridayProducts'
 import Categories from '@/components/sections/Categories'
 import ExclusiveProducts from '@/components/sections/ExclusiveProducts'
 import ReviewsSection from '@/components/sections/ReviewsSection'
@@ -10,6 +11,7 @@ import DeliverySection from '@/components/sections/DeliverySection'
 import Footer from '@/components/layout/Footer'
 import { listProducts, CARD_COLUMNS } from '@/lib/productStore'
 import { isUnavailable } from '@/lib/stock'
+import { blackFridayPhase, BLACK_FRIDAY_IDS } from '@/lib/promo'
 
 /**
  * Публічна сторінка — її вміст однаковий для всіх, тож він кешується й
@@ -76,26 +78,36 @@ export default async function Home() {
   // (не пізніше ніж за revalidate) поверне товари на місце.
   let newRows: RawRow[] = []
   let exclusiveRows: RawRow[] = []
+  let bfRows: RawRow[] = []
+  const bfOn = blackFridayPhase() !== 'after'
+  // Ids are our own constants (promo.ts); quotes are escaped anyway.
+  const bfIn = Array.from(BLACK_FRIDAY_IDS).map((id) => `'${id.replace(/'/g, "''")}'`).join(',')
   try {
-    const [fresh, exclusive] = await Promise.all([
+    const [fresh, exclusive, bf] = await Promise.all([
       listProducts('is_active = 1 AND is_new = 1', CARD_COLUMNS, { limit: 12, cacheable: true }),
       listProducts('is_active = 1 AND is_exclusive = 1', CARD_COLUMNS, { limit: 12, cacheable: true }),
+      bfOn ? listProducts(`is_active = 1 AND id IN (${bfIn})`, CARD_COLUMNS, { limit: 100, cacheable: true }) : Promise.resolve([]),
     ])
     newRows = fresh as unknown as RawRow[]
     exclusiveRows = exclusive as unknown as RawRow[]
+    bfRows = bf as unknown as RawRow[]
   } catch (error) {
     console.error('[home] product query failed:', error)
   }
 
   const newProducts = newRows.map(mapRow)
   const exclusiveProducts = exclusiveRows.map(mapRow)
+  // In stock first, then the biggest discount first.
+  const bfProducts = bfRows
+    .map(mapRow)
+    .sort((a, b) => Number(a.comingSoon) - Number(b.comingSoon) || (b.discount ?? 0) - (a.discount ?? 0))
 
   return (
     <main className="min-h-screen -mt-[86px]">
       {/* Hero spans the full viewport from top:0 — so the floating header capsule
           appears DIRECTLY over the Hero face image, with no gap or backdrop strip. */}
       <div className="fixed top-0 left-0 right-0 h-screen z-0 bg-[#E2F9FF]">
-        <Hero />
+        <Hero bf={blackFridayPhase() !== 'after'} />
       </div>
 
       {/* Spacer: header height + hero visible area */}
@@ -110,6 +122,7 @@ export default async function Home() {
       >
         <HomeIntro />
         <FeaturedIn />
+        {bfOn && <BlackFridayProducts products={bfProducts} />}
         <NewProducts products={newProducts} />
         <Categories />
         <ExclusiveProducts products={exclusiveProducts} />

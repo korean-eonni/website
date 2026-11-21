@@ -24,6 +24,15 @@ export interface Product {
 
 type NewProductsProps = {
   products?: Product[]
+  /** Section heading (default «Новинки»). */
+  title?: string
+  /** Where «see all» leads (default the new arrivals). */
+  viewAllHref?: string
+  viewAllLabel?: string
+  /** Put the whole section (heading + products) on one big lilac plate. */
+  boxed?: boolean
+  /** Seed for the decorative floating icons, so stacked sections differ. */
+  iconsOffset?: number
 }
 
 // Product Card Component
@@ -188,7 +197,14 @@ function ProductCard({ product, addingId, addedId, onAddToCart }: {
   )
 }
 
-export default function NewProducts({ products }: NewProductsProps) {
+export default function NewProducts({
+  products,
+  title = 'Новинки',
+  viewAllHref = '/catalog?new=true',
+  viewAllLabel = 'Усі новинки',
+  boxed = false,
+  iconsOffset = 0,
+}: NewProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [addingId, setAddingId] = useState<string | null>(null)
   const [addedId, setAddedId] = useState<string | null>(null)
@@ -230,20 +246,21 @@ export default function NewProducts({ products }: NewProductsProps) {
 
   return (
     <section className="relative bg-[#E2F9FF] py-16 sm:py-20 overflow-hidden">
-      <FloatingIcons count={7} offset={0} />
-      <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[72px] xl:px-[100px]">
+      <FloatingIcons count={7} offset={iconsOffset} />
+      <div className={`relative z-10 max-w-[1440px] mx-auto ${boxed ? 'px-3 sm:px-6 lg:px-[40px] xl:px-[60px]' : 'px-4 sm:px-6 lg:px-[72px] xl:px-[100px]'}`}>
+        <div className={boxed ? 'rounded-[24px] sm:rounded-[40px] bg-[#CBBDF4] px-3 py-6 sm:px-8 sm:py-10 lg:px-10 shadow-[0_10px_40px_-12px_rgba(90,60,160,0.35)]' : ''}>
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6 sm:mb-10">
           <h2 className="font-bebas uppercase text-black text-[40px] leading-[44px] sm:text-[64px] sm:leading-[68px] lg:text-[80px] lg:leading-[80px]">
-            Новинки
+            {title}
           </h2>
           {/* Hide button on mobile */}
           <Magnetic strength={12}>
             <Link
-              href="/catalog?new=true"
-              className="hidden sm:inline-flex items-center justify-center bg-[#BCC2F4] hover:bg-[#A8B0E8] text-black font-semibold text-[15px] tracking-[0.05em] px-10 py-4 rounded-[12px] transition-colors duration-300 uppercase"
+              href={viewAllHref}
+              className={`hidden sm:inline-flex items-center justify-center ${boxed ? 'bg-white/85 hover:bg-white' : 'bg-[#BCC2F4] hover:bg-[#A8B0E8]'} text-black font-semibold text-[15px] tracking-[0.05em] px-10 py-4 rounded-[12px] transition-colors duration-300 uppercase`}
             >
-              Усі новинки
+              {viewAllLabel}
             </Link>
           </Magnetic>
         </div>
@@ -316,13 +333,14 @@ export default function NewProducts({ products }: NewProductsProps) {
         {displayProducts.length > 8 && (
           <div className="mt-6 text-center md:hidden">
             <Link
-              href="/catalog?new=true"
+              href={viewAllHref}
               className="text-[#4348AE] font-semibold text-[14px] hover:underline"
             >
               Переглянути всі →
             </Link>
           </div>
         )}
+        </div>
       </div>
     </section>
   )

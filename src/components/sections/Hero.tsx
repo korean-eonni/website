@@ -65,24 +65,26 @@ function SkinProfileSlide() {
   )
 }
 
-export default function Hero() {
-  // The Black Friday slide is added only in the browser (and only until 02.12),
-  // so the cached server HTML never disagrees with the client.
-  const [showBf, setShowBf] = useState(false)
+export default function Hero({ bf = false }: { bf?: boolean }) {
+  // `bf` comes from the server render (page is rebuilt every 5 min), so during
+  // the promo the Black Friday poster is already the first slide in the HTML —
+  // no flash of the other slide. The browser re-checks the date on mount.
+  const [showBf, setShowBf] = useState(bf)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [paused, setPaused] = useState(false)
   const touchX = useRef<number | null>(null)
 
   useEffect(() => {
-    setShowBf(blackFridayPhase() !== 'after')
-    // ?bf=1 — open straight on the Black Friday slide and hold it (for previews).
-    if (new URLSearchParams(window.location.search).get('bf')) {
-      setCurrentSlide(1)
-      setPaused(true)
-    }
+    const on = blackFridayPhase() !== 'after'
+    setShowBf(on)
+    setCurrentSlide(0)
+    // ?bf=1 — hold on the Black Friday slide (for previews).
+    if (on && new URLSearchParams(window.location.search).get('bf')) setPaused(true)
   }, [])
 
-  const count = showBf ? 2 : 1
+  // Black Friday poster first, SKIN PROFILE second.
+  const slides: ('bf' | 'skin')[] = showBf ? ['bf', 'skin'] : ['skin']
+  const count = slides.length
   const go = useCallback((i: number) => setCurrentSlide(((i % count) + count) % count), [count])
 
   useEffect(() => {
@@ -116,21 +118,15 @@ export default function Hero() {
         go(currentSlide + (end < start ? 1 : -1))
       }}
     >
-      <div
-        className={`absolute inset-0 transition-opacity duration-700 ${currentSlide === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        aria-hidden={currentSlide !== 0}
-      >
-        <SkinProfileSlide />
-      </div>
-
-      {showBf && (
+      {slides.map((kind, idx) => (
         <div
-          className={`absolute inset-0 transition-opacity duration-700 ${currentSlide === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          aria-hidden={currentSlide !== 1}
+          key={kind}
+          className={`absolute inset-0 transition-opacity duration-700 ${currentSlide === idx ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          aria-hidden={currentSlide !== idx}
         >
-          <BlackFridaySlide active={currentSlide === 1} />
+          {kind === 'bf' ? <BlackFridaySlide active={currentSlide === idx} /> : <SkinProfileSlide />}
         </div>
-      )}
+      ))}
 
       {/* Carousel Dots */}
       {count > 1 && (

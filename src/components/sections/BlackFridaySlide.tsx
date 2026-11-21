@@ -124,11 +124,15 @@ function pad(n: number) {
 }
 
 function useCountdown(target: number) {
-  const [now, setNow] = useState(() => Date.now())
+  // null until mounted: the slide is now server-rendered, and the server's
+  // clock must not end up in the HTML (hydration mismatch).
+  const [now, setNow] = useState<number | null>(null)
   useEffect(() => {
+    setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
+  if (now === null) return null
   const left = Math.max(0, target - now)
   return {
     d: Math.floor(left / 86400000),
@@ -140,7 +144,7 @@ function useCountdown(target: number) {
 
 export default function BlackFridaySlide({ active = true }: { active?: boolean }) {
   const before = blackFridayPhase() === 'before'
-  const { d, h, m, s } = useCountdown(before ? BLACK_FRIDAY_START : BLACK_FRIDAY_END)
+  const cd = useCountdown(before ? BLACK_FRIDAY_START : BLACK_FRIDAY_END)
 
   const text = (
     <div className={`${unbounded.className} text-black`}>
@@ -162,14 +166,14 @@ export default function BlackFridaySlide({ active = true }: { active?: boolean }
         <div className="flex items-center gap-1.5 tabular-nums">
           {(
             [
-              [d, 'дн'],
-              [h, 'год'],
-              [m, 'хв'],
-              [s, 'с'],
+              [cd?.d, 'дн'],
+              [cd?.h, 'год'],
+              [cd?.m, 'хв'],
+              [cd?.s, 'с'],
             ] as const
           ).map(([v, l]) => (
             <span key={l} className="inline-flex items-baseline gap-0.5 rounded-md bg-white/75 px-1.5 sm:px-2 py-1 shadow-[0_2px_8px_rgba(40,80,120,0.12)]">
-              <span className="text-[13px] sm:text-[16px] font-semibold">{l === 'дн' ? v : pad(v)}</span>
+              <span className="text-[13px] sm:text-[16px] font-semibold">{v === undefined ? '--' : l === 'дн' ? v : pad(v)}</span>
               <span className="text-[9px] sm:text-[10px] text-black/50">{l}</span>
             </span>
           ))}
