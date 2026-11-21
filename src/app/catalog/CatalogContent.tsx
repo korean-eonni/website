@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { promoLabel } from '@/lib/promo'
+import { promoLabel, blackFridayPhase, BLACK_FRIDAY_IDS } from '@/lib/promo'
 import { useCart } from '@/contexts/CartContext'
 import WishlistButton from '@/components/WishlistButton'
 import productColors from '@/lib/productColors.json'
@@ -129,6 +129,11 @@ function isComingSoon(p: Product): boolean {
 // A set/bundle = two products joined by " + " in the name, e.g. "Крем + Сироватка".
 // The " + " must have a space before it and be followed by a letter — this excludes
 // "SPF50+ PA++++", "100+100 Падів" and "... + 30 мл" (a quantity, not a second item).
+/** Товар акції «Чорна п'ятниця», який можна купити зараз. */
+function isBlackFriday(p: Product): boolean {
+  return BLACK_FRIDAY_IDS.has(p.id) && !isComingSoon(p)
+}
+
 function isBundle(p: Product): boolean {
   return /\s\+\s+[^\d\s]/.test(p.name || '')
 }
@@ -909,6 +914,14 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     const rank = (p: Product) => (isComingSoon(p) ? 2 : isBundle(p) ? 0 : 1)
     sorted.sort((a, b) => rank(a) - rank(b))
 
+    // «Чорна п'ятниця»: товари акції (у наявності) — на самому початку списку,
+    // найбільші знижки першими. Лише для типового сортування — якщо покупець
+    // сам вибрав «за ціною» чи «новинки», порядок лишається його.
+    if (sortBy === 'color' && blackFridayPhase() !== 'after') {
+      const bf = (p: Product) => (isBlackFriday(p) ? 0 : 1)
+      sorted.sort((a, b) => bf(a) - bf(b) || (bf(a) === 0 ? (b.discount_amount ?? 0) - (a.discount_amount ?? 0) : 0))
+    }
+
     return { items: sorted, relaxedStock: relaxed }
   }, [filteredIgnoringStock, stockTab, sortBy])
   
@@ -916,6 +929,17 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     return filteredProducts.slice(0, displayCount)
   }, [filteredProducts, displayCount])
   
+  // Товари «Чорної п'ятниці» стоять на початку списку (див. сортування вище) —
+  // показуємо їх окремою бузковою плашкою, решту — звичайною сіткою під нею.
+  const { bfShown, restShown } = useMemo(() => {
+    if (sortBy !== 'color' || blackFridayPhase() === 'after') {
+      return { bfShown: [] as Product[], restShown: displayedProducts }
+    }
+    let n = 0
+    while (n < displayedProducts.length && isBlackFriday(displayedProducts[n])) n++
+    return { bfShown: displayedProducts.slice(0, n), restShown: displayedProducts.slice(n) }
+  }, [displayedProducts, sortBy])
+
   const hasMoreProducts = displayCount < filteredProducts.length
   
   const loadMoreProducts = useCallback(() => {
@@ -1362,11 +1386,25 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-6 sm:gap-y-10">
-                    {displayedProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-                    ))}
-                  </div>
+                  {bfShown.length > 0 && (
+                    <div className="mb-8 sm:mb-12 -mx-1 sm:mx-0 rounded-[24px] sm:rounded-[40px] bg-[#CBBDF4] px-3 py-6 sm:px-8 sm:py-10 shadow-[0_10px_40px_-12px_rgba(90,60,160,0.35)]">
+                      <h2 className="font-bebas uppercase text-black text-[36px] leading-[40px] sm:text-[56px] sm:leading-[60px] mb-5 sm:mb-8">
+                        Чорна п&apos;ятниця
+                      </h2>
+                      <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-6 sm:gap-y-10">
+                        {bfShown.map((product) => (
+                          <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {restShown.length > 0 && (
+                    <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-6 sm:gap-y-10">
+                      {restShown.map((product) => (
+                        <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+                      ))}
+                    </div>
+                  )}
                   
                   {/* Show More Button */}
                   {hasMoreProducts && (
