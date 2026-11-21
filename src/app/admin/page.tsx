@@ -142,7 +142,7 @@ async function deleteProductAction(formData: FormData) {
 function revalidatePublicPages(productId?: string) {
   revalidatePath('/')
   revalidatePath('/catalog')
-  if (productId) revalidatePath(`/product/${productId}`)
+  if (productId) revalidatePath(encodeURI(`/product/${productId}`)) // URL-кодуємо: кирилиця в шляху ламала збереження (заголовок відповіді лише ASCII)
 }
 
 

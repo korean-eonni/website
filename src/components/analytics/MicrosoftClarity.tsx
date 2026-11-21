@@ -7,7 +7,9 @@ import Script from 'next/script'
  * creating a project at https://clarity.microsoft.com.
  */
 export default function MicrosoftClarity() {
-  const projectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID
+  // trim(): у Vercel значення збережене з переносом рядка в кінці — він ламав
+  // рядок у скрипті, і Clarity взагалі не запускалась.
+  const projectId = (process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || '').trim()
 
   if (!projectId) return null
 
@@ -21,7 +23,7 @@ export default function MicrosoftClarity() {
   c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
   t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
   y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "${projectId}");
+})(window, document, "clarity", "script", ${JSON.stringify(projectId)});
         `.trim(),
       }}
     />

@@ -96,7 +96,8 @@ async function updateProductAction(formData: FormData) {
   // 5) Публічні сторінки кешуються — скидаємо кеш, щоб зміна була видима одразу.
   revalidatePath('/')
   revalidatePath('/catalog')
-  revalidatePath(`/product/${id}`)
+  // URL-кодуємо: id з кирилицею ламав збереження (Next кладе шлях у заголовок, а там лише ASCII)
+  revalidatePath(encodeURI(`/product/${id}`))
 
   redirect('/admin?success=product-updated')
 }
