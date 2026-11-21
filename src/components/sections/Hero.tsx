@@ -128,7 +128,7 @@ export default function Hero() {
           className={`absolute inset-0 transition-opacity duration-700 ${currentSlide === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           aria-hidden={currentSlide !== 1}
         >
-          <BlackFridaySlide />
+          <BlackFridaySlide active={currentSlide === 1} />
         </div>
       )}
 

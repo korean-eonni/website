@@ -43,6 +43,56 @@ const SCREEN_LINKS: { href: string; label: string; d: Box; m: Box }[] = [
   },
 ]
 
+/**
+ * TV screen outlines (% of the photo; `d` desktop, `m` phone crop) for the
+ * flicker + rolling light bar. Order: 3 product TVs, then BLACK FRIDAY, SHOP.
+ */
+const SCREENS: { d: string; m: string; delay: number }[] = [
+  { d: '75.31% 18.04%, 63.7% 20.52%, 62.68% 5.75%, 74.41% 2.82%', m: '58.71% 18.18%, 36.56% 20.68%, 34.62% 5.8%, 56.99% 2.84%', delay: 0 },
+  { d: '67.64% 29.31%, 65.73% 43.86%, 55.86% 41.49%, 57.27% 25.7%', m: '44.09% 29.55%, 40.43% 44.2%, 21.61% 41.82%, 24.3% 25.91%', delay: -0.9 },
+  { d: '80.38% 42.39%, 71.14% 44.64%, 70.46% 44.08%, 69.0% 28.64%, 78.8% 25.25%', m: '68.39% 42.73%, 50.75% 45.0%, 49.46% 44.43%, 46.67% 28.86%, 65.38% 25.45%', delay: -1.7 },
+  { d: '67.7% 69.33%, 67.47% 69.79%, 55.64% 69.79%, 55.24% 59.64%, 55.3% 52.99%, 55.47% 51.52%, 60.32% 50.39%, 67.47% 49.83%, 67.76% 52.09%', m: '44.19% 69.89%, 43.76% 70.34%, 21.18% 70.34%, 20.43% 60.11%, 20.54% 53.41%, 20.86% 51.93%, 30.11% 50.8%, 43.76% 50.23%, 44.3% 52.5%', delay: -0.4 },
+  { d: '81.4% 52.54%, 81.45% 54.79%, 80.78% 70.12%, 69.79% 69.9%, 69.56% 67.87%, 69.56% 50.96%, 74.46% 50.96%, 80.16% 51.97%', m: '70.32% 52.95%, 70.43% 55.23%, 69.14% 70.68%, 48.17% 70.45%, 47.74% 68.41%, 47.74% 51.36%, 57.1% 51.36%, 67.96% 52.39%', delay: -1.3 },
+]
+
+/** Living TVs: flicker and a rolling light bar on every screen, pulsing neon (BLACK FRIDAY, SHOP, SALE). */
+function TvFx({ mobile = false }: { mobile?: boolean }) {
+  return (
+    <>
+      {SCREENS.map((sc, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="bf-screen"
+          style={{ clipPath: `polygon(${mobile ? sc.m : sc.d})`, ['--d' as string]: `${sc.delay}s` }}
+        />
+      ))}
+      <Image
+        src={mobile ? '/black-friday/bf-neon-mobile-v2.webp' : '/black-friday/bf-neon-v2.webp'}
+        alt=""
+        aria-hidden
+        fill
+        unoptimized
+        className={`bf-neon pointer-events-none ${mobile ? 'object-contain' : 'object-cover'}`}
+      />
+    </>
+  )
+}
+
+/** «Shop Black Friday / sale», written line by line like a pen; replays each time the slide shows. */
+function Handwriting({ active }: { active: boolean }) {
+  return (
+    <>
+      <span key={active ? 'w1' : 's1'} className={active ? 'bf-write' : 'block'} style={{ animationDelay: '0.35s' }}>
+        Shop Black Friday
+      </span>
+      <span key={active ? 'w2' : 's2'} className={active ? 'bf-write' : 'block'} style={{ animationDelay: '1.95s', animationDuration: '0.7s' }}>
+        sale
+      </span>
+    </>
+  )
+}
+
 function ScreenLinks({ mobile = false }: { mobile?: boolean }) {
   return (
     <>
@@ -88,7 +138,7 @@ function useCountdown(target: number) {
   }
 }
 
-export default function BlackFridaySlide() {
+export default function BlackFridaySlide({ active = true }: { active?: boolean }) {
   const before = blackFridayPhase() === 'before'
   const { d, h, m, s } = useCountdown(before ? BLACK_FRIDAY_START : BLACK_FRIDAY_END)
 
@@ -153,6 +203,7 @@ export default function BlackFridaySlide() {
       {/* The photo sits under the header and leaves room below it for the script line. */}
       <div className="hidden md:block absolute right-0 xl:right-[8vw] aspect-[2/1]" style={{ top: 88, height: `calc(100% - 88px - ${SCRIPT_SPACE})` }}>
         <Image src="/black-friday/bf-cart-v11.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
+        <TvFx />
         <ScreenLinks />
         <span
           className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
@@ -166,9 +217,7 @@ export default function BlackFridaySlide() {
             WebkitTextStroke: '0.6px #4348AE',
           }}
         >
-          Shop Black Friday
-          <br />
-          sale
+          <Handwriting active={active} />
         </span>
       </div>
       {/* pointer-events-none on the full-width wrapper, so it does not cover the clickable TVs */}
@@ -181,6 +230,7 @@ export default function BlackFridaySlide() {
         {/* Cart centred; the handwritten line sits under it, below the back (handle-side) wheels. */}
         <div className="relative mx-auto h-[218px] w-[230px] shrink-0">
           <Image src="/black-friday/bf-cart-mobile-v11.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
+          <TvFx mobile />
           <ScreenLinks mobile />
           <span
             className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
@@ -194,9 +244,7 @@ export default function BlackFridaySlide() {
               WebkitTextStroke: '0.35px #4348AE',
             }}
           >
-            Shop Black Friday
-            <br />
-            sale
+            <Handwriting active={active} />
           </span>
         </div>
         <div className="mt-[22px]">{text}</div>

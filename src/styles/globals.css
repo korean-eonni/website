@@ -192,3 +192,71 @@
     will-change: auto;
   }
 }
+
+/* ── Black Friday hero: living TV screens, pulsing neon, handwriting ── */
+.bf-screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.bf-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0.02;
+  animation: bf-flicker 3.7s steps(1, end) infinite;
+  animation-delay: var(--d, 0s);
+}
+.bf-screen::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0));
+  transform: translateY(-110%);
+  animation: bf-scan 2.8s linear infinite;
+  animation-delay: var(--d, 0s);
+}
+@keyframes bf-flicker {
+  0% { opacity: 0.02; }
+  6% { opacity: 0.07; }
+  8% { opacity: 0.01; }
+  21% { opacity: 0.05; }
+  22% { opacity: 0.13; }
+  23% { opacity: 0.03; }
+  47% { opacity: 0.06; }
+  61% { opacity: 0.02; }
+  62% { opacity: 0.1; }
+  64% { opacity: 0.03; }
+  83% { opacity: 0.06; }
+}
+@keyframes bf-scan {
+  0% { transform: translateY(-110%); }
+  50%, 100% { transform: translateY(470%); }
+}
+.bf-neon {
+  mix-blend-mode: screen;
+  animation: bf-neon 1.8s ease-in-out infinite;
+}
+@keyframes bf-neon {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
+  70% { opacity: 0.8; }
+  71% { opacity: 0.15; }
+  72% { opacity: 0.75; }
+  73% { opacity: 0.2; }
+  74% { opacity: 0.75; }
+}
+.bf-write {
+  display: block;
+  clip-path: inset(-30% 100% -50% -12%);
+  animation: bf-write 1.6s cubic-bezier(0.45, 0.1, 0.4, 1) forwards;
+}
+@keyframes bf-write {
+  to { clip-path: inset(-30% -12% -50% -12%); }
+}
