@@ -3,32 +3,28 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Unbounded, Mrs_Saint_Delafield } from 'next/font/google'
 import Magnetic from '@/components/ui/Magnetic'
 import { blackFridayPhase, BLACK_FRIDAY_START, BLACK_FRIDAY_END } from '@/lib/promo'
 
-/** Products shown on the right of the Black Friday hero slide (all −25% during BF). */
-const FEATURED = [
-  {
-    href: '/product/medicube-zero-pore-pad-2-0-двосторонні-т-45',
-    name: 'Zero Pore Pad 2.0',
-    pct: 25,
-    image:
-      'https://919i7sxesnwlsr16.public.blob.vercel-storage.com/products/medicube-zero-pore-pad-2-0-%D0%B4%D0%B2%D0%BE%D1%81%D1%82%D0%BE%D1%80%D0%BE%D0%BD%D0%BD%D1%96-%D1%82-45/Medicube%2C%20Zero%20Pore%20Pad%202.0%2C%20%D0%94%D0%B2%D0%BE%D1%81%D1%82%D0%BE%D1%80%D0%BE%D0%BD%D0%BD%D1%96%20%D0%A2%D0%BE%D0%BD%D0%B5%D1%80-%D0%9F%D0%B0%D0%B4%D0%B8%20%D0%B7%20AHA%20BHA%20%D0%B4%D0%BB%D1%8F%20%D0%97%D0%B2%D1%83%D0%B6%D0%B5%D0%BD%D0%BD%D1%8F%20%D0%9F%D0%BE%D1%80%20%D1%82%D0%B0%20%D0%97%D0%BC%D0%B5%D0%BD%D1%88%D0%B5%D0%BD%D0%BD%D1%8F%20%D0%A7%D0%BE%D1%80%D0%BD%D0%B8%D1%85%20%D0%A6%D1%8F%D1%82%D0%BE%D0%BA%2C%2070%20%D0%BF%D0%B5%D0%B4%D1%96%D0%B2.jpg',
-  },
-  {
-    href: '/product/medicube-pdrn-pink-collagen-toning-gel-t-6',
-    name: 'PDRN Pink Toning Gel Pad',
-    pct: 25,
-    image:
-      'https://919i7sxesnwlsr16.public.blob.vercel-storage.com/products/medicube-pdrn-pink-collagen-toning-gel-t-6/Medicube%2C%20PDRN%20Pink%20Collagen%20Toning%20Gel%20Toner%20Pad%2C%20%D0%A2%D0%BE%D0%BD%D0%B5%D1%80-%D0%9F%D0%B0%D0%B4%D0%B8%20%D0%B7%20PDRN%20%D1%82%D0%B0%20%D0%9A%D0%BE%D0%BB%D0%B0%D0%B3%D0%B5%D0%BD%D0%BE%D0%BC%20%D0%B4%D0%BB%D1%8F%20%D0%A1%D1%8F%D1%8F%D0%BD%D0%BD%D1%8F%20%D1%82%D0%B0%20%D0%A0%D0%B5%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B0%D1%86%D1%96%D1%97%20%D0%A8%D0%BA%D1%96%D1%80%D0%B8%2C%2070%20%D1%88%D1%82.jpg',
-  },
-  {
-    href: '/product/medicube-red-foam-cleanser-пінка-для-вми-63',
-    name: 'Red Foam Cleanser',
-    pct: 25,
-    image:
-      'https://919i7sxesnwlsr16.public.blob.vercel-storage.com/products/medicube-red-foam-cleanser-%D0%BF%D1%96%D0%BD%D0%BA%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%B2%D0%BC%D0%B8-63/Medicube%2C%20Red%20Foam%20Cleanser%2C%20%D0%9F%D1%96%D0%BD%D0%BA%D0%B0%20%D0%B4%D0%BB%D1%8F%20%D0%92%D0%BC%D0%B8%D0%B2%D0%B0%D0%BD%D0%BD%D1%8F%20%D0%B7%20BHA%20%D0%9F%D1%80%D0%BE%D1%82%D0%B8%20%D0%90%D0%BA%D0%BD%D0%B5%20%D1%82%D0%B0%20%D0%A7%D0%BE%D1%80%D0%BD%D0%B8%D1%85%20%D0%A6%D1%8F%D1%82%D0%BE%D0%BA%2C%20120%20%D0%BC%D0%BB.png',
-  },
+const unbounded = Unbounded({ subsets: ['latin', 'cyrillic'], weight: ['400', '600', '800'], display: 'swap' })
+const script = Mrs_Saint_Delafield({ subsets: ['latin'], weight: '400', display: 'swap' })
+
+/** Background colour of the cart photo (its empty wall), used to fill around it. */
+const BG = '#CDDEEF'
+
+/** Height kept free under the desktop photo for the handwritten line. */
+const SCRIPT_SPACE = 'clamp(96px, 15vh, 170px)'
+
+/**
+ * Clickable TV screens on the desktop photo (public/black-friday/bf-cart-v6.webp,
+ * 1774×887). Values are % of the photo box; the products are baked into the
+ * photo, these links only make each TV open its product.
+ */
+const SCREEN_LINKS = [
+  { href: '/product/c4c01cd1-cff1-49dc-b98d-01fea1f5d274', label: 'Medicube PDRN Pink Peptide Serum Mask −30%', left: 62.8, top: 2.5, width: 12.6, height: 18.5 },
+  { href: '/product/medicube-zero-pore-pad-2-0-двосторонні-т-45', label: 'Medicube Zero Pore Pad 2.0 −25%', left: 56.3, top: 25.5, width: 11.1, height: 17.6 },
+  { href: '/product/medicube-kojic-acid-turmeric-vita-capsul-84', label: 'Medicube Kojic Acid Turmeric Vita Capsule Cream −20%', left: 69.4, top: 25.3, width: 10.7, height: 18.8 },
 ]
 
 function pad(n: number) {
@@ -42,102 +38,132 @@ function useCountdown(target: number) {
     return () => clearInterval(t)
   }, [])
   const left = Math.max(0, target - now)
-  const d = Math.floor(left / 86400000)
-  const h = Math.floor((left % 86400000) / 3600000)
-  const m = Math.floor((left % 3600000) / 60000)
-  const s = Math.floor((left % 60000) / 1000)
-  return { d, h, m, s }
+  return {
+    d: Math.floor(left / 86400000),
+    h: Math.floor((left % 86400000) / 3600000),
+    m: Math.floor((left % 3600000) / 60000),
+    s: Math.floor((left % 60000) / 1000),
+  }
 }
 
 export default function BlackFridaySlide() {
-  const phase = blackFridayPhase()
-  const before = phase === 'before'
+  const before = blackFridayPhase() === 'before'
   const { d, h, m, s } = useCountdown(before ? BLACK_FRIDAY_START : BLACK_FRIDAY_END)
 
-  return (
-    <div className="absolute inset-0 bg-[#0B0B0B] text-white overflow-hidden">
-      {/* soft pink glow */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(60% 70% at 85% 45%, rgba(232,74,138,0.35) 0%, rgba(232,74,138,0) 70%), radial-gradient(40% 50% at 10% 90%, rgba(226,249,255,0.10) 0%, rgba(226,249,255,0) 70%)',
-        }}
-      />
+  const text = (
+    <div className={`${unbounded.className} text-black`}>
+      <span className="inline-flex items-center h-[26px] sm:h-[30px] px-3 rounded-full bg-[#E84A8A] text-white text-[11px] sm:text-[12px] font-semibold tracking-[0.06em] uppercase">
+        {before ? 'Старт 22 листопада' : '22.11 — 02.12'}
+      </span>
 
-      <div className="relative h-full max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 flex items-start pt-[132px] sm:items-center sm:pt-0">
-        <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 sm:gap-8 sm:pt-16 lg:pt-0">
-          <div className="max-w-[640px]">
-            <span className="inline-flex items-center h-[30px] px-3 rounded-full bg-[#E84A8A] text-white text-[12px] sm:text-[13px] font-semibold tracking-[0.08em] uppercase">
-              {before ? 'Старт 22 листопада' : '22.11 — 02.12'}
+      <h2 className="mt-2.5 sm:mt-5 whitespace-nowrap md:whitespace-normal text-[31px] leading-[34px] sm:text-[56px] sm:leading-[58px] lg:text-[76px] lg:leading-[78px] font-extrabold uppercase tracking-[-0.01em]">
+        Black <br className="hidden md:inline" />
+        Friday
+      </h2>
+
+      <p className="mt-1.5 sm:mt-4 text-[12.5px] leading-[18px] sm:text-[18px] sm:leading-[26px] font-normal">
+        Знижки до <span className="text-[#E84A8A] font-semibold">−30%</span> на корейську косметику
+      </p>
+
+      <div className="mt-2.5 sm:mt-6 flex items-center gap-2.5">
+        <span className="text-[11px] sm:text-[13px] text-black/60">{before ? 'До старту' : 'До кінця акції'}</span>
+        <div className="flex items-center gap-1.5 tabular-nums">
+          {(
+            [
+              [d, 'дн'],
+              [h, 'год'],
+              [m, 'хв'],
+              [s, 'с'],
+            ] as const
+          ).map(([v, l]) => (
+            <span key={l} className="inline-flex items-baseline gap-0.5 rounded-md bg-white/75 px-1.5 sm:px-2 py-1 shadow-[0_2px_8px_rgba(40,80,120,0.12)]">
+              <span className="text-[13px] sm:text-[16px] font-semibold">{l === 'дн' ? v : pad(v)}</span>
+              <span className="text-[9px] sm:text-[10px] text-black/50">{l}</span>
             </span>
-
-            <h2 className="mt-4 text-[56px] leading-[52px] sm:text-[88px] sm:leading-[84px] lg:text-[120px] lg:leading-[110px] font-bebas uppercase">
-              Black Friday
-            </h2>
-
-            <p className="mt-3 sm:mt-4 text-[17px] leading-[24px] sm:text-[22px] sm:leading-[30px] font-gilroy">
-              Знижки до <span className="text-[#E84A8A] font-bold">−30%</span> на корейську косметику
-            </p>
-
-            <div className="mt-5 sm:mt-6 flex items-center gap-3 font-gilroy">
-              <span className="text-[13px] sm:text-[14px] text-white/70">{before ? 'До старту' : 'До кінця акції'}</span>
-              <div className="flex items-center gap-1.5 tabular-nums">
-                {[
-                  [d, 'дн'],
-                  [h, 'год'],
-                  [m, 'хв'],
-                  [s, 'с'],
-                ].map(([v, l]) => (
-                  <span key={l as string} className="inline-flex items-baseline gap-0.5 rounded-md bg-white/10 px-2 py-1">
-                    <span className="text-[16px] sm:text-[18px] font-bold">{l === 'дн' ? v : pad(v as number)}</span>
-                    <span className="text-[11px] text-white/60">{l}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-7 sm:mt-9 flex flex-wrap items-center gap-3 sm:gap-4">
-              <Magnetic strength={12}>
-                <Link
-                  href="/catalog?brand=Medicube&sale=true"
-                  className="inline-flex items-center justify-center bg-[#E84A8A] hover:bg-[#d63d7b] text-white uppercase transition-all duration-300 h-[46px] sm:h-[50px] px-6 sm:px-8 text-[15px] sm:text-[17px] font-semibold"
-                >
-                  Medicube до −30%
-                </Link>
-              </Magnetic>
-              <Magnetic strength={12}>
-                <Link
-                  href="/catalog?sale=true"
-                  className="inline-flex items-center justify-center border border-white hover:bg-white hover:text-black text-white uppercase transition-all duration-300 h-[46px] sm:h-[50px] px-6 sm:px-8 text-[13px] sm:text-[15px] font-semibold tracking-[0.05em]"
-                >
-                  Всі пропозиції зі знижкою
-                </Link>
-              </Magnetic>
-            </div>
-          </div>
-
-          {/* Featured products */}
-          <div className="flex gap-3 sm:gap-4 lg:gap-5">
-            {FEATURED.map((p, i) => (
-              <Link
-                key={p.href}
-                href={p.href}
-                className={`group relative block w-[96px] sm:w-[140px] lg:w-[190px] rounded-[14px] bg-white p-2 sm:p-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-transform duration-300 hover:-translate-y-1 ${
-                  i === 1 ? 'lg:-translate-y-6' : ''
-                }`}
-              >
-                <span className="absolute top-2 left-2 z-[1] rounded-[6px] bg-[#E84A8A] px-1.5 py-0.5 text-[11px] sm:text-[13px] font-bold text-white">
-                  −{p.pct}%
-                </span>
-                <div className="relative aspect-square">
-                  <Image src={p.image} alt={`Medicube ${p.name}`} fill sizes="(min-width:1024px) 190px, 140px" className="object-contain" quality={75} />
-                </div>
-                <p className="hidden sm:block mt-1.5 text-[10px] sm:text-[12px] leading-tight text-black font-gilroy line-clamp-2">{p.name}</p>
-              </Link>
-            ))}
-          </div>
+          ))}
         </div>
+      </div>
+
+      <div className="mt-3.5 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
+        <Magnetic strength={12}>
+          <Link
+            href="/catalog?brand=Medicube&sale=true"
+            className="inline-flex w-full sm:w-auto items-center justify-center bg-[#E84A8A] hover:bg-[#d63d7b] text-white uppercase transition-all duration-300 h-[38px] sm:h-[50px] px-6 sm:px-7 text-[11px] sm:text-[14px] font-semibold tracking-[0.02em]"
+          >
+            Medicube до −30%
+          </Link>
+        </Magnetic>
+        <Magnetic strength={12}>
+          <Link
+            href="/catalog?sale=true"
+            className="inline-flex w-full sm:w-auto items-center justify-center bg-black hover:bg-[#333333] text-white uppercase transition-all duration-300 h-[38px] sm:h-[50px] px-6 sm:px-7 text-[11px] sm:text-[14px] font-semibold tracking-[0.02em]"
+          >
+            Всі пропозиції зі знижкою
+          </Link>
+        </Magnetic>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: BG }}>
+      {/* ── Desktop / tablet: photo anchored to the right, text on the left ── */}
+      {/* The photo sits under the header and leaves room below it for the script line. */}
+      <div className="hidden md:block absolute right-0 xl:right-[8vw] aspect-[2/1]" style={{ top: 88, height: `calc(100% - 88px - ${SCRIPT_SPACE})` }}>
+        <Image src="/black-friday/bf-cart-v6.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
+        {SCREEN_LINKS.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            aria-label={l.label}
+            className="absolute rounded-[18px] transition-shadow hover:shadow-[0_0_0_3px_rgba(232,74,138,0.55)]"
+            style={{ left: `${l.left}%`, top: `${l.top}%`, width: `${l.width}%`, height: `${l.height}%` }}
+          />
+        ))}
+        <span
+          className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
+          style={{
+            left: '70%',
+            top: '99%',
+            transform: 'translateX(-50%) rotate(-3deg)',
+            fontSize: 'clamp(40px, 6.6vh, 76px)',
+            lineHeight: 0.82,
+            textShadow: '0 0 10px rgba(225,236,247,0.95), 0 0 3px rgba(225,236,247,0.9)',
+            WebkitTextStroke: '0.6px #4348AE',
+          }}
+        >
+          Shop Black Friday
+          <br />
+          sale
+        </span>
+      </div>
+      <div className="hidden md:flex relative h-full max-w-[1440px] mx-auto px-8 lg:px-12 items-center pt-16">
+        <div className="max-w-[46%] lg:max-w-[560px]">{text}</div>
+      </div>
+
+      {/* ── Phone: cart photo on top, text below ── */}
+      <div className="md:hidden relative h-full flex flex-col items-stretch px-5 pt-[92px]">
+        {/* Cart centred; the handwritten line sits under it, below the back (handle-side) wheels. */}
+        <div className="relative mx-auto h-[218px] w-[230px] shrink-0">
+          <Image src="/black-friday/bf-cart-mobile-v6.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
+          <span
+            className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
+            style={{
+              left: '70%',
+              top: 'calc(100% - 12px)',
+              transform: 'rotate(-5deg)',
+              fontSize: 20,
+              lineHeight: 0.85,
+              textShadow: '0 0 6px rgba(225,236,247,0.95)',
+              WebkitTextStroke: '0.35px #4348AE',
+            }}
+          >
+            Shop Black Friday
+            <br />
+            sale
+          </span>
+        </div>
+        <div className="mt-[22px]">{text}</div>
       </div>
     </div>
   )

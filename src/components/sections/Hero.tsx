@@ -75,6 +75,11 @@ export default function Hero() {
 
   useEffect(() => {
     setShowBf(blackFridayPhase() !== 'after')
+    // ?bf=1 — open straight on the Black Friday slide and hold it (for previews).
+    if (new URLSearchParams(window.location.search).get('bf')) {
+      setCurrentSlide(1)
+      setPaused(true)
+    }
   }, [])
 
   const count = showBf ? 2 : 1
