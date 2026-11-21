@@ -10,14 +10,14 @@ import { blackFridayPhase, BLACK_FRIDAY_START, BLACK_FRIDAY_END } from '@/lib/pr
 const unbounded = Unbounded({ subsets: ['latin', 'cyrillic'], weight: ['400', '600', '800'], display: 'swap' })
 const script = Mrs_Saint_Delafield({ subsets: ['latin'], weight: '400', display: 'swap' })
 
-/** Bright turquoise from the site gradient; the cart photo's wall is recoloured to match, used to fill around it. */
-const BG = '#B2EFFB'
+/** Lilac from the site gradient; the cart photo's wall is recoloured to match, used to fill around it. */
+const BG = '#CBBDF4'
 
 /** Height kept free under the desktop photo for the handwritten line. */
 const SCRIPT_SPACE = 'clamp(96px, 15vh, 170px)'
 
 /**
- * Clickable TV screens on the desktop photo (public/black-friday/bf-cart-v8.webp,
+ * Clickable TV screens on the desktop photo (public/black-friday/bf-cart-v9.webp,
  * 1774×887). Values are % of the photo box; the products are baked into the
  * photo, these links only make each TV open its product.
  */
@@ -110,7 +110,7 @@ export default function BlackFridaySlide() {
       {/* ── Desktop / tablet: photo anchored to the right, text on the left ── */}
       {/* The photo sits under the header and leaves room below it for the script line. */}
       <div className="hidden md:block absolute right-0 xl:right-[8vw] aspect-[2/1]" style={{ top: 88, height: `calc(100% - 88px - ${SCRIPT_SPACE})` }}>
-        <Image src="/black-friday/bf-cart-v8.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
+        <Image src="/black-friday/bf-cart-v9.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
         {SCREEN_LINKS.map((l) => (
           <Link
             key={l.href}
@@ -128,7 +128,7 @@ export default function BlackFridaySlide() {
             transform: 'translateX(-50%) rotate(-3deg)',
             fontSize: 'clamp(40px, 6.6vh, 76px)',
             lineHeight: 0.82,
-            textShadow: '0 0 10px rgba(215,249,255,0.9), 0 0 3px rgba(215,249,255,0.85)',
+            textShadow: '0 0 10px rgba(228,220,251,0.9), 0 0 3px rgba(228,220,251,0.85)',
             WebkitTextStroke: '0.6px #4348AE',
           }}
         >
@@ -145,7 +145,7 @@ export default function BlackFridaySlide() {
       <div className="md:hidden relative h-full flex flex-col items-stretch px-5 pt-[92px]">
         {/* Cart centred; the handwritten line sits under it, below the back (handle-side) wheels. */}
         <div className="relative mx-auto h-[218px] w-[230px] shrink-0">
-          <Image src="/black-friday/bf-cart-mobile-v8.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
+          <Image src="/black-friday/bf-cart-mobile-v9.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
           <span
             className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
             style={{
@@ -154,7 +154,7 @@ export default function BlackFridaySlide() {
               transform: 'rotate(-5deg)',
               fontSize: 20,
               lineHeight: 0.85,
-              textShadow: '0 0 6px rgba(215,249,255,0.9)',
+              textShadow: '0 0 6px rgba(228,220,251,0.9)',
               WebkitTextStroke: '0.35px #4348AE',
             }}
           >
