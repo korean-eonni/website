@@ -17,7 +17,7 @@ const BG = '#CBBDF4'
 const SCRIPT_SPACE = 'clamp(96px, 15vh, 170px)'
 
 /**
- * Clickable TV screens on the desktop photo (public/black-friday/bf-cart-v9.webp,
+ * Clickable TV screens on the desktop photo (public/black-friday/bf-cart-v10.webp,
  * 1774×887). Values are % of the photo box; the products are baked into the
  * photo, these links only make each TV open its product.
  */
@@ -110,7 +110,7 @@ export default function BlackFridaySlide() {
       {/* ── Desktop / tablet: photo anchored to the right, text on the left ── */}
       {/* The photo sits under the header and leaves room below it for the script line. */}
       <div className="hidden md:block absolute right-0 xl:right-[8vw] aspect-[2/1]" style={{ top: 88, height: `calc(100% - 88px - ${SCRIPT_SPACE})` }}>
-        <Image src="/black-friday/bf-cart-v9.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
+        <Image src="/black-friday/bf-cart-v10.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill priority={false} sizes="200vh" className="object-cover" quality={86} />
         {SCREEN_LINKS.map((l) => (
           <Link
             key={l.href}
@@ -145,7 +145,7 @@ export default function BlackFridaySlide() {
       <div className="md:hidden relative h-full flex flex-col items-stretch px-5 pt-[92px]">
         {/* Cart centred; the handwritten line sits under it, below the back (handle-side) wheels. */}
         <div className="relative mx-auto h-[218px] w-[230px] shrink-0">
-          <Image src="/black-friday/bf-cart-mobile-v9.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
+          <Image src="/black-friday/bf-cart-mobile-v10.webp" alt="Візок з телевізорами: Black Friday, знижки на Medicube" fill sizes="230px" className="object-contain" quality={86} />
           <span
             className={`${script.className} pointer-events-none absolute text-[#4348AE] whitespace-nowrap text-center`}
             style={{
