@@ -35,7 +35,19 @@ export type PlatonAuthInput = {
 
 export type PlatonAuthForm = {
   endpoint: string
-  fields: { key: string; payment: 'CC'; data: string; url: string; sign: string }
+  fields: {
+    key: string
+    payment: 'CC'
+    data: string
+    url: string
+    sign: string
+    /** Our order id — Platon echoes it back in the callback (`order`). */
+    order: string
+    lang: 'UK'
+    error_url?: string
+    email?: string
+    phone?: string
+  }
 }
 
 /**
@@ -45,7 +57,7 @@ export type PlatonAuthForm = {
  *   strrev(key) . strrev(payment) . strrev(data) . strrev(url) . strrev(PASSWORD)
  * ))
  *
- * `data` is base64(JSON) of the order details. Amounts MUST be "1000.00" format.
+ * `data` is base64(JSON) of amount/description/currency only. Amounts MUST be "1000.00".
  */
 export function buildPlatonAuthForm(
   input: PlatonAuthInput,
@@ -54,16 +66,15 @@ export function buildPlatonAuthForm(
 ): PlatonAuthForm {
   const payment = 'CC' as const
 
+  // `data` carries ONLY amount / description / currency. order, email, phone,
+  // error_url and lang are separate top-level form fields — inside `data` Platon
+  // silently ignores them, generates its own order number, and our callback
+  // then can't find the order (that's why paid orders never turned «Оплачено»).
   const dataObj: Record<string, string> = {
     amount: input.amount.toFixed(2), // e.g. "100.00" — Platon rejects "100" / "100.0"
-    currency: 'UAH',
     description: input.description.slice(0, 2500),
-    order: input.orderId.slice(0, 255),
-    lang: 'UK',
+    currency: 'UAH',
   }
-  if (input.errorUrl) dataObj.error_url = input.errorUrl
-  if (input.email) dataObj.email = input.email
-  if (input.phone) dataObj.phone = input.phone
 
   const data = Buffer.from(JSON.stringify(dataObj), 'utf8').toString('base64')
   const url = input.successUrl
@@ -73,7 +84,22 @@ export function buildPlatonAuthForm(
   ).toUpperCase()
   const sign = crypto.createHash('md5').update(signBase, 'utf8').digest('hex')
 
-  return { endpoint: PLATON_ENDPOINT, fields: { key, payment, data, url, sign } }
+  const fields: PlatonAuthForm['fields'] = {
+    key,
+    payment,
+    data,
+    url,
+    sign,
+    order: input.orderId.slice(0, 255),
+    lang: 'UK',
+  }
+  if (input.errorUrl) fields.error_url = input.errorUrl
+  // The callback signature includes the email we pass here (verified against
+  // the order's email in the callback handler), so send exactly order.email.
+  if (input.email) fields.email = input.email
+  if (input.phone) fields.phone = input.phone
+
+  return { endpoint: PLATON_ENDPOINT, fields }
 }
 
 function md5Upper(input: string): string {
