@@ -149,7 +149,7 @@ export default function BlackFridaySlide({ active = true }: { active?: boolean }
   const text = (
     <div className={`${unbounded.className} text-black`}>
       <span className="inline-flex items-center h-[26px] sm:h-[30px] px-3 rounded-full bg-[#E84A8A] text-white text-[11px] sm:text-[12px] font-semibold tracking-[0.06em] uppercase">
-        {before ? 'Старт 22 листопада' : '22.11 — 02.12'}
+        {before ? 'Старт 21 листопада' : '21.11 — 02.12'}
       </span>
 
       <h2 className="mt-2.5 sm:mt-5 whitespace-nowrap md:whitespace-normal text-[31px] leading-[34px] sm:text-[56px] sm:leading-[58px] lg:text-[76px] lg:leading-[78px] font-extrabold uppercase tracking-[-0.01em]">

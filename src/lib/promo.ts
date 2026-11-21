@@ -1,12 +1,13 @@
 /**
- * Black Friday 2026 (22.11–02.12.2026, Kyiv time).
+ * Black Friday 2026 (21.11–02.12.2026, Kyiv time).
  * Products in BLACK_FRIDAY_IDS get the words «Чорна п'ятниця» next to the
  * discount percent on the image badge, but only inside the promo window and
  * only while the product actually has a discount. Prices themselves live in
  * the DB (sale_price / original_price / discount_amount).
  */
 export const BLACK_FRIDAY_LABEL = "Чорна п'ятниця"
-const START = Date.parse('2026-11-22T00:00:00+02:00')
+// Стартували на день раніше — 21.11 за її рішенням.
+const START = Date.parse('2026-11-21T00:00:00+02:00')
 const END = Date.parse('2026-12-03T00:00:00+02:00')
 export const BLACK_FRIDAY_START = START
 export const BLACK_FRIDAY_END = END
@@ -76,7 +77,7 @@ export const BLACK_FRIDAY_IDS = new Set<string>([
   'lactofit-probiotic-liver-care-пробіотик--108',
 ])
 
-/** 'before' until 22.11, 'active' 22.11–02.12, 'after' from 03.12 (Kyiv time). */
+/** 'before' until 21.11, 'active' 21.11–02.12, 'after' from 03.12 (Kyiv time). */
 export function blackFridayPhase(now: number = Date.now()): 'before' | 'active' | 'after' {
   if (now < START) return 'before'
   if (now >= END) return 'after'

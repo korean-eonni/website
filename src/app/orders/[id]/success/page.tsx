@@ -183,7 +183,7 @@ export default function OrderSuccessPage() {
 
               {/* Order Details */}
               <div className="bg-[#E2F9FF] rounded-[24px] p-6 sm:p-8 shadow-sm mb-6">
-                <h2 className="font-bebas text-[28px] text-black mb-6">Деталі замовлення</h2>
+                <h2 className="font-bebas text-[28px] text-black mb-6">Що в посилці</h2>
 
                 {/* Items */}
                 <div className="space-y-4 mb-6 pb-6 border-b border-[#E5E5E5]">
