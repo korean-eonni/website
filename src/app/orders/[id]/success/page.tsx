@@ -169,17 +169,14 @@ export default function OrderSuccessPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h1 className="font-bebas text-[48px] sm:text-[56px] text-black mb-4">
-                  Дякуємо за замовлення!
+                <h1 className="font-bebas uppercase text-[44px] leading-[48px] sm:text-[56px] sm:leading-[60px] text-black mb-4">
+                  Ура, ваше замовлення прийняте!
                 </h1>
-                <p className="text-[20px] font-semibold text-black max-w-md mx-auto">
-                  Ура, замовлення прийняте!
-                </p>
-                <p className="mt-2 text-[16px] text-[#666]">
-                  Номер замовлення: <span className="font-semibold text-black">{order.id}</span>
+                <p className="text-[18px] font-semibold text-black">
+                  № {order.id}
                 </p>
                 <p className="mt-3 text-[18px] text-[#666] max-w-md mx-auto">
-                  Ми вже збираємо ваше замовлення з любов&apos;ю, а номер накладної надішлемо, щойно відправимо посилку{' '}
+                  Ми вже збираємо його з любов&apos;ю, а номер накладної надішлемо, щойно відправимо посилку{' '}
                   <span className="text-[#E84A8A]" aria-hidden="true">&#9829;</span>
                 </p>
               </div>
