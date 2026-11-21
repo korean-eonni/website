@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     'Умови повернення та обміну товарів в Eonni. 14 днів на повернення товарів, які підлягають поверненню. Дізнайтесь про правила та процедуру.',
   keywords: 'повернення косметики, обмін товару, 14 днів повернення, Eonni',
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Повернення та обмін | Eonni',
     description: '14 днів на повернення товарів, які підлягають поверненню.',
     type: 'website',

@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import type { Metadata } from 'next'
 import { getProduct } from '@/lib/productStore'
 
@@ -20,11 +21,8 @@ function decodeId(id: string): string {
 
 /** URL лише з ASCII: кодуємо кирилицю/пробіли, але не кодуємо вдруге вже закодоване. */
 function safeUrl(u: string): string {
-  try {
-    return encodeURI(decodeURI(u))
-  } catch {
-    return encodeURI(u)
-  }
+  // Кодуємо лише те, що не ASCII (кирилиця, пробіли); вже наявні %XX не чіпаємо.
+  return u.replace(/[^!-~]/g, (c) => encodeURIComponent(c))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -62,7 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         siteName: 'Eonni',
         // Фото самого товару. (Згенерована картинка opengraph-image не працювала:
         // Next обрізав кирилицю в її адресі, і прев'ю в месенджерах було порожнім.)
-        ...(ogImage ? { images: [{ url: ogImage, alt: product.name }] } : {}),
+        images: ogImage ? [{ url: ogImage, alt: product.name }] : DEFAULT_OG_IMAGES,
       },
       twitter: {
         card: 'summary_large_image',

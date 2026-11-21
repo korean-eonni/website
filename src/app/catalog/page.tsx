@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import CatalogContent from './CatalogContent'
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
     'Каталог оригінальної корейської косметики Eonni: догляд за обличчям, тілом, волоссям, БАДи та косметичні девайси. Medicube, Mediheal, Torriden, UNOVE, VT Cosmetics, LACTOFIT та інші бренди K-beauty.',
   alternates: { canonical: '/catalog' },
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Каталог корейської косметики | Eonni',
     description:
       'Оригінальна корейська косметика з доставкою по Україні. Догляд за обличчям, тілом, волоссям, БАДи K-beauty.',

@@ -1,11 +1,16 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'Eonni — Корейська косметика'
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
+// Не пререндерити під час збірки: статична версія виходила порожньою (0 байт).
+export const dynamic = 'force-dynamic'
 
-export default async function OpengraphImage() {
+/**
+ * Картинка-прев'ю сайту для соцмереж і месенджерів (GET /og-image).
+ * Раніше це був файл app/opengraph-image.tsx, але такий файл перекриває
+ * og:image УСІХ сторінок — і товари не могли показати власне фото.
+ * Тепер сторінки підключають її явно (DEFAULT_OG_IMAGES), а товари — своє фото.
+ */
+export async function GET() {
   return new ImageResponse(
     (
       <div
@@ -35,7 +40,7 @@ export default async function OpengraphImage() {
           eonni
           <span
             style={{
-              display: 'inline-block',
+              display: 'flex',
               width: 28,
               height: 28,
               background: '#0A0F1F',
@@ -69,6 +74,6 @@ export default async function OpengraphImage() {
         </div>
       </div>
     ),
-    { ...size }
+    { width: 1200, height: 630 }
   )
 }

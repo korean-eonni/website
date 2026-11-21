@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     'Політика конфіденційності інтернет-магазину Eonni. Дізнайтесь, які дані ми збираємо, як їх використовуємо та захищаємо відповідно до законодавства України.',
   keywords: 'політика конфіденційності, захист даних, персональні дані, GDPR, Eonni',
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Політика конфіденційності | Eonni',
     description: 'Як ми захищаємо ваші персональні дані та забезпечуємо приватність.',
     type: 'website',

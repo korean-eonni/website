@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import type { Metadata } from 'next'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
     'Офіційні K-beauty бренди в Eonni: Medicube, Mediheal, Torriden, UNOVE, LACTOFIT, VT Cosmetics, VITAHALO, BIOHEAL BOH, CJ WELLCARE, INNERLAB, ARDIEM. Оригінальна корейська косметика з доставкою по Україні.',
   alternates: { canonical: '/brands' },
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Бренди корейської косметики | Eonni',
     description: 'Офіційні K-beauty бренди з доставкою по Україні.',
     type: 'website',

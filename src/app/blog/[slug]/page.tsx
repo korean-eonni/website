@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
@@ -377,6 +378,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     description: post.description,
     keywords: `K-beauty, корейська косметика, ${post.category.toLowerCase()}, догляд за шкірою`,
     openGraph: {
+      images: DEFAULT_OG_IMAGES,
       title: post.title,
       description: post.description,
       type: 'article',

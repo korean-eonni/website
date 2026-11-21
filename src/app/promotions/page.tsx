@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   title: 'Акції та подарунки | Eonni — корейська косметика',
   description: `${GIFT_MASKS_ENABLED ? `Маска Medicube у подарунок за кожні ${GIFT_THRESHOLD} ₴, б` : 'Б'}езкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴, −10% на перше замовлення для зареєстрованих і −10% на догляд після skin-test.`,
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Акції та подарунки | Eonni',
     description: `Подарунки, безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴ і знижки 10%.`,
     type: 'website',

@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Magnetic from '@/components/ui/Magnetic'
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
     'Eonni — інтернет-магазин оригінальної корейської косметики в Україні. Експертний підбір догляду, швидка доставка, 100% автентичність продукції. Дізнайтесь більше про нашу історію та цінності.',
   keywords: 'корейська косметика, K-beauty, догляд за шкірою, оригінальна косметика, Eonni, купити корейську косметику',
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Про нас | Eonni — Корейська косметика в Україні',
     description:
       'Eonni — інтернет-магазин оригінальної корейської косметики в Україні. Експертний підбір догляду, швидка доставка, 100% автентичність продукції.',

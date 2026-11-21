@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
     'Блог Eonni про корейську косметику: огляди засобів, поради з догляду, тренди K-beauty, ритуали для шкіри. Корисні матеріали від експертів.',
   alternates: { canonical: '/blog' },
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Блог про корейську косметику | Eonni',
     description: 'Огляди, поради та тренди K-beauty від Eonni.',
     type: 'website',

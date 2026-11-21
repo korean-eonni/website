@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
     "Зв'яжіться з Eonni: телефон +380732737330, email eonnisupport@gmail.com, Instagram @eonni.korean.cosmetics. Працюємо щодня з 12:00 до 23:00. Київ, вул. Левка Лук'яненка, 21.",
   keywords: 'контакти Eonni, корейська косметика Київ, телефон, email, Instagram',
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Контакти | Eonni — Корейська косметика',
     description: 'Зв\'яжіться з нами: телефон, email, соціальні мережі. Працюємо щодня з 12:00 до 23:00.',
     type: 'website',

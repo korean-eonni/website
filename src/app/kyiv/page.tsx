@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Footer from '@/components/layout/Footer'
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: '/kyiv' },
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Корейська косметика в Києві — Eonni',
     description: 'Оригінальна K-beauty з доставкою по Києву та Новою Поштою по всій Україні.',
     type: 'website',

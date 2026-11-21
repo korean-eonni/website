@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
     `Доставка Новою Поштою та Укрпоштою по всій Україні. Безкоштовна доставка від ${FREE_SHIPPING_THRESHOLD} ₴. Оплата онлайн або при отриманні. Замовлення до 16:00 у робочі дні відправляємо того ж дня.`,
   keywords: 'доставка косметики, Нова Пошта, Укрпошта, оплата онлайн, накладений платіж, Eonni',
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Доставка та оплата | Eonni',
     description: `Швидка доставка по всій Україні. Безкоштовно від ${FREE_SHIPPING_THRESHOLD} ₴. Замовлення до 16:00 у робочі дні відправляємо того ж дня.`,
     type: 'website',

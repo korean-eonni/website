@@ -1,3 +1,4 @@
+import { DEFAULT_OG_IMAGES } from '@/lib/ogDefault'
 import Footer from '@/components/layout/Footer'
 import FloatingIcons from '@/components/FloatingIcons'
 import Link from 'next/link'
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     'Публічна оферта інтернет-магазину Eonni. Умови оформлення замовлення, оплати, доставки, повернення товару та відповідальність сторін.',
   keywords: 'публічна оферта, умови покупки, договір, правила магазину, Eonni',
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: 'Умови ведення бізнесу | Eonni',
     description: 'Публічна оферта та умови співпраці з інтернет-магазином Eonni.',
     type: 'website',
