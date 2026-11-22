@@ -556,5 +556,59 @@
   "old_original": null,
   "old_discount": null,
   "new_sale": 1112
+ },
+ {
+  "id": "mediheal-hyaluronate-toner-pad-тонер-пад-111",
+  "name": "Mediheal, Hyaluronate Toner Pad (100+100 педів)",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "mediheal-pdrn-lifting-pad-ліфтинг-пади-з-113",
+  "name": "Mediheal, PDRN Lifting Pad (100+100 педів)",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "mediheal-teatree-trouble-pad-тонер-пади--114",
+  "name": "Mediheal, Teatree Trouble Pad (100+100 педів)",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "mediheal-vitamin-c-brightening-pad-тонер-110",
+  "name": "Mediheal, Vitamin C Brightening Pad (100+100 педів)",
+  "pct": 15,
+  "old_sale": 1600,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1360
+ },
+ {
+  "id": "mediheal-collagen-capsule-patch-vitamin--117",
+  "name": "Mediheal, Collagen Capsule Patch Vitamin C (60+60 патчів)",
+  "pct": 20,
+  "old_sale": 1400,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1120
+ },
+ {
+  "id": "mediheal-retinol-collagen-eye-patch-гідр-116",
+  "name": "Mediheal, Retinol Collagen Eye Patch (60+60 патчів)",
+  "pct": 20,
+  "old_sale": 1400,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 1120
  }
 ]

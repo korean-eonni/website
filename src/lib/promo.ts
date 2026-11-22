@@ -13,6 +13,13 @@ export const BLACK_FRIDAY_START = START
 export const BLACK_FRIDAY_END = END
 
 export const BLACK_FRIDAY_IDS = new Set<string>([
+  // Mediheal — розпродаж, додано 22.11
+  'mediheal-hyaluronate-toner-pad-тонер-пад-111',
+  'mediheal-pdrn-lifting-pad-ліфтинг-пади-з-113',
+  'mediheal-teatree-trouble-pad-тонер-пади--114',
+  'mediheal-vitamin-c-brightening-pad-тонер-110',
+  'mediheal-collagen-capsule-patch-vitamin--117',
+  'mediheal-retinol-collagen-eye-patch-гідр-116',
   '6a110a83-49c2-47b2-a19d-c7d038c4a7b2',
   'medicube-zero-pore-toner-тонер-з-aha-bha-35',
   'medicube-pdrn-pink-collagen-capsule-crea-0',
