@@ -12,6 +12,7 @@ import WishlistButton from '@/components/WishlistButton'
 import { decodeRouteId } from '@/lib/routeParams'
 import { isPurchasable, isUnavailable, maxOrderable } from '@/lib/stock'
 import { promoLabel } from '@/lib/promo'
+import { metaTrack } from '@/lib/metaPixel'
 
 type Product = {
   id: string
@@ -1571,6 +1572,13 @@ export default function ProductPage() {
         }
         const data = await response.json()
         setProduct(data)
+        metaTrack('ViewContent', {
+          content_ids: [data.id],
+          content_name: data.name,
+          content_type: 'product',
+          value: Number(data.sale_price) || 0,
+          currency: 'UAH',
+        })
 
         if (data.volume_options) {
           const volumes = data.volume_options.split(',').map((v: string) => v.trim())

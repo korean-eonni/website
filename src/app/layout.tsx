@@ -10,6 +10,7 @@ import LenisProvider from '@/components/providers/LenisProvider'
 import MicrosoftClarity from '@/components/analytics/MicrosoftClarity'
 import GoogleTag from '@/components/analytics/GoogleTag'
 import AdAttributionCapture from '@/components/analytics/AdAttributionCapture'
+import MetaPixel from '@/components/analytics/MetaPixel'
 import PendingPaymentWatcher from '@/components/PendingPaymentWatcher'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://eonni.com.ua').trim().replace(/\/$/, '')
@@ -106,9 +107,13 @@ export const metadata: Metadata = {
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
-      ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
-      : undefined,
+    other: {
+      // Підтвердження домену в бізнес-кабінеті Meta (портфоліо pop.color5).
+      'facebook-domain-verification': 'sou7urz5pvctg416pwagphj5u2z5hk',
+      ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+        ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+        : {}),
+    },
   },
 }
 
@@ -194,6 +199,7 @@ export default function RootLayout({
         <MicrosoftClarity />
         <GoogleTag />
         <AdAttributionCapture />
+        <MetaPixel />
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>

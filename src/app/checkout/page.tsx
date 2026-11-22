@@ -10,6 +10,7 @@ import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDisco
 import { hasFreeShipping } from '@/lib/shipping'
 import { maxOrderable } from '@/lib/stock'
 import { RESERVATION_MINUTES } from '@/lib/reservationWindow'
+import { metaTrack } from '@/lib/metaPixel'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -76,6 +77,18 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, subtotal, clearCart, giftMasks, loading: cartLoading, refreshCart, promoCode: giftPromoCode, removePromo } = useCart()
+  // Піксель Meta: «Почав оформлення» — один раз, коли кошик уже завантажився.
+  const [checkoutTracked, setCheckoutTracked] = useState(false)
+  useEffect(() => {
+    if (checkoutTracked || cartLoading || items.length === 0) return
+    metaTrack('InitiateCheckout', {
+      content_ids: items.map((i) => i.product_id),
+      num_items: items.reduce((n, i) => n + i.quantity, 0),
+      value: subtotal,
+      currency: 'UAH',
+    })
+    setCheckoutTracked(true)
+  }, [checkoutTracked, cartLoading, items, subtotal])
   const { discountEligible } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
   // Кошик перечитано з сервера вже на цій сторінці (а не колись раніше).

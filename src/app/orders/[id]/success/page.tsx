@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GOOGLE_ADS_PURCHASE_SEND_TO } from '@/components/analytics/GoogleTag'
+import { metaTrack } from '@/lib/metaPixel'
 import { forgetPendingPayment } from '@/components/PendingPaymentWatcher'
 
 type Order = {
@@ -121,6 +122,23 @@ export default function OrderSuccessPage() {
       if (userData) w.dataLayer.push(['set', 'user_data', userData])
       w.dataLayer.push(['event', 'conversion', params])
     }
+    try {
+      localStorage.setItem(key, '1')
+    } catch {}
+  }, [order])
+
+  // Піксель Meta: «Покупка» — один раз на замовлення (eventID = номер замовлення).
+  useEffect(() => {
+    if (!order || order.payment_status === 'failed') return
+    const key = `meta_purchase_${order.id}`
+    try {
+      if (localStorage.getItem(key)) return
+    } catch {}
+    metaTrack(
+      'Purchase',
+      { value: Number(order.total_amount) || 0, currency: 'UAH', content_type: 'product' },
+      String(order.id),
+    )
     try {
       localStorage.setItem(key, '1')
     } catch {}

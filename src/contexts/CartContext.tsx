@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react'
 import { giftCountForSubtotal, giftMasksForSubtotal, GiftLine } from '@/lib/giftMasks'
+import { metaTrack } from '@/lib/metaPixel'
 import { loadSession } from '@/lib/sessionBootstrap'
 import { PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
 
@@ -204,6 +205,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const nextSubtotal = typeof data.subtotal === 'number' ? data.subtotal : subtotalRef.current
       const nextN = giftCountForSubtotal(nextSubtotal)
       applyCartData(data)
+      {
+        const added = (data.items as CartItem[] | undefined)?.find((it) => it.product_id === productId)
+        const price = Number(added?.product?.sale_price) || 0
+        metaTrack('AddToCart', {
+          content_ids: [productId],
+          content_type: 'product',
+          value: price * quantity,
+          currency: 'UAH',
+        })
+      }
       if (nextN > prevN) {
         const newly = giftMasksForSubtotal(nextSubtotal).slice(prevN, nextN)
         setGiftFly({ id: Date.now(), masks: newly })
