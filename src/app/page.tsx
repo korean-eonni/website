@@ -103,9 +103,10 @@ export default async function Home() {
   // (otherwise the −30% masks fill the whole top of the carousel).
   const bfTypeOf = (r: RawRow) => r.subcategory || r.category || ''
   const bfDisc = (r: RawRow) => Number(r.discount_amount) || 0
+  const bfName = (r: RawRow) => r.name
   const bfAvail = bfRows.filter((r) => !mapRow(r).comingSoon)
   const bfSoon = bfRows.filter((r) => mapRow(r).comingSoon)
-  const bfProducts = [...mixBlackFriday(bfAvail, bfTypeOf, bfDisc), ...mixBlackFriday(bfSoon, bfTypeOf, bfDisc)].map(mapRow)
+  const bfProducts = [...mixBlackFriday(bfAvail, bfTypeOf, bfDisc, bfName), ...mixBlackFriday(bfSoon, bfTypeOf, bfDisc, bfName)].map(mapRow)
 
   return (
     <main className="min-h-screen -mt-[86px]">

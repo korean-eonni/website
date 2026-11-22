@@ -99,19 +99,60 @@ export function promoLabel(id: string | null | undefined, discount: number | nul
   return BLACK_FRIDAY_LABEL
 }
 
+/** Бренд з назви: «Medicube, …» → Medicube; «100+100 педів Mediheal, …» → Mediheal. */
+function brandOf(name: string): string {
+  const head = name.split(',')[0].trim()
+  return head.replace(/^\d[\d+]*\s+\S+\s+/, '').toLowerCase()
+}
+
 /**
- * Порядок товарів «Чорної п'ятниці»: найбільші знижки — ближче до початку, але
- * без «стіни» з одного типу. Маски мають −30% і інакше займали б увесь верх,
- * тож поруч не ставимо два товари одного типу, якщо є чим розбавити.
+ * Порядок товарів «Чорної п'ятниці» — перемішаний список:
+ *  • товари кожного бренду рівномірно розкидані по всьому списку (Medicube
+ *    багато, тож без цього всі інші бренди опинялися в самому кінці);
+ *  • усередині бренду більші знижки йдуть раніше;
+ *  • поруч не ставимо два товари одного бренду чи одного типу (маски не
+ *    стоять «стіною»), якщо є чим розбавити.
  */
-export function mixBlackFriday<T>(items: T[], type: (x: T) => string, discount: (x: T) => number): T[] {
-  const left = [...items].sort((a, b) => discount(b) - discount(a))
+export function mixBlackFriday<T>(
+  items: T[],
+  type: (x: T) => string,
+  discount: (x: T) => number,
+  name: (x: T) => string = () => '',
+): T[] {
+  const groups = new Map<string, T[]>()
+  for (const x of items) {
+    const b = brandOf(name(x)) || type(x)
+    groups.set(b, [...(groups.get(b) ?? []), x])
+  }
+  // Місце товару в списку — середнє з двох чисел від 0 до 1:
+  //   • рівномірність бренду: k-й з n товарів бренду → (k + 0.5) / n;
+  //   • розмір знижки: місце серед усіх товарів за знижкою (−30% ближче до 0).
+  const byDiscount = [...items].sort((a, b) => discount(b) - discount(a))
+  const discRank = new Map<T, number>()
+  byDiscount.forEach((x) => {
+    const first = byDiscount.findIndex((y) => discount(y) === discount(x))
+    discRank.set(x, first / Math.max(1, items.length))
+  })
+  const slot = new Map<T, number>()
+  groups.forEach((g) => {
+    g.sort((a, b) => discount(b) - discount(a))
+    g.forEach((x, k) => slot.set(x, ((k + 0.5) / g.length + discRank.get(x)!) / 2))
+  })
+  const left = [...items].sort((a, b) => slot.get(a)! - slot.get(b)! || discount(b) - discount(a))
   const out: T[] = []
   while (left.length) {
-    const prev = out.length ? type(out[out.length - 1]) : null
+    const last = out[out.length - 1]
+    const prev = last ? type(last) : null
     const prev2 = out.length > 1 ? type(out[out.length - 2]) : null
-    let i = left.findIndex((x) => type(x) !== prev && type(x) !== prev2)
-    if (i < 0) i = left.findIndex((x) => type(x) !== prev)
+    const prevBrand = last ? brandOf(name(last)) : null
+    const ok = (x: T, strictType: boolean) =>
+      type(x) !== prev && (!strictType || type(x) !== prev2) && (!prevBrand || brandOf(name(x)) !== prevBrand)
+    // Дивимось лише на кілька найближчих кандидатів, інакше «рідкісні» бренди
+    // висмикувались би на самий початок і рівномірність зникала б.
+    const near = left.slice(0, 5)
+    let i = near.findIndex((x) => ok(x, true))
+    if (i < 0) i = near.findIndex((x) => ok(x, false))
+    if (i < 0) i = near.findIndex((x) => type(x) !== prev)
     if (i < 0) i = 0
     out.push(left.splice(i, 1)[0])
   }
