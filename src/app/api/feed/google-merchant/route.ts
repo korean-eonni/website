@@ -51,7 +51,11 @@ export async function GET(request: Request) {
   const limitParam = Number(new URL(request.url).searchParams.get('limit'))
   const limit = Number.isInteger(limitParam) && limitParam > 0 ? limitParam : null
 
-  let feedProducts = products.filter((p) => p.sale_price && p.sale_price > 0)
+  // Only products that are actually in stock — out-of-stock items are not
+  // advertised in Google (owner's decision, 24.11.2026).
+  let feedProducts = products.filter(
+    (p) => p.sale_price && p.sale_price > 0 && (p.stock_quantity ?? 0) > 0,
+  )
   if (limit) {
     feedProducts = [...feedProducts]
       .sort((a, b) => (b.stock_quantity ?? 0) - (a.stock_quantity ?? 0))
@@ -60,8 +64,7 @@ export async function GET(request: Request) {
 
   const items = feedProducts
     .map((p) => {
-      const inStock = !!(p.stock_quantity && p.stock_quantity > 0)
-      const availability = inStock ? 'in_stock' : 'preorder'
+      const availability = 'in_stock'
       const description =
         stripHtml(p.short_description) ||
         stripHtml(p.long_description) ||
