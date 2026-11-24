@@ -106,7 +106,7 @@ export default async function Home() {
   const bfName = (r: RawRow) => r.name
   const bfAvail = bfRows.filter((r) => !mapRow(r).comingSoon)
   const bfSoon = bfRows.filter((r) => mapRow(r).comingSoon)
-  const bfProducts = [...mixBlackFriday(bfAvail, bfTypeOf, bfDisc, bfName), ...mixBlackFriday(bfSoon, bfTypeOf, bfDisc, bfName)].map(mapRow)
+  const bfProducts = [...mixBlackFriday(bfAvail, bfTypeOf, bfDisc, bfName, (r) => r.id), ...mixBlackFriday(bfSoon, bfTypeOf, bfDisc, bfName)].map(mapRow)
 
   return (
     <main className="min-h-screen -mt-[86px]">

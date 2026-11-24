@@ -919,7 +919,7 @@ export default function CatalogContent({ initialProducts }: { initialProducts?: 
     if (sortBy === 'color' && blackFridayPhase() !== 'after') {
       const bfItems = sorted.filter(isBlackFriday)
       if (bfItems.length) {
-        const mixed = mixBlackFriday(bfItems, (p) => p.subcategory || p.category || '', (p) => p.discount_amount ?? 0, (p) => p.name)
+        const mixed = mixBlackFriday(bfItems, (p) => p.subcategory || p.category || '', (p) => p.discount_amount ?? 0, (p) => p.name, (p) => p.id)
         const rest = sorted.filter((p) => !isBlackFriday(p))
         return { items: [...mixed, ...rest], relaxedStock: relaxed }
       }

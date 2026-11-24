@@ -12,9 +12,20 @@ const END = Date.parse('2026-12-03T00:00:00+02:00')
 export const BLACK_FRIDAY_START = START
 export const BLACK_FRIDAY_END = END
 
-export const BLACK_FRIDAY_IDS = new Set<string>([
-  // AGE-R Booster Pro X2 Pink — знижку поставила власниця 24.11 (17 799 → 15 150)
+/**
+ * Апарати, які стоять на самому початку кожного списку «Чорної п'ятниці»
+ * (каталог, знижки, бренд, категорія, головна) — саме в такому порядку.
+ */
+export const BLACK_FRIDAY_PINNED = [
+  'medicube-age-r-booster-pro-x2-zo-friends-103',
   'medicube-age-r-booster-pro-x2-pink-мульт-104',
+]
+
+export const BLACK_FRIDAY_IDS = new Set<string>([
+  // AGE-R Booster Pro X2 — знижки поставила власниця 24.11:
+  // Pink 17 799 → 15 150, ZO&FRIENDS 21 000 → 16 915 (закреслена 19 900)
+  'medicube-age-r-booster-pro-x2-pink-мульт-104',
+  'medicube-age-r-booster-pro-x2-zo-friends-103',
   // Mediheal — розпродаж, додано 22.11
   'mediheal-hyaluronate-toner-pad-тонер-пад-111',
   'mediheal-pdrn-lifting-pad-ліфтинг-пади-з-113',
@@ -120,7 +131,16 @@ export function mixBlackFriday<T>(
   type: (x: T) => string,
   discount: (x: T) => number,
   name: (x: T) => string = () => '',
+  id?: (x: T) => string,
 ): T[] {
+  if (id) {
+    // Закріплені апарати — першими, решта перемішується як завжди.
+    const pinned = BLACK_FRIDAY_PINNED.flatMap((pid) => items.filter((x) => id(x) === pid))
+    if (pinned.length) {
+      const rest = items.filter((x) => !BLACK_FRIDAY_PINNED.includes(id(x)))
+      return [...pinned, ...mixBlackFriday(rest, type, discount, name)]
+    }
+  }
   const groups = new Map<string, T[]>()
   for (const x of items) {
     const b = brandOf(name(x)) || type(x)
