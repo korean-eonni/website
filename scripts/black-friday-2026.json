@@ -610,5 +610,14 @@
   "old_original": null,
   "old_discount": null,
   "new_sale": 1120
+ },
+ {
+  "id": "medicube-age-r-booster-pro-x2-pink-мульт-104",
+  "name": "Medicube, AGE-R Booster Pro X2 Pink",
+  "pct": 15,
+  "old_sale": 17799,
+  "old_original": null,
+  "old_discount": null,
+  "new_sale": 15200
  }
 ]
