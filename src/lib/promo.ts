@@ -13,7 +13,7 @@ export const BLACK_FRIDAY_START = START
 export const BLACK_FRIDAY_END = END
 
 export const BLACK_FRIDAY_IDS = new Set<string>([
-  // AGE-R Booster Pro X2 Pink — знижку поставила власниця 24.11 (17 799 → 15 200)
+  // AGE-R Booster Pro X2 Pink — знижку поставила власниця 24.11 (17 799 → 15 150)
   'medicube-age-r-booster-pro-x2-pink-мульт-104',
   // Mediheal — розпродаж, додано 22.11
   'mediheal-hyaluronate-toner-pad-тонер-пад-111',
