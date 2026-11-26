@@ -96,8 +96,8 @@ export const BLACK_FRIDAY_IDS = new Set<string>([
   'medicube-zero-pore-cooling-mask-зеро-пор-19',
   'lactofit-probiotic-liver-care-пробіотик--108',
   // Тріо Rosemary PDRN (шампунь + кондиціонер + сироватка), додано 26.11.
-  // Ціну 2873 (−15% від 3380) поставила власниця — це постійна ціна набору,
-  // тому в black-friday-2026.json його немає і 03.12 вона не відкотиться.
+  // Ціна на ЧП 2873 (−15% від 3380); 03.12 повертається до 3380 без знижки
+  // (рядок у black-friday-2026.json).
   '907da5d6-7d50-4ae7-97ea-18dc3a2706f8',
 ])
 
