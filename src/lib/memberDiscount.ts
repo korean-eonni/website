@@ -10,7 +10,15 @@
  */
 
 export const MEMBER_DISCOUNT_RATE = 0.1
-export const MEMBER_DISCOUNT_LABEL = 'Знижка зареєстрованим −10%'
+
+/**
+ * ТИМЧАСОВО (з 27.11.2026, на прохання власниці): −10% на ВСІ замовлення —
+ * і гостям, і повторним покупцям. Щоб повернути звичайне правило
+ * (лише перше замовлення зареєстрованого) — поставити false.
+ */
+export const DISCOUNT_FOR_EVERYONE = true
+
+export const MEMBER_DISCOUNT_LABEL = DISCOUNT_FOR_EVERYONE ? 'Знижка −10%' : 'Знижка зареєстрованим −10%'
 
 /** Discounted unit price. Rounded to whole ₴ — the store never shows kopiykas. */
 export function memberPrice(price: number | null | undefined): number {

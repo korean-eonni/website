@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { loadSession } from '@/lib/sessionBootstrap'
+import { DISCOUNT_FOR_EVERYONE } from '@/lib/memberDiscount'
 
 type AuthUser = {
   id: string
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isMember: !!user, hasOrders, discountEligible: !!user && !hasOrders, refresh }}
+      value={{ user, loading, isMember: !!user, hasOrders, discountEligible: DISCOUNT_FOR_EVERYONE || (!!user && !hasOrders), refresh }}
     >
       {children}
     </AuthContext.Provider>

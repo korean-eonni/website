@@ -5,7 +5,7 @@ import { getSessionByToken, clearCart, userHasOrders, ensureUserSchema } from '@
 import { getProduct, ensureProductSchema } from '@/lib/productStore'
 import { createOrderWithStock } from '@/lib/orderTransaction'
 import { expireStaleReservations } from '@/lib/reservation'
-import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
+import { DISCOUNT_FOR_EVERYONE, MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
 import { giftProductIdFor, normalizePromoCode, promoGiftFor, PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
 import { ensurePromoSchema } from '@/lib/promoStore'
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     const promoCode = typeof data.promoCode === 'string' ? data.promoCode.trim() : ''
     // Знижка зареєстрованим діє ЛИШЕ на перше замовлення — якщо в клієнта вже
     // є хоч одне, вона не застосовується.
-    const firstOrder = userId ? !(await userHasOrders(userId)) : false
+    const firstOrder = DISCOUNT_FOR_EVERYONE || (userId ? !(await userHasOrders(userId)) : false)
     const memberDiscount = firstOrder ? memberDiscountForLines(lines) : 0
     const promoDiscount =
       promoCode === 'SKINTEST10' && totalAmount > 0 ? Math.round(totalAmount * 0.1) : 0
