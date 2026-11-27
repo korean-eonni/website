@@ -9,7 +9,7 @@ import RegisterOffer from '@/components/checkout/RegisterOffer'
 import { MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { hasFreeShipping } from '@/lib/shipping'
 import { maxOrderable } from '@/lib/stock'
-import { RESERVATION_MINUTES } from '@/lib/reservationWindow'
+import { RESERVATION_MINUTES, RESERVATION_TIMER_ENABLED } from '@/lib/reservationWindow'
 import { metaTrack } from '@/lib/metaPixel'
 import Footer from '@/components/layout/Footer'
 import Image from 'next/image'
@@ -572,8 +572,9 @@ export default function CheckoutPage() {
               але оплату не завершено. Кошик збережено — нічого не втрачено.
             </p>
             <p className="text-[#666] font-gilroy text-[14px] mb-8">
-              Товар зарезервовано за вами ще {RESERVATION_MINUTES} хв від моменту оформлення.
-              Далі він повертається в продаж.
+              {RESERVATION_TIMER_ENABLED
+                ? `Товар зарезервовано за вами ще ${RESERVATION_MINUTES} хв від моменту оформлення. Далі він повертається в продаж.`
+                : 'Товар залишається зарезервованим за вами — завершити оплату можна будь-коли.'}
             </p>
 
             {retryError && (

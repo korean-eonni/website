@@ -3,7 +3,7 @@ import { db, sql } from '@vercel/postgres'
 import type { Order } from '@/lib/userStore'
 import { ensureUserSchema } from '@/lib/userStore'
 import { ensureProductSchema } from '@/lib/productStore'
-import { RESERVATION_MINUTES } from '@/lib/reservationWindow'
+import { RESERVATION_MINUTES, RESERVATION_TIMER_ENABLED } from '@/lib/reservationWindow'
 
 /**
  * Резерв складу під неоплачене онлайн-замовлення.
@@ -136,6 +136,8 @@ export function reservationExpiresAt(createdAt: string): number {
 
 /** Чи ще тримає це замовлення товар (чи можна повторити оплату). */
 export function reservationIsAlive(order: Pick<Order, 'created_at'>): boolean {
+  // Таймер вимкнено — резерв «не згорає», повторну оплату дозволено завжди.
+  if (!RESERVATION_TIMER_ENABLED) return true
   return Date.now() < reservationExpiresAt(order.created_at)
 }
 
@@ -147,6 +149,9 @@ export function reservationIsAlive(order: Pick<Order, 'created_at'>): boolean {
  * оплату, навіть якщо cron не спрацював.
  */
 export async function expireStaleReservations(): Promise<{ expired: string[] }> {
+  // Таймер вимкнено — нічого не скасовуємо автоматично за часом; неоплаченими
+  // замовленнями й поверненням товару керує власниця вручну в адмінці.
+  if (!RESERVATION_TIMER_ENABLED) return { expired: [] }
   await ensureUserSchema()
   const cutoff = new Date(Date.now() - RESERVATION_MINUTES * 60_000).toISOString()
 
