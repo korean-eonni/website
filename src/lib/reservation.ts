@@ -234,3 +234,70 @@ export async function releaseOwnPendingReservations(
   }
   return { released }
 }
+
+/**
+ * Повністю видаляє замовлення (разом із його позиціями та використаним
+ * промокодом). Якщо замовлення ще тримало товар (резерв не знято,
+ * stock_released_at порожній) — товар повертається на склад, щоб видалення не
+ * «з'їло» залишок. Одна транзакція, рядок замовлення блокується (FOR UPDATE).
+ *
+ * Незворотно — викликати лише після підтвердження в адмінці.
+ */
+export async function deleteOrder(id: string): Promise<'deleted' | 'not-found'> {
+  await ensureProductSchema()
+  await ensureUserSchema()
+  await ensurePromoSchema()
+  const now = new Date().toISOString()
+
+  const client = await db.connect()
+  try {
+    await client.sql`BEGIN`
+
+    const { rows } = await client.sql`
+      SELECT id, stock_released_at FROM orders WHERE id = ${id} FOR UPDATE
+    `
+    const order = rows[0]
+    if (!order) {
+      await client.sql`ROLLBACK`
+      return 'not-found'
+    }
+
+    // Товар повертаємо лише якщо резерв ще не було знято (інакше повернули б
+    // двічі). Подарунки по 0 ₴ не резервувалися — їх пропускаємо.
+    if (!order.stock_released_at) {
+      const items = await client.sql`
+        SELECT product_id, SUM(quantity)::int AS qty
+        FROM order_items
+        WHERE order_id = ${id} AND price > 0
+        GROUP BY product_id
+      `
+      for (const item of items.rows) {
+        const qty = Number(item.qty)
+        if (!Number.isFinite(qty) || qty <= 0) continue
+        await client.sql`
+          UPDATE products
+          SET stock_quantity = COALESCE(stock_quantity, 0) + ${qty},
+              coming_soon = CASE WHEN COALESCE(stock_quantity, 0) + ${qty} >= 1 THEN 0 ELSE coming_soon END,
+              updated_at = ${now}
+          WHERE id = ${item.product_id}
+        `
+      }
+    }
+
+    await client.sql`DELETE FROM promo_redemptions WHERE order_id = ${id}`
+    await client.sql`DELETE FROM order_items WHERE order_id = ${id}`
+    await client.sql`DELETE FROM orders WHERE id = ${id}`
+
+    await client.sql`COMMIT`
+    return 'deleted'
+  } catch (error) {
+    try {
+      await client.sql`ROLLBACK`
+    } catch {
+      /* транзакцію вже закрито */
+    }
+    throw error
+  } finally {
+    client.release()
+  }
+}

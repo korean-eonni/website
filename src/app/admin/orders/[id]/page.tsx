@@ -12,6 +12,8 @@ import {
   updatePaymentStatus,
   type Order,
 } from '@/lib/userStore'
+import { deleteOrder } from '@/lib/reservation'
+import DeleteOrderButton from '@/components/admin/DeleteOrderButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,6 +79,19 @@ async function setPaymentAction(formData: FormData) {
     await updatePaymentStatus(id, payment)
   }
   redirect(`/admin/orders/${id}`)
+}
+
+async function deleteOrderAction(formData: FormData) {
+  'use server'
+  if (!isAuthed()) return
+  const id = String(formData.get('id') || '')
+  // confirm === 'DELETE' ставить лише крок підтвердження в адмінці — захист від
+  // випадкового сабміту.
+  const confirm = String(formData.get('confirm') || '')
+  if (id && confirm === 'DELETE') {
+    await deleteOrder(id)
+  }
+  redirect('/admin/orders')
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -315,6 +330,15 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
             </div>
           </section>
         )}
+
+        {/* Небезпечна зона — видалення */}
+        <section className="bg-white rounded-2xl border border-[#F3C0C0] p-5 mt-4 mb-10">
+          <h2 className="text-[15px] font-semibold mb-1 text-[#9B2C2C]">Небезпечна зона</h2>
+          <p className="text-[13px] text-[#999] mb-3">
+            Повністю видалити це замовлення. Потрібне окреме підтвердження.
+          </p>
+          <DeleteOrderButton orderId={order.id} action={deleteOrderAction} />
+        </section>
       </div>
     </main>
   )
