@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyPlatonCallback } from '@/lib/platon'
-import { getOrderById, updatePaymentStatus, clearCart } from '@/lib/userStore'
+import { getOrderById, updatePaymentStatus, markPaidAfterAutoCancel, clearCart } from '@/lib/userStore'
 import { releaseOrderStock } from '@/lib/reservation'
 
 export const dynamic = 'force-dynamic'
@@ -49,6 +49,17 @@ export async function POST(request: Request) {
     return new NextResponse('OK', { status: 200 })
   }
 
+  // Чи це замовлення звільнила САМА система (таймер прострочення або звільнення
+  // власного резерву покупця перед новим замовленням) — на відміну від ручного
+  // скасування продавцем. Лише такі рятуємо, якщо оплата прийшла із запізненням.
+  const releasedByUs =
+    order.status === 'cancelled' &&
+    order.payment_status === 'failed' &&
+    !!order.stock_released_at &&
+    typeof order.notes === 'string' &&
+    (order.notes.includes('Резерв скасовано автоматично') ||
+      order.notes.includes('Резерв звільнено'))
+
   // Only act while still pending; never downgrade an already-final status.
   if (order.payment_status === 'pending' && body.status === 'SALE') {
     await updatePaymentStatus(orderId, 'paid')
@@ -57,6 +68,19 @@ export async function POST(request: Request) {
     if (order.cart_session || order.user_id) {
       await clearCart(order.cart_session ?? '', order.user_id ?? undefined).catch((e) =>
         console.error('Failed to clear cart after payment:', e),
+      )
+    }
+  } else if (releasedByUs && body.status === 'SALE') {
+    // Оплата надійшла ПІСЛЯ того, як система зняла резерв. Не втрачаємо її:
+    // позначаємо замовлення оплаченим і повертаємо в роботу, з приміткою —
+    // товар уже міг повернутись на склад, тож треба звіритися із залишком.
+    await markPaidAfterAutoCancel(
+      orderId,
+      'Оплата надійшла після звільнення резерву — перевірте наявність товару перед відправкою',
+    )
+    if (order.cart_session || order.user_id) {
+      await clearCart(order.cart_session ?? '', order.user_id ?? undefined).catch((e) =>
+        console.error('Failed to clear cart after late payment:', e),
       )
     }
   } else if (order.payment_status === 'pending' && body.status && body.status !== 'SALE') {

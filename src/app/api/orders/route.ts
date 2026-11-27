@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { getSessionByToken, clearCart, userHasOrders, ensureUserSchema } from '@/lib/userStore'
 import { getProduct, ensureProductSchema } from '@/lib/productStore'
 import { createOrderWithStock } from '@/lib/orderTransaction'
-import { expireStaleReservations } from '@/lib/reservation'
+import { expireStaleReservations, releaseOwnPendingReservations } from '@/lib/reservation'
 import { DISCOUNT_FOR_EVERYONE, MEMBER_DISCOUNT_LABEL, memberDiscountForLines } from '@/lib/memberDiscount'
 import { giftMasksForSubtotal } from '@/lib/giftMasks'
 import { giftProductIdFor, normalizePromoCode, promoGiftFor, PROMO_MIN_SUBTOTAL } from '@/lib/promoCodes'
@@ -51,6 +51,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Кошик порожній' }, { status: 400 })
     }
 
+    // Хто цей покупець (гість за cart_session чи зареєстрований за токеном) —
+    // потрібно вже тут, щоб звільнити саме ЙОГО кинуті резерви до перевірки
+    // наявності.
+    const cookieStore = await cookies()
+    const cartSession = cookieStore.get('cart_session')?.value ?? null
+    const token = cookieStore.get('session_token')?.value
+    let userId: string | null = null
+    if (token) {
+      const session = await getSessionByToken(token)
+      if (session) userId = session.user_id
+    }
+
     // Спершу знімаємо прострочені резерви: покинута кимось оплата не повинна
     // тримати товар і блокувати цього покупця. Робиться до перевірки наявності
     // й не має права завалити замовлення, тому — best-effort.
@@ -58,6 +70,16 @@ export async function POST(request: Request) {
       await expireStaleReservations()
     } catch (sweepError) {
       console.error('Failed to expire stale reservations:', sweepError)
+    }
+
+    // І окремо — ВЛАСНІ кинуті резерви цього ж покупця (ще не прострочені): його
+    // попередня незавершена спроба не повинна блокувати товар для його ж
+    // повторного замовлення (типова причина «не можу оплатити» на товарах із
+    // залишком 1). Теж best-effort.
+    try {
+      await releaseOwnPendingReservations(cartSession, userId)
+    } catch (ownSweepError) {
+      console.error('Failed to release own reservations:', ownSweepError)
     }
 
     // Resolve products from DB and compute total server-side. NEVER trust
@@ -141,16 +163,8 @@ export async function POST(request: Request) {
         }]
       : []
 
-    // Identify user (if any). Needed before discounts — being logged in is itself
-    // one, so the order total depends on it.
-    const cookieStore = await cookies()
-    const cartSession = cookieStore.get('cart_session')?.value ?? null
-    const token = cookieStore.get('session_token')?.value
-    let userId: string | null = null
-    if (token) {
-      const session = await getSessionByToken(token)
-      if (session) userId = session.user_id
-    }
+    // Покупця вже визначено вище (cartSession / userId) — потрібен і для знижок:
+    // бути залогіненим саме по собі дає знижку, тож від цього залежить сума.
 
     // Discounts are decided here, from the session and a fixed rule set — never
     // from anything the client sends, so a tampered request can't invent its own.

@@ -177,3 +177,55 @@ export async function expireStaleReservations(): Promise<{ expired: string[] }> 
   }
   return { expired }
 }
+
+/**
+ * Звільняє ВЛАСНІ неоплачені резерви того самого покупця перед створенням
+ * нового замовлення.
+ *
+ * Навіщо: покупець створює онлайн-замовлення (товар резервується), не доводить
+ * оплату до кінця й одразу пробує оформити ще раз. Його ж попередній резерв, ще
+ * «свіжий» (молодший за RESERVATION_MINUTES), тримає останню одиницю товару —
+ * і нова спроба впирається в «немає в наявності». Для товарів із залишком 1 це
+ * і виглядає як «не можу оплатити». Раніше такий резерв доводилось знімати
+ * вручну в адмінці.
+ *
+ * Знімаємо лише НЕоплачені замовлення цього ж покупця (за cart_session або
+ * user_id), які ще не повернули товар і де покупець не дійшов до сторінки
+ * «дякуємо» (payment_returned_at). Оплачене замовлення releaseOrderStock не
+ * чіпає. Якщо раптом оплата по звільненому прийде пізніше — її підхопить
+ * рятувальна гілка в callback Platon.
+ */
+export async function releaseOwnPendingReservations(
+  cartSession: string | null,
+  userId: string | null,
+): Promise<{ released: string[] }> {
+  if (!cartSession && !userId) return { released: [] }
+  await ensureUserSchema()
+
+  const { rows } = await sql`
+    SELECT id FROM orders
+    WHERE payment_method = 'platon'
+      AND payment_status = 'pending'
+      AND status = 'pending'
+      AND stock_released_at IS NULL
+      AND payment_returned_at IS NULL
+      AND (cart_session = ${cartSession} OR user_id = ${userId})
+    LIMIT 20
+  `
+
+  const released: string[] = []
+  for (const row of rows) {
+    const id = String(row.id)
+    try {
+      const outcome = await releaseOrderStock(id, {
+        status: 'cancelled',
+        paymentStatus: 'failed',
+        reason: 'Резерв звільнено: покупець оформлює нове замовлення',
+      })
+      if (outcome === 'released') released.push(id)
+    } catch (error) {
+      console.error('Failed to release own reservation', id, error)
+    }
+  }
+  return { released }
+}

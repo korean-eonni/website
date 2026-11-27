@@ -574,6 +574,25 @@ export async function updatePaymentStatus(id: string, paymentStatus: Order['paym
   await sql`UPDATE orders SET payment_status = ${paymentStatus}, updated_at = ${now} WHERE id = ${id}`
 }
 
+/**
+ * Рятує замовлення, яке таймер уже встиг авто-скасувати, коли підтверджена
+ * оплата приходить пізніше: позначає його оплаченим і повертає в роботу
+ * (status = 'pending'), додаючи помітну примітку — бо товар уже міг повернутись
+ * на склад, тож продавцю треба звіритися із залишком. Жодна оплата не губиться.
+ */
+export async function markPaidAfterAutoCancel(id: string, note: string): Promise<void> {
+  await ensureUserSchema()
+  const now = new Date().toISOString()
+  await sql`
+    UPDATE orders
+    SET payment_status = 'paid',
+        status = 'pending',
+        notes = COALESCE(notes, '') || ${' | ' + note},
+        updated_at = ${now}
+    WHERE id = ${id}
+  `
+}
+
 // ── Restock ("Повідомити, коли з'явиться") requests ─────────────────────────
 export type RestockRequest = {
   id: string
