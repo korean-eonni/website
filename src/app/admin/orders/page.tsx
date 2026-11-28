@@ -120,14 +120,14 @@ export default async function AdminOrdersPage({
   const tab = searchParams?.tab === 'customers' ? 'customers' : 'orders'
   const [orders, users] = await Promise.all([getAllOrders(500), getAllUsers()])
 
-  // Registration lookup — an order is "registered" if it's linked to an account
-  // or its email/phone matches a registered user.
-  const regEmails = new Set(users.map((u) => (u.email || '').toLowerCase()))
-  const regPhones = new Set(users.map((u) => normPhone(u.phone)).filter(Boolean))
-  const isRegistered = (o: Order) =>
-    !!o.user_id ||
-    regEmails.has((o.email || '').toLowerCase()) ||
-    (!!normPhone(o.phone) && regPhones.has(normPhone(o.phone)))
+  // Замовлення вважається «зареєстрованим» ЛИШЕ коли воно привʼязане до
+  // справжнього акаунта (order.user_id вказує на наявного користувача) — точно
+  // так само, як це визначає сторінка конкретного замовлення (`!!owner`).
+  // Збіг за email/телефоном навмисно НЕ використовуємо: він хибно позначав
+  // гостей зареєстрованими — акаунт лише за телефоном має порожній email, тож
+  // будь-яке гостьове замовлення без email «збігалося» з ним.
+  const userIds = new Set(users.map((u) => u.id))
+  const isRegistered = (o: Order) => !!o.user_id && userIds.has(o.user_id)
 
   const newCount = orders.filter((o) => o.status === 'pending').length
 
